@@ -1,3 +1,6 @@
+# Backend
 `go run server.go` run go server
 
-`cd frontend && run npm dev` run frontend server
+# Frontend
+
+`cd frontend && npm install && npm run dev` run frontend server
