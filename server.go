@@ -1,8 +1,8 @@
 package main
 
 import (
-	"net/http"
 	"sunlight/config/database"
+	"sunlight/handlers"
 
 	_ "github.com/jinzhu/gorm/dialects/postgres"
 	"github.com/labstack/echo"
@@ -18,11 +18,7 @@ func main() {
 			`"method":"${method}","uri":"${uri}","status":${status}}"` + "\n",
 	}))
 
-	e.POST("/hello", hello)
+	e.POST("/auth/sign_up", handlers.SignUp)
 
 	e.Start(":1323")
-}
-
-func hello(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
 }
