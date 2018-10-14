@@ -2,7 +2,7 @@ package database
 
 import (
 	"github.com/jinzhu/gorm"
-	"feed/models"
+	"sunlight/models"
 )
 
 func Initialize() *gorm.DB {

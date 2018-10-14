@@ -3,7 +3,7 @@ package main
 import (
 		"github.com/labstack/echo"
 	_ "github.com/jinzhu/gorm/dialects/postgres"
-		"feed/config/database"
+		"sunlight/config/database"
 )
 
 func main() {
