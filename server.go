@@ -19,6 +19,7 @@ func main() {
 	}))
 
 	e.POST("/auth/sign_up", handlers.SignUp)
+	e.POST("/auth/generate_jwt_token", handlers.GenerateJwtToken)
 
 	e.Start(":1323")
 }
