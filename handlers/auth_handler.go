@@ -11,15 +11,32 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type SignUpForm struct {
+	Username string
+	Email    string
+	Password string
+}
+
+type SignInForm struct {
+	Email    string
+	Password string
+}
+
 func SignUp(c echo.Context) error {
 	db := database.Connect()
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(c.FormValue("password")), bcrypt.DefaultCost)
-	user := &models.User{
+	form := SignUpForm{
 		Username: c.FormValue("username"),
 		Email:    c.FormValue("email"),
+		Password: c.FormValue("password")}
+
+	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(form.Password), bcrypt.DefaultCost)
+	user := &models.User{
+		Username: form.Username,
+		Email:    form.Email,
 		Password: string(passwordHash),
 	}
+
 	err := db.Create(user).Error
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
@@ -31,15 +48,16 @@ func SignUp(c echo.Context) error {
 func GenerateJwtToken(c echo.Context) error {
 	db := database.Connect()
 
-	formEmail := c.FormValue("email")
-	formPassword := c.FormValue("password")
+	form := SignInForm{
+		Email:    c.FormValue("email"),
+		Password: c.FormValue("password")}
 
 	user := models.User{}
-	if db.Where("email = ?", formEmail).First(&user).RecordNotFound() {
+	if db.Where("email = ?", form.Email).First(&user).RecordNotFound() {
 		return c.JSON(http.StatusInternalServerError, "Email not found or incorrect password")
 	}
 
-	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(formPassword))
+	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(form.Password))
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, "Email not found or incorrect password")
 	} else {
