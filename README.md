@@ -1,3 +1,7 @@
+# Installation
+
+`cp config/application.yml.example` `config/application.yml`
+
 # Backend
 `go run server.go` run go server
 
