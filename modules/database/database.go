@@ -20,7 +20,10 @@ func Prepare() error {
 }
 
 func Connection() *gorm.DB {
-	return connect()
+	conn := connect()
+	conn.LogMode(true)
+
+	return conn
 }
 
 func connect() *gorm.DB {
