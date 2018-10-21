@@ -2,8 +2,8 @@ package handlers
 
 import (
 	"net/http"
-	"sunlight/config/database"
 	"sunlight/models"
+	"sunlight/modules/database"
 	"time"
 
 	jwt "github.com/dgrijalva/jwt-go"
@@ -23,8 +23,6 @@ type SignInForm struct {
 }
 
 func SignUp(c echo.Context) error {
-	db := database.Connect()
-
 	form := SignUpForm{
 		Username: c.FormValue("username"),
 		Email:    c.FormValue("email"),
@@ -37,7 +35,7 @@ func SignUp(c echo.Context) error {
 		Password: string(passwordHash),
 	}
 
-	err := db.Create(&user).Error
+	err := database.Connection().Create(&user).Error
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	} else {
@@ -46,14 +44,12 @@ func SignUp(c echo.Context) error {
 }
 
 func SignIn(c echo.Context) error {
-	db := database.Connect()
-
 	form := SignInForm{
 		Email:    c.FormValue("email"),
 		Password: c.FormValue("password")}
 
 	user := models.User{}
-	if db.Where("email = ?", form.Email).First(&user).RecordNotFound() {
+	if database.Connection().Where("email = ?", form.Email).First(&user).RecordNotFound() {
 		return c.JSON(http.StatusInternalServerError, "Email not found or incorrect password")
 	}
 
@@ -71,14 +67,12 @@ func CurrentUser(c echo.Context) error {
 }
 
 func currentUserByJwtToken(c echo.Context) (user models.User) {
-	db := database.Connect()
-
 	// Get user id by Jwt token
 	result := c.Get("user").(*jwt.Token)
 	claims := result.Claims.(jwt.MapClaims)
 	id := claims["email"].(string)
 
-	db.Where("email = ?", id).First(&user)
+	database.Connection().Where("email = ?", id).First(&user)
 	return user
 }
 

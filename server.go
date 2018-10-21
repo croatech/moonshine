@@ -1,16 +1,18 @@
 package main
 
 import (
-	"sunlight/config/database"
 	"sunlight/handlers"
+	"sunlight/modules/database"
 
-	_ "github.com/jinzhu/gorm/dialects/postgres"
+	"github.com/jinzhu/gorm"
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 )
 
+var db *gorm.DB
+
 func main() {
-	database.Initialize()
+	database.Prepare()
 
 	e := echo.New()
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
