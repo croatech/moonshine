@@ -14,12 +14,18 @@ func main() {
 
 	e := echo.New()
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
-		Format: `{"time":"${time_rfc3339_nano}","remote_ip":"${remote_ip}","host":"${host}",` +
+		Format: `{"response":"${latency_human}", time":"${time_rfc3339_nano}","remote_ip":"${remote_ip}","host":"${host}",` +
 			`"method":"${method}","uri":"${uri}","status":${status}}"` + "\n",
 	}))
 
+	// Unauthenticated routes
 	e.POST("/auth/sign_up", handlers.SignUp)
-	e.POST("/auth/generate_jwt_token", handlers.GenerateJwtToken)
+	e.POST("/auth/sign_in", handlers.SignIn)
+
+	// Restricted routes
+	r := e.Group("/")
+	r.Use(middleware.JWT([]byte("secret")))
+	r.GET("auth/current_user", handlers.CurrentUser)
 
 	e.Start(":1323")
 }

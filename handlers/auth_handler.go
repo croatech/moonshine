@@ -31,21 +31,21 @@ func SignUp(c echo.Context) error {
 		Password: c.FormValue("password")}
 
 	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(form.Password), bcrypt.DefaultCost)
-	user := &models.User{
+	user := models.User{
 		Username: form.Username,
 		Email:    form.Email,
 		Password: string(passwordHash),
 	}
 
-	err := db.Create(user).Error
+	err := db.Create(&user).Error
 	if err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
 	} else {
-		return c.JSON(http.StatusOK, user)
+		return generateJwtToken(c, user)
 	}
 }
 
-func GenerateJwtToken(c echo.Context) error {
+func SignIn(c echo.Context) error {
 	db := database.Connect()
 
 	form := SignInForm{
@@ -65,13 +65,30 @@ func GenerateJwtToken(c echo.Context) error {
 	}
 }
 
+func CurrentUser(c echo.Context) error {
+	user := currentUserByJwtToken(c)
+	return c.JSON(http.StatusOK, user)
+}
+
+func currentUserByJwtToken(c echo.Context) (user models.User) {
+	db := database.Connect()
+
+	// Get user id by Jwt token
+	result := c.Get("user").(*jwt.Token)
+	claims := result.Claims.(jwt.MapClaims)
+	id := claims["email"].(string)
+
+	db.Where("email = ?", id).First(&user)
+	return user
+}
+
 func generateJwtToken(c echo.Context, user models.User) error {
 	token := jwt.New(jwt.SigningMethodHS256)
 
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["userId"] = user.ID
-	claims["exp"] = time.Now().Add(time.Hour * 72).Unix()
+	claims["email"] = user.Email
+	claims["expiresAt"] = time.Now().Add(time.Hour * 72).Unix()
 
 	// Generate encoded token and send it as response.
 	t, err := token.SignedString([]byte("secret"))
