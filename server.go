@@ -1,6 +1,7 @@
 package main
 
 import (
+	"net/http"
 	"sunlight/config"
 	"sunlight/handlers"
 	"sunlight/modules/database"
@@ -17,6 +18,9 @@ func main() {
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `{"response":"${latency_human}", time":"${time_rfc3339_nano}","remote_ip":"${remote_ip}","host":"${host}",` +
 			`"method":"${method}","uri":"${uri}","status":${status}}"` + "\n",
+	}))
+	e.Use(middleware.CORSWithConfig(middleware.CORSConfig{
+		AllowMethods: []string{http.MethodGet, http.MethodPut, http.MethodPost, http.MethodDelete, http.MethodOptions},
 	}))
 
 	// Unauthenticated routes
