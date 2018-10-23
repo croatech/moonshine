@@ -5,6 +5,7 @@ import (
 	"sunlight/config"
 	"sunlight/handlers"
 	"sunlight/modules/database"
+	"sunlight/modules/seeds"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
@@ -12,6 +13,7 @@ import (
 
 func main() {
 	database.Prepare()
+	seeds.Load()
 	config.Load()
 
 	e := echo.New()

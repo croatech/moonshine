@@ -1,6 +1,9 @@
 package models
 
-import "github.com/jinzhu/gorm"
+import (
+	"github.com/jinzhu/gorm"
+	"golang.org/x/crypto/bcrypt"
+)
 
 type User struct {
 	gorm.Model
@@ -35,4 +38,9 @@ type User struct {
 	AvatarID           int
 	Equipment          []int `json:"-" sql:"-"`
 	Tools              []int `json:"-" sql:"-"`
+}
+
+func HashPassword(password string) string {
+	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	return string(hash)
 }

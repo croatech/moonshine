@@ -28,11 +28,10 @@ func SignUp(c echo.Context) error {
 		Email:    c.FormValue("email"),
 		Password: c.FormValue("password")}
 
-	passwordHash, _ := bcrypt.GenerateFromPassword([]byte(form.Password), bcrypt.DefaultCost)
 	user := models.User{
 		Username: form.Username,
 		Email:    form.Email,
-		Password: string(passwordHash),
+		Password: models.HashPassword(form.Password),
 	}
 
 	err := database.Connection().Create(&user).Error
