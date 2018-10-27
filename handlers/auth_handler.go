@@ -12,21 +12,22 @@ import (
 )
 
 type SignUpForm struct {
-	Username string
-	Email    string
-	Password string
+	Username string `json:"username" form:"username"`
+	Email    string `json:"email" form:"email"`
+	Password string `json:"password" form:"password"`
 }
 
 type SignInForm struct {
-	Email    string
-	Password string
+	Username string `json:"username" form:"username"`
+	Password string `json:"password" form:"password"`
 }
 
 func SignUp(c echo.Context) error {
-	form := SignUpForm{
-		Username: c.FormValue("username"),
-		Email:    c.FormValue("email"),
-		Password: c.FormValue("password")}
+	form := new(SignUpForm)
+
+	if err := c.Bind(form); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
 
 	user := models.User{
 		Username: form.Username,
@@ -34,27 +35,34 @@ func SignUp(c echo.Context) error {
 		Password: models.HashPassword(form.Password),
 	}
 
-	err := database.Connection().Create(&user).Error
-	if err != nil {
+	if err := user.Validate(); err != nil {
 		return c.JSON(http.StatusInternalServerError, err)
+	}
+
+	if err := database.Connection().Create(&user).Error; err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"error": "Undefined error",
+		})
 	} else {
 		return generateJwtToken(c, user)
 	}
 }
 
 func SignIn(c echo.Context) error {
-	form := SignInForm{
-		Email:    c.FormValue("email"),
-		Password: c.FormValue("password")}
+	form := new(SignInForm)
+
+	if err := c.Bind(form); err != nil {
+		return c.JSON(http.StatusBadRequest, err)
+	}
 
 	user := models.User{}
-	if database.Connection().Where("email = ?", form.Email).First(&user).RecordNotFound() {
-		return c.JSON(http.StatusInternalServerError, "Email not found or incorrect password")
+	if database.Connection().Where("username = ?", form.Username).First(&user).RecordNotFound() {
+		return c.JSON(http.StatusInternalServerError, "Player not found")
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(form.Password))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Email not found or incorrect password")
+		return c.JSON(http.StatusInternalServerError, "Incorrect password")
 	} else {
 		return generateJwtToken(c, user)
 	}

@@ -1,6 +1,8 @@
 package models
 
 import (
+	validation "github.com/go-ozzo/ozzo-validation"
+	"github.com/go-ozzo/ozzo-validation/is"
 	"github.com/jinzhu/gorm"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -53,4 +55,12 @@ type User struct {
 func HashPassword(password string) string {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hash)
+}
+
+func (user User) Validate() error {
+	return validation.ValidateStruct(&user,
+		validation.Field(&user.Username, validation.Required, validation.Length(3, 10)),
+		validation.Field(&user.Password, validation.Required, validation.Length(3, 10)),
+		validation.Field(&user.Email, validation.Required, is.Email),
+	)
 }
