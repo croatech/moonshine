@@ -6,27 +6,34 @@ import (
 	"sunlight/modules/database"
 	"time"
 
+	"github.com/asaskevich/govalidator"
 	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type SignUpForm struct {
-	Username string `json:"username" form:"username"`
-	Email    string `json:"email" form:"email"`
-	Password string `json:"password" form:"password"`
+	Username string `json:"username" form:"username" valid:"required,length(3|20)"`
+	Email    string `json:"email" form:"email" valid:"required,email"`
+	Password string `json:"password" form:"password" valid:"required,length(3|20)"`
 }
 
 type SignInForm struct {
-	Username string `json:"username" form:"username"`
-	Password string `json:"password" form:"password"`
+	Username string `json:"username" form:"username" valid:"required,length(3|20)"`
+	Password string `json:"password" form:"password" valid:"required,length(3|20)"`
+}
+
+type formValidator interface {
+	validate() error
 }
 
 func SignUp(c echo.Context) error {
 	form := new(SignUpForm)
-
 	if err := c.Bind(form); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
+	}
+	if _, err := govalidator.ValidateStruct(form); err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	user := models.User{
@@ -34,14 +41,9 @@ func SignUp(c echo.Context) error {
 		Email:    form.Email,
 		Password: models.HashPassword(form.Password),
 	}
-
-	if err := user.Validate(); err != nil {
-		return c.JSON(http.StatusInternalServerError, err)
-	}
-
 	if err := database.Connection().Create(&user).Error; err != nil {
 		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Undefined error",
+			"error": "Email or username already exist",
 		})
 	} else {
 		return generateJwtToken(c, user)
@@ -50,9 +52,11 @@ func SignUp(c echo.Context) error {
 
 func SignIn(c echo.Context) error {
 	form := new(SignInForm)
-
 	if err := c.Bind(form); err != nil {
 		return c.JSON(http.StatusBadRequest, err)
+	}
+	if _, err := govalidator.ValidateStruct(form); err != nil {
+		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
 	user := models.User{}
@@ -77,9 +81,9 @@ func currentUserByJwtToken(c echo.Context) (user models.User) {
 	// Get user id by Jwt token
 	result := c.Get("user").(*jwt.Token)
 	claims := result.Claims.(jwt.MapClaims)
-	id := claims["email"].(string)
+	id := claims["username"].(string)
 
-	database.Connection().Where("email = ?", id).First(&user)
+	database.Connection().Where("username = ?", id).First(&user)
 	return user
 }
 
@@ -88,7 +92,7 @@ func generateJwtToken(c echo.Context, user models.User) error {
 
 	// Set claims
 	claims := token.Claims.(jwt.MapClaims)
-	claims["email"] = user.Email
+	claims["username"] = user.Username
 	claims["expiresAt"] = time.Now().Add(time.Hour * 72).Unix()
 
 	// Generate encoded token and send it as response.
