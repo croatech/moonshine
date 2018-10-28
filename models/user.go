@@ -1,7 +1,11 @@
 package models
 
 import (
+	"sunlight/modules/database"
+
+	jwt "github.com/dgrijalva/jwt-go"
 	"github.com/jinzhu/gorm"
+	"github.com/labstack/echo"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -53,4 +57,14 @@ type User struct {
 func HashPassword(password string) string {
 	hash, _ := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	return string(hash)
+}
+
+func CurrentUserByJwtToken(c echo.Context) (user User) {
+	// Get username by Jwt token
+	result := c.Get("user").(*jwt.Token)
+	claims := result.Claims.(jwt.MapClaims)
+	username := claims["username"].(string)
+
+	database.Connection().Where("username = ?", username).First(&user)
+	return user
 }

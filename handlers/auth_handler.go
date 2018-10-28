@@ -23,10 +23,6 @@ type SignInForm struct {
 	Password string `json:"password" form:"password" valid:"required,length(3|20)"`
 }
 
-type formValidator interface {
-	validate() error
-}
-
 func SignUp(c echo.Context) error {
 	form := new(SignUpForm)
 	if err := c.Bind(form); err != nil {
@@ -42,11 +38,9 @@ func SignUp(c echo.Context) error {
 		Password: models.HashPassword(form.Password),
 	}
 	if err := database.Connection().Create(&user).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"error": "Email or username already exist",
-		})
+		return c.JSON(http.StatusInternalServerError, "Email or username already exist")
 	} else {
-		return generateJwtToken(c, user)
+		return c.JSON(http.StatusOK, "")
 	}
 }
 
@@ -70,21 +64,6 @@ func SignIn(c echo.Context) error {
 	} else {
 		return generateJwtToken(c, user)
 	}
-}
-
-func CurrentUser(c echo.Context) error {
-	user := currentUserByJwtToken(c)
-	return c.JSON(http.StatusOK, user)
-}
-
-func currentUserByJwtToken(c echo.Context) (user models.User) {
-	// Get user id by Jwt token
-	result := c.Get("user").(*jwt.Token)
-	claims := result.Claims.(jwt.MapClaims)
-	id := claims["username"].(string)
-
-	database.Connection().Where("username = ?", id).First(&user)
-	return user
 }
 
 func generateJwtToken(c echo.Context, user models.User) error {

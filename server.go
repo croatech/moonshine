@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"sunlight/config"
 	"sunlight/handlers"
-	"sunlight/modules/database"
+	"sunlight/modules/migrations"
 	"sunlight/modules/seeds"
 
 	"github.com/labstack/echo"
@@ -12,7 +12,7 @@ import (
 )
 
 func main() {
-	database.Prepare()
+	migrations.Run()
 	seeds.Load()
 	config.Load()
 
@@ -34,7 +34,7 @@ func main() {
 	// Restricted routes
 	r := e.Group("/")
 	r.Use(middleware.JWT([]byte("secret")))
-	r.GET("auth/current_user", handlers.CurrentUser)
+	r.GET("users/current", handlers.CurrentUser)
 
 	e.Start(":1323")
 }
