@@ -1,6 +1,6 @@
 # Installation
 
-`cp config/application.yml.example` `config/application.yml`
+`cp config/config.yml.example` `config/config.yml`
 
 # Backend
 `go run server.go` run go server
