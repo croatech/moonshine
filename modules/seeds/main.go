@@ -8,6 +8,6 @@ import (
 func Load() {
 	// If there are no users in the database
 	if database.Connection().First(&models.User{}).RecordNotFound() {
-		seedUsers()
+		SeedUsers()
 	}
 }

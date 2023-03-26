@@ -2,15 +2,15 @@ package seeds
 
 import (
 	"moonshine/models"
-	"moonshine/modules/database"
 	"moonshine/modules/support"
+	services "moonshine/services/users"
 )
 
-func seedUsers() {
+func SeedUsers() {
 	user := models.User{
-		Username: "Croaton",
+		Username: "Cro",
 		Email:    "admin@gmail.com",
 		Password: support.HashPassword("password"),
 	}
-	database.Connection().Create(&user)
+	services.CreateUser(&user)
 }

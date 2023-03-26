@@ -3,6 +3,7 @@ package handlers
 import (
 	"moonshine/models"
 	"moonshine/modules/database"
+	"moonshine/modules/support"
 	services "moonshine/services/users"
 	"net/http"
 	"time"
@@ -33,7 +34,13 @@ func SignUp(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	if err := services.CreateUser(form.Username, form.Email, form.Password); err != nil {
+	user := models.User{
+		Username: form.Username,
+		Email:    form.Email,
+		Password: support.HashPassword(form.Password),
+	}
+
+	if err := services.CreateUser(&user); err != nil {
 		return c.JSON(http.StatusInternalServerError, "Email or username already exists")
 	} else {
 		return c.JSON(http.StatusOK, "")

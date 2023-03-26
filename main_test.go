@@ -5,7 +5,7 @@ import (
 	"github.com/steinfletcher/apitest"
 	"log"
 	"moonshine/modules/database"
-	services "moonshine/services/users"
+	"moonshine/modules/seeds"
 	"net/http"
 	"os"
 	"testing"
@@ -44,12 +44,12 @@ func TestSignUp_Success(t *testing.T) {
 }
 
 func TestSignUp_FailNotUniqueEmail(t *testing.T) {
-	services.CreateUser("test", "a@gmail.com", "password")
+	seeds.SeedUsers()
 
 	apitest.New().
 		Handler(appServer()).
 		Post("/auth/sign_up").
-		JSON(`{"username":"cro","password":"password","email":"a@gmail.com"}`).
+		JSON(`{"username":"Croa","password":"password","email":"admin@gmail.com"}`).
 		Expect(t).
 		Body(`"Email or username already exists"`).
 		Status(http.StatusInternalServerError).
@@ -59,15 +59,28 @@ func TestSignUp_FailNotUniqueEmail(t *testing.T) {
 }
 
 func TestSignUp_FailNotUniqueUsername(t *testing.T) {
-	services.CreateUser("cro", "an@gmail.com", "password")
+	seeds.SeedUsers()
 
+	apitest.New().
+		Handler(appServer()).
+		Post("/auth/sign_up").
+		JSON(`{"username":"Cro","password":"password","email":"a@gmail.com"}`).
+		Expect(t).
+		Body(`"Email or username already exists"`).
+		Status(http.StatusInternalServerError).
+		End()
+
+	database.Clean()
+}
+
+func TestSignIn_Success(t *testing.T) {
 	apitest.New().
 		Handler(appServer()).
 		Post("/auth/sign_up").
 		JSON(`{"username":"cro","password":"password","email":"a@gmail.com"}`).
 		Expect(t).
-		Body(`"Email or username already exists"`).
-		Status(http.StatusInternalServerError).
+		Body(`""`).
+		Status(http.StatusOK).
 		End()
 
 	database.Clean()
