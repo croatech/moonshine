@@ -1,9 +1,10 @@
 package handlers
 
 import (
+	"moonshine/models"
+	"moonshine/modules/database"
+	services "moonshine/services/users"
 	"net/http"
-	"sunlight/models"
-	"sunlight/modules/database"
 	"time"
 
 	"github.com/asaskevich/govalidator"
@@ -32,13 +33,8 @@ func SignUp(c echo.Context) error {
 		return c.JSON(http.StatusInternalServerError, err.Error())
 	}
 
-	user := models.User{
-		Username: form.Username,
-		Email:    form.Email,
-		Password: models.HashPassword(form.Password),
-	}
-	if err := database.Connection().Create(&user).Error; err != nil {
-		return c.JSON(http.StatusInternalServerError, "Email or username already exist")
+	if err := services.CreateUser(form.Username, form.Email, form.Password); err != nil {
+		return c.JSON(http.StatusInternalServerError, "Email or username already exists")
 	} else {
 		return c.JSON(http.StatusOK, "")
 	}

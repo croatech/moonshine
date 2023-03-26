@@ -1,8 +1,8 @@
 package seeds
 
 import (
-	"sunlight/models"
-	"sunlight/modules/database"
+	"moonshine/models"
+	"moonshine/modules/database"
 )
 
 func Load() {

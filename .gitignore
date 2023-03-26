@@ -1,4 +1,4 @@
 .idea
 .vscode
-frontend/node_modules/
-config/config.yml
+.env
+.env.test

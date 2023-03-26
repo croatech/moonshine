@@ -3,7 +3,7 @@
 `cp config/config.yml.example` `config/config.yml`
 
 # Backend
-`go run server.go` run go server
+`go run main.go` run go server
 
 # Frontend
 
