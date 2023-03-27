@@ -1,17 +1,17 @@
 package handlers
 
 import (
+	"github.com/asaskevich/govalidator"
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/labstack/echo/v4"
+	"golang.org/x/crypto/bcrypt"
 	"moonshine/models"
 	"moonshine/modules/database"
 	"moonshine/modules/support"
 	services "moonshine/services/users"
 	"net/http"
+	"os"
 	"time"
-
-	"github.com/asaskevich/govalidator"
-	jwt "github.com/dgrijalva/jwt-go"
-	"github.com/labstack/echo"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type SignUpForm struct {
@@ -23,6 +23,11 @@ type SignUpForm struct {
 type SignInForm struct {
 	Username string `json:"username" form:"username" valid:"required,length(3|20)"`
 	Password string `json:"password" form:"password" valid:"required,length(3|20)"`
+}
+
+type jwtCustomClaims struct {
+	ID uint `json:"id"`
+	jwt.RegisteredClaims
 }
 
 func SignUp(c echo.Context) error {
@@ -40,7 +45,7 @@ func SignUp(c echo.Context) error {
 		Password: support.HashPassword(form.Password),
 	}
 
-	if err := services.CreateUser(&user); err != nil {
+	if _, err := services.CreateUser(&user); err != nil {
 		return c.JSON(http.StatusInternalServerError, "Email or username already exists")
 	} else {
 		return c.JSON(http.StatusOK, "")
@@ -58,31 +63,42 @@ func SignIn(c echo.Context) error {
 
 	user := models.User{}
 	if database.Connection().Where("username = ?", form.Username).First(&user).RecordNotFound() {
-		return c.JSON(http.StatusInternalServerError, "Player not found")
+		return c.JSON(http.StatusUnauthorized, "User not found")
 	}
 
 	err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(form.Password))
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, "Incorrect password")
+		return c.JSON(http.StatusUnauthorized, "Incorrect password")
 	} else {
 		return generateJwtToken(c, user)
 	}
 }
 
 func generateJwtToken(c echo.Context, user models.User) error {
-	token := jwt.New(jwt.SigningMethodHS256)
+	t, err := GenerateJwtPayload(user.ID)
 
-	// Set claims
-	claims := token.Claims.(jwt.MapClaims)
-	claims["username"] = user.Username
-	claims["expiresAt"] = time.Now().Add(time.Hour * 72).Unix()
-
-	// Generate encoded token and send it as response.
-	t, err := token.SignedString([]byte("secret"))
 	if err != nil {
-		return err
+		return c.JSON(http.StatusInternalServerError, err)
 	}
-	return c.JSON(http.StatusOK, map[string]string{
+
+	return c.JSON(http.StatusOK, echo.Map{
 		"token": t,
 	})
+}
+
+func GenerateJwtPayload(id uint) (string, error) {
+	claims := &jwtCustomClaims{
+		id,
+		jwt.RegisteredClaims{
+			ExpiresAt: jwt.NewNumericDate(time.Now().Add(time.Hour * 72)),
+		},
+	}
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+	t, err := token.SignedString([]byte(os.Getenv("JWT_KEY")))
+	if err != nil {
+		return t, err
+	}
+
+	return t, nil
 }

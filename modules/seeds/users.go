@@ -8,9 +8,10 @@ import (
 
 func SeedUsers() {
 	user := models.User{
-		Username: "Cro",
+		Username: "cro",
 		Email:    "admin@gmail.com",
 		Password: support.HashPassword("password"),
 	}
+
 	services.CreateUser(&user)
 }

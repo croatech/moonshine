@@ -2,8 +2,10 @@ package main
 
 import (
 	"github.com/joho/godotenv"
-	"github.com/labstack/echo"
-	"github.com/labstack/echo/middleware"
+	echojwt "github.com/labstack/echo-jwt/v4"
+	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
+	"github.com/swaggo/echo-swagger"
 	"log"
 	"moonshine/handlers"
 	"moonshine/modules/database"
@@ -24,13 +26,16 @@ func appServer() *echo.Echo {
 		AllowHeaders: []string{echo.HeaderOrigin, echo.HeaderContentType, echo.HeaderAccept, echo.HeaderAuthorization},
 	}))
 
+	// Swagger
+	app.GET("/swagger/*", echoSwagger.WrapHandler)
+
 	// Unauthenticated routes
 	app.POST("/auth/sign_up", handlers.SignUp)
 	app.POST("/auth/sign_in", handlers.SignIn)
 
 	// Restricted routes
 	r := app.Group("/")
-	r.Use(middleware.JWT([]byte("secret")))
+	r.Use(echojwt.JWT([]byte(os.Getenv("JWT_KEY"))))
 	r.GET("users/current", handlers.CurrentUser)
 
 	return app
@@ -43,6 +48,7 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	database.Drop()
 	database.Migrate()
 	seeds.Load()
 

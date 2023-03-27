@@ -1,10 +1,11 @@
 # Installation
 
-`cp config/config.yml.example` `config/config.yml`
+`cp .env.example .env`
+
+`cp .env.example .env.test`
 
 # Backend
 `go run main.go` run go server
 
-# Frontend
-
-`cd frontend && npm install && npm run dev` run frontend server
+# UI for tests
+`sudo $GOPATH/bin/goconvey`
