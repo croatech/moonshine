@@ -1,0 +1,130 @@
+.stats a:hover {
+  cursor: pointer;
+  color: black;
+  text-decoration: none;
+}
+.stats .stat {
+  font-size: 3rem;
+}
+.player .avatar img {
+  margin: 0 auto;
+  display: block;
+  margin-top: 36px;
+}
+.player .player-name {
+  margin: 0 auto;
+  font-size: 2rem;
+}
+.player .player-items {
+  float: left;
+}
+.player .player-items .weapon {
+  margin-top: -13px;
+}
+.player .player-items .cloak {
+  margin-top: 100px;
+}
+.player .player-items .belt {
+  margin-top: 208px;
+}
+.player .player-items .helmet, .player .player-items .armor, .player .player-items .gloves, .player .player-items .pants {
+  margin-left: 75px;
+}
+.player .player-items .necklace, .player .player-items .mail, .player .player-items .bracers, .player .player-items .foots {
+  margin-left: 273px;
+}
+.player .player-items .shield, .player .player-items .ring {
+  margin-left: 350px;
+}
+.player .player-items .helmet, .player .player-items .necklace {
+  margin-top: -20px;
+}
+.player .player-items .armor, .player .player-items .mail {
+  margin-top: 53px;
+}
+.player .player-items .gloves, .player .player-items .bracers {
+  margin-top: 146px;
+}
+.player .player-items .foots, .player .player-items .pants {
+  margin-top: 199px;
+}
+.player .player-items .shield {
+  margin-top: -14px;
+}
+.player .player-items .ring {
+  margin-top: 96px;
+}
+.player .player-items .item {
+  position: absolute;
+  padding-left: 4px;
+}
+.player .player-items .item a img {
+  max-width: 67px;
+}
+.player .player-items .item a img:hover {
+  cursor: pointer;
+}
+.player .player-items .item .stats {
+  background: #fffdf8;
+  position: absolute;
+  padding: 19px;
+  top: 0;
+  width: 86%;
+  height: 89%;
+  margin-top: 10px;
+  display: none;
+  opacity: 0.9;
+}
+.player .player-items .item .stats .stat {
+  font-size: 2rem;
+}
+.player .player-items .item .stats .put-off {
+  top: 0;
+  position: absolute;
+  right: 0;
+  margin-right: 5px;
+  margin-top: 5px;
+}
+.player .player-items .tool {
+  margin-top: 42px;
+  display: inline-block;
+}
+.player .player-items .tool img {
+  height: 48px;
+}
+.player .player-items .num-0 {
+  margin-left: 84px;
+}
+.player .progresses {
+  max-width: 255px;
+  margin: 0 auto;
+  padding-top: 16px;
+}
+.player .progresses .progress {
+  height: 22px;
+  margin: 0;
+}
+.grid {
+  background: url('/static/images/profile/grid.png');
+  background-repeat: no-repeat;
+  min-height: 500px;
+  max-width: 455px;
+  position: relative;
+  background-position: center;
+}
+.inventory .navbar {
+  margin: 0px;
+}
+.inventory .navbar ul {
+  padding: 0px;
+}
+.inventory .player {
+  margin-top: 40px;
+}
+.settings-avatars .avatar {
+  display: inline-block;
+  margin-right: 105px;
+}
+.settings-avatars .avatar .active img {
+  border: 6px solid #5bc0de;
+}

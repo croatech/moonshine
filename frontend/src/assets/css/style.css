@@ -1,0 +1,62 @@
+.center {
+  margin: 0 auto;
+  display: table;
+}
+
+.navbar {
+  margin: 0 auto;
+}
+
+.navbar ul {
+  display: inline-block;
+}
+
+.navbar li {
+  display: inline;
+}
+
+.navbar .gold {
+  display: inline-block;
+  margin-left: 10px;
+}
+
+.navbar .gold img {
+  display: inline-block;
+}
+
+.navbar .gold p {
+  display: inline-block
+}
+
+.background {
+  max-width: 100%
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+}
+
+.red {
+  color: red;
+}
+
+a {
+  color: #333333;
+}
+
+h1, h2 {
+  font-weight: normal;
+}
+
+ul {
+  list-style-type: none;
+  padding: 0;
+}
+
+a {
+  color: #42b983;
+}
+
+.auth_form {
+   max-width: 300px;
+}

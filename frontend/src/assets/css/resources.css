@@ -1,0 +1,12 @@
+#collect-image, #collected-image
+  max-width: 100%
+
+.white-popup-block
+  background: white
+  max-width: 800px
+  margin: 0 auto
+  padding: 60px
+  text-align: center
+
+#collect-button, #cancel-button
+  margin-top: 30px
