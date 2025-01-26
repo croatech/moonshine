@@ -1,17 +1,17 @@
 services:
   pg:
-    image: postgres:14.5-alpine
+    image: postgres:17.2
     environment:
       POSTGRES_DB: moonshine_db
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     volumes:
       - pg_data:/var/lib/postgresql/data
+      - ./init-scripts:/docker-entrypoint-initdb.d
     networks:
       - moonshine_backend
     ports:
       - "5435:5432"
-
 
 volumes:
   pg_data:

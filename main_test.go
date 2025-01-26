@@ -8,6 +8,7 @@ import (
 	"moonshine/models"
 	"moonshine/modules/database"
 	"moonshine/modules/seeds"
+	"moonshine/modules/server"
 	"moonshine/modules/support"
 	services "moonshine/services/users"
 	"net/http"
@@ -37,7 +38,7 @@ func TestMain(m *testing.M) {
 
 func TestSignUp_Success(t *testing.T) {
 	apitest.New().
-		Handler(appServer()).
+		Handler(server.AppServer()).
 		Post("/auth/sign_up").
 		JSON(`{"username":"cro","password":"password","email":"a@gmail.com"}`).
 		Expect(t).
@@ -52,7 +53,7 @@ func TestSignUp_FailNotUniqueEmail(t *testing.T) {
 	seeds.SeedUsers()
 
 	apitest.New().
-		Handler(appServer()).
+		Handler(server.AppServer()).
 		Post("/auth/sign_up").
 		JSON(`{"username":"croa","password":"password","email":"admin@gmail.com"}`).
 		Expect(t).
@@ -67,7 +68,7 @@ func TestSignUp_FailNotUniqueUsername(t *testing.T) {
 	seeds.SeedUsers()
 
 	apitest.New().
-		Handler(appServer()).
+		Handler(server.AppServer()).
 		Post("/auth/sign_up").
 		JSON(`{"username":"cro","password":"password","email":"a@gmail.com"}`).
 		Expect(t).
@@ -84,7 +85,7 @@ func TestSignIn_Success(t *testing.T) {
 	seeds.SeedUsers()
 
 	apitest.New().
-		Handler(appServer()).
+		Handler(server.AppServer()).
 		Post("/auth/sign_in").
 		JSON(`{"username":"cro","password":"password"}`).
 		Expect(t).
@@ -96,7 +97,7 @@ func TestSignIn_Success(t *testing.T) {
 
 func TestSignIn_Fail(t *testing.T) {
 	apitest.New().
-		Handler(appServer()).
+		Handler(server.AppServer()).
 		Post("/auth/sign_in").
 		JSON(`{"username":"cro","password":"password"}`).
 		Expect(t).
@@ -118,7 +119,7 @@ func TestUsersCurrent_Success(t *testing.T) {
 	token, _ := handlers.GenerateJwtPayload(createdUser.ID)
 
 	apitest.New().
-		Handler(appServer()).
+		Handler(server.AppServer()).
 		Get("/users/current").
 		Header("Authorization", "Bearer "+token).
 		Expect(t).
@@ -134,7 +135,7 @@ func TestUsersCurrent_Fail(t *testing.T) {
 	token, _ := handlers.GenerateJwtPayload(0)
 
 	apitest.New().
-		Handler(appServer()).
+		Handler(server.AppServer()).
 		Get("/users/current").
 		Header("Authorization", "Bearer "+token).
 		Expect(t).

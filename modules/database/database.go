@@ -18,8 +18,6 @@ type Config struct {
 	SSLMode  string
 }
 
-var connection *gorm.DB
-
 func Connection() *gorm.DB {
 	conn := connect()
 	conn.LogMode(true)
