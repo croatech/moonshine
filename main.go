@@ -1,28 +1,48 @@
 package main
 
 import (
-	"github.com/joho/godotenv"
+	"context"
 	"log"
-	"moonshine/modules/database"
-	"moonshine/modules/seeds"
-	"moonshine/modules/server"
+	"net/http"
 	"os"
+	"time"
+
+	"github.com/joho/godotenv"
 )
 
+func mustEnv(key, fallback string) string {
+	v := os.Getenv(key)
+	if v == "" {
+		return fallback
+	}
+	return v
+}
+
 func main() {
-	// Load envs
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
+	if err := godotenv.Load(); err != nil {
+		log.Println(".env not loaded, relying on environment")
 	}
 
-	database.Drop()
-	database.Migrate()
-	seeds.Load()
+	ctx := context.Background()
+	_ = ctx // пока не используем, но оставляем как в примере
 
-	app := server.AppServer()
-	app.Start(":" + os.Getenv("APP_PORT"))
-	if err != nil {
-		panic(err)
+	addr := mustEnv("HTTP_ADDR", ":8080")
+
+	mux := http.NewServeMux()
+	mux.HandleFunc("/health", func(w http.ResponseWriter, _ *http.Request) {
+		w.WriteHeader(http.StatusOK)
+		w.Write([]byte("ok"))
+	})
+
+	server := &http.Server{
+		Addr:         addr,
+		Handler:      mux,
+		ReadTimeout:  5 * time.Second,
+		WriteTimeout: 10 * time.Second,
+	}
+
+	log.Printf("http server starting on %s", addr)
+	if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		log.Fatalf("server failed: %v", err)
 	}
 }
