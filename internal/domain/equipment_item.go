@@ -1,17 +1,15 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type EquipmentItem struct {
-	gorm.Model
+	Model
 	Name                string             `json:"name"`
-	Attack              uint               `json:"attack" sql:"DEFAULT:0"`
-	Defense             uint               `json:"defense" sql:"DEFAULT:0"`
-	Hp                  uint               `json:"hp" sql:"DEFAULT:0"`
-	RequiredLevel       uint               `json:"required_level" sql:"DEFAULT:1"`
+	Attack              uint               `json:"attack" gorm:"default:0"`
+	Defense             uint               `json:"defense" gorm:"default:0"`
+	Hp                  uint               `json:"hp" gorm:"default:0"`
+	RequiredLevel       uint               `json:"required_level" gorm:"default:1"`
 	Price               uint               `json:"price"`
-	Artifact            bool               `json:"artifact" sql:"DEFAULT:false"`
+	Artifact            bool               `json:"artifact" gorm:"default:false"`
 	EquipmentCategoryID uint               `json:"equipment_category_id"`
-	EquipmentCategory   *EquipmentCategory `json:"equipment_category"`
+	EquipmentCategory   *EquipmentCategory `json:"equipment_category,omitempty"`
 	Image               string             `json:"image"`
 }

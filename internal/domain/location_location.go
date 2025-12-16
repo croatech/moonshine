@@ -1,10 +1,8 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type LocationLocation struct {
-	gorm.Model
+	Model
 	LocationID     uint      `json:"location_id"`
-	Location       *Location `json:"location"`
+	Location       *Location `json:"location,omitempty"`
 	NearLocationID uint      `json:"near_location_id"`
 }

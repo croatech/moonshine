@@ -1,10 +1,8 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type Avatar struct {
-	gorm.Model
-	Private bool    `json:"private" sql:"DEFAULT:true"`
+	Model
+	Private bool    `json:"private" gorm:"default:true"`
 	Image   string  `json:"image"`
-	Users   []*User `json:"users"`
+	Users   []*User `json:"users,omitempty"`
 }

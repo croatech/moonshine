@@ -7,7 +7,6 @@ import (
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
-	_ "github.com/lib/pq"
 )
 
 var DB *gorm.DB
@@ -22,21 +21,21 @@ type Config struct {
 }
 
 func Init() error {
-	config := getConfig()
-	
+	cfg := loadConfig()
+
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		config.Host, config.Port, config.User, config.Password, config.Database, config.SSLMode,
+		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database, cfg.SSLMode,
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return err
+		return fmt.Errorf("open database: %w", err)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		return err
+		return fmt.Errorf("get underlying db: %w", err)
 	}
 
 	sqlDB.SetMaxIdleConns(2)
@@ -51,10 +50,12 @@ func Close() error {
 	if DB == nil {
 		return nil
 	}
+
 	sqlDB, err := DB.DB()
 	if err != nil {
 		return err
 	}
+
 	return sqlDB.Close()
 }
 
@@ -62,8 +63,8 @@ func GetDB() *gorm.DB {
 	return DB
 }
 
-func getConfig() Config {
-	config := Config{
+func loadConfig() Config {
+	return Config{
 		Host:     getEnv("DATABASE_HOST", "localhost"),
 		Port:     getEnv("DATABASE_PORT", "5433"),
 		User:     getEnv("DATABASE_USER", "postgres"),
@@ -71,7 +72,6 @@ func getConfig() Config {
 		Database: getEnv("DATABASE_NAME", "moonshine"),
 		SSLMode:  getEnv("DATABASE_SSL_MODE", "disable"),
 	}
-	return config
 }
 
 func getEnv(key, fallback string) string {
@@ -80,4 +80,3 @@ func getEnv(key, fallback string) string {
 	}
 	return fallback
 }
-

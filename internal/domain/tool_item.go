@@ -1,13 +1,11 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type ToolItem struct {
-	gorm.Model
+	Model
 	Name           string        `json:"name"`
 	Price          uint          `json:"price"`
 	RequiredSkill  uint          `json:"required_skill"`
 	ToolCategoryID uint          `json:"tool_category_id"`
-	ToolCategory   *ToolCategory `json:"tool_category"`
+	ToolCategory   *ToolCategory `json:"tool_category,omitempty"`
 	Image          string        `json:"image"`
 }

@@ -1,16 +1,12 @@
 package domain
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 type Round struct {
-	gorm.Model
+	Model
 	FightID            uint   `json:"fight_id"`
-	Fight              *Fight `json:"fight"`
+	Fight              *Fight `json:"fight,omitempty"`
 	PlayerDamage       uint   `json:"player_damage"`
 	BotDamage          uint   `json:"bot_damage"`
-	Status             uint   `json:"status" sql:"DEFAULT:0"`
+	Status             uint   `json:"status" gorm:"default:0"`
 	PlayerHp           uint   `json:"player_hp"`
 	BotHp              uint   `json:"bot_hp"`
 	PlayerAttackPoint  string `json:"player_attack_point"`

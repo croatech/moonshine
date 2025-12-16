@@ -1,10 +1,8 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type Event struct {
-	gorm.Model
+	Model
 	UserID uint   `json:"user_id"`
-	User   *User  `json:"user"`
+	User   *User  `json:"user,omitempty"`
 	Body   string `json:"body"`
 }

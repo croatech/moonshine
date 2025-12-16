@@ -11,3 +11,6 @@
 *.so
 *.dylib
 _testmain.go
+
+tmp/
+build-errors.log

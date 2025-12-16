@@ -6,31 +6,23 @@ import (
 )
 
 type UserService struct {
-	userRepo *repository.UserRepository
+	repo *repository.UserRepository
 }
 
 func NewUserService() *UserService {
 	return &UserService{
-		userRepo: repository.NewUserRepository(),
+		repo: repository.NewUserRepository(),
 	}
 }
 
-func (s *UserService) CreateUser(user *domain.User) (*domain.User, error) {
-	if err := s.userRepo.Create(user); err != nil {
-		return nil, err
-	}
-	return user, nil
+func (s *UserService) Create(user *domain.User) error {
+	return s.repo.Create(user)
 }
 
-func (s *UserService) GetUserByID(id uint) (*domain.User, error) {
-	return s.userRepo.FindByID(id)
+func (s *UserService) GetByID(id uint) (*domain.User, error) {
+	return s.repo.FindByID(id)
 }
 
-func (s *UserService) GetUserByUsername(username string) (*domain.User, error) {
-	return s.userRepo.FindByUsername(username)
-}
-
-func CreateUser(user *domain.User) (*domain.User, error) {
-	service := NewUserService()
-	return service.CreateUser(user)
+func (s *UserService) GetByUsername(username string) (*domain.User, error) {
+	return s.repo.FindByUsername(username)
 }

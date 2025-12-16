@@ -1,11 +1,9 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type UserEquipmentItem struct {
-	gorm.Model
+	Model
 	UserID          uint           `json:"user_id"`
-	User            *User          `json:"user"`
+	User            *User          `json:"user,omitempty"`
 	EquipmentItemID uint           `json:"equipment_item_id"`
-	EquipmentItem   *EquipmentItem `json:"equipment_item"`
+	EquipmentItem   *EquipmentItem `json:"equipment_item,omitempty"`
 }

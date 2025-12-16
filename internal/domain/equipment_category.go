@@ -1,10 +1,8 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type EquipmentCategory struct {
-	gorm.Model
+	Model
 	Name           string           `json:"name"`
 	Type           string           `json:"type"`
-	EquipmentItems []*EquipmentItem `json:"equipment_items"`
+	EquipmentItems []*EquipmentItem `json:"equipment_items,omitempty"`
 }

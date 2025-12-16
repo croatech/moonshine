@@ -1,17 +1,15 @@
 package domain
 
-import "github.com/jinzhu/gorm"
-
 type Location struct {
-	gorm.Model
+	Model
 	Name              string              `json:"name"`
 	Slug              string              `json:"slug"`
-	Cell              bool                `json:"cell" sql:"DEFAULT:true"`
-	Inactive          bool                `json:"inactive" sql:"DEFAULT:true"`
+	Cell              bool                `json:"cell" gorm:"default:true"`
+	Inactive          bool                `json:"inactive" gorm:"default:true"`
 	ParentID          uint                `json:"parent_id"`
-	Parent            *Location           `json:"parent"`
-	LocationBots      []*LocationBot      `json:"location_bots"`
-	Users             []*User             `json:"users"`
-	LocationLocations []*LocationLocation `json:"location_locations"`
-	LocationResources []*LocationResource `json:"location_resources"`
+	Parent            *Location           `json:"parent,omitempty"`
+	LocationBots      []*LocationBot      `json:"location_bots,omitempty"`
+	Users             []*User             `json:"users,omitempty"`
+	LocationLocations []*LocationLocation `json:"location_locations,omitempty"`
+	LocationResources []*LocationResource `json:"location_resources,omitempty"`
 }

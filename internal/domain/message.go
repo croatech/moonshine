@@ -1,13 +1,9 @@
 package domain
 
-import (
-	"github.com/jinzhu/gorm"
-)
-
 type Message struct {
-	gorm.Model
-	UserID      int    `json:"user_id"`
-	User        *User  `json:"user"`
+	Model
+	UserID      uint   `json:"user_id"`
+	User        *User  `json:"user,omitempty"`
 	Text        string `json:"text"`
 	RecipientID uint   `json:"recipient_id"`
 }

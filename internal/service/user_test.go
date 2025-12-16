@@ -1,63 +1,84 @@
 package service
 
 import (
+	"fmt"
+	"testing"
+	"time"
+
 	"moonshine/internal/domain"
 	"moonshine/internal/repository"
-	"testing"
 )
 
-func TestUserService_CreateUser(t *testing.T) {
-	// Initialize repository for testing
+func TestMain(m *testing.M) {
 	if err := repository.Init(); err != nil {
-		t.Fatalf("Failed to initialize repository: %v", err)
+		panic(err)
 	}
 	defer repository.Close()
+	m.Run()
+}
 
-	service := NewUserService()
+func TestUserService_Create(t *testing.T) {
+	svc := NewUserService()
+	ts := time.Now().UnixNano()
 
 	user := &domain.User{
-		Username: "serviceuser",
-		Email:    "service@example.com",
+		Username: fmt.Sprintf("serviceuser%d", ts),
+		Email:    fmt.Sprintf("service%d@example.com", ts),
 		Password: "hashedpassword",
 	}
 
-	created, err := service.CreateUser(user)
-	if err != nil {
+	if err := svc.Create(user); err != nil {
 		t.Fatalf("Failed to create user: %v", err)
 	}
 
-	if created.ID == 0 {
+	if user.ID == 0 {
 		t.Error("User ID should be set after creation")
 	}
 }
 
-func TestUserService_GetUserByUsername(t *testing.T) {
-	// Initialize repository for testing
-	if err := repository.Init(); err != nil {
-		t.Fatalf("Failed to initialize repository: %v", err)
-	}
-	defer repository.Close()
+func TestUserService_GetByUsername(t *testing.T) {
+	svc := NewUserService()
+	ts := time.Now().UnixNano()
 
-	service := NewUserService()
-
-	// Create a test user first
+	username := fmt.Sprintf("getuser%d", ts)
 	user := &domain.User{
-		Username: "getuser",
-		Email:    "get@example.com",
+		Username: username,
+		Email:    fmt.Sprintf("get%d@example.com", ts),
 		Password: "hashedpassword",
 	}
-	if _, err := service.CreateUser(user); err != nil {
+	if err := svc.Create(user); err != nil {
 		t.Fatalf("Failed to create test user: %v", err)
 	}
 
-	// Get the user
-	found, err := service.GetUserByUsername("getuser")
+	found, err := svc.GetByUsername(username)
 	if err != nil {
 		t.Fatalf("Failed to get user: %v", err)
 	}
 
-	if found.Username != "getuser" {
-		t.Errorf("Expected username 'getuser', got '%s'", found.Username)
+	if found.Username != username {
+		t.Errorf("Expected username '%s', got '%s'", username, found.Username)
 	}
 }
 
+func TestUserService_GetByID(t *testing.T) {
+	svc := NewUserService()
+	ts := time.Now().UnixNano()
+
+	user := &domain.User{
+		Username: fmt.Sprintf("getbyid%d", ts),
+		Email:    fmt.Sprintf("getbyid%d@example.com", ts),
+		Password: "hashedpassword",
+	}
+	if err := svc.Create(user); err != nil {
+		t.Fatalf("Failed to create test user: %v", err)
+	}
+
+	found, err := svc.GetByID(user.ID)
+	if err != nil {
+		t.Fatalf("Failed to get user: %v", err)
+	}
+
+	if found.ID != user.ID {
+		t.Errorf("Expected ID %d, got %d", user.ID, found.ID)
+	}
+}
