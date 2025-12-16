@@ -2,3 +2,12 @@
 .vscode
 .env
 .env.test
+.env.test.example
+
+*.test
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+_testmain.go
