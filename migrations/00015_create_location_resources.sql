@@ -1,12 +1,12 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE location_resources (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
-    location_id INTEGER NOT NULL,
-    resource_id INTEGER NOT NULL,
+    location_id UUID NOT NULL,
+    resource_id UUID NOT NULL,
     CONSTRAINT fk_location_resources_location FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE CASCADE,
     CONSTRAINT fk_location_resources_resource FOREIGN KEY (resource_id) REFERENCES resources(id) ON DELETE CASCADE
 );

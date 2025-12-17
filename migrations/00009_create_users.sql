@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE users (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
@@ -9,8 +9,8 @@ CREATE TABLE users (
     email VARCHAR(100) NOT NULL UNIQUE,
     password VARCHAR(255) NOT NULL,
     name VARCHAR(255),
-    avatar_id INTEGER,
-    location_id INTEGER,
+    avatar_id UUID,
+    location_id UUID NOT NULL,
     armor_slot INTEGER NOT NULL DEFAULT 0,
     attack INTEGER NOT NULL DEFAULT 1,
     defense INTEGER NOT NULL DEFAULT 1,
@@ -38,7 +38,7 @@ CREATE TABLE users (
     shield_slot INTEGER NOT NULL DEFAULT 0,
     weapon_slot INTEGER NOT NULL DEFAULT 0,
     CONSTRAINT fk_users_avatar FOREIGN KEY (avatar_id) REFERENCES avatars(id) ON DELETE SET NULL,
-    CONSTRAINT fk_users_location FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE SET NULL
+    CONSTRAINT fk_users_location FOREIGN KEY (location_id) REFERENCES locations(id) ON DELETE RESTRICT
 );
 -- +goose StatementEnd
 

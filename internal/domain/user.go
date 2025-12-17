@@ -1,11 +1,13 @@
 package domain
 
+import "github.com/google/uuid"
+
 type User struct {
 	Model
 	ArmorSlot          uint                 `json:"armor_slot"`
 	Attack             uint                 `json:"attack" gorm:"default:1"`
 	Avatar             *Avatar              `json:"avatar,omitempty"`
-	AvatarID           uint                 `json:"avatar_id"`
+	AvatarID           *uuid.UUID           `json:"avatar_id" gorm:"type:uuid"`
 	BeltSlot           uint                 `json:"belt_slot"`
 	BracersSlot        uint                 `json:"bracers_slot"`
 	CloakSlot          uint                 `json:"cloak_slot"`
@@ -26,7 +28,7 @@ type User struct {
 	Hp                 uint                 `json:"hp" gorm:"default:20"`
 	Level              uint                 `json:"level" gorm:"default:1"`
 	Location           *Location            `json:"location,omitempty"`
-	LocationID         uint                 `json:"location_id"`
+	LocationID         uuid.UUID            `json:"location_id" gorm:"type:uuid;not null"`
 	LumberjackingSkill uint                 `json:"lumberjacking_skill" gorm:"default:0"`
 	LumberjackingSlot  uint                 `json:"lumberjacking_slot"`
 	MailSlot           uint                 `json:"mail_slot"`

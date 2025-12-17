@@ -1,8 +1,10 @@
 package domain
 
+import "github.com/google/uuid"
+
 type Round struct {
 	Model
-	FightID            uint   `json:"fight_id"`
+	FightID            uuid.UUID `json:"fight_id" gorm:"type:uuid"`
 	Fight              *Fight `json:"fight,omitempty"`
 	PlayerDamage       uint   `json:"player_damage"`
 	BotDamage          uint   `json:"bot_damage"`

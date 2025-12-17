@@ -8,6 +8,7 @@ import (
 	"github.com/99designs/gqlgen/graphql"
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 
 	"moonshine/internal/graphql/generated"
@@ -46,9 +47,11 @@ func GraphQLHandler() echo.HandlerFunc {
 		if tokenValue := c.Get("user"); tokenValue != nil {
 			if token, ok := tokenValue.(*jwt.Token); ok {
 				if claims, ok := token.Claims.(jwt.MapClaims); ok {
-					if idFloat, ok := claims["id"].(float64); ok {
-						ctx = context.WithValue(ctx, "userID", uint(idFloat))
-						c.SetRequest(c.Request().WithContext(ctx))
+					if idStr, ok := claims["id"].(string); ok {
+						if userID, err := uuid.Parse(idStr); err == nil {
+							ctx = context.WithValue(ctx, "userID", userID)
+							c.SetRequest(c.Request().WithContext(ctx))
+						}
 					}
 				}
 			}

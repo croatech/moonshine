@@ -1,8 +1,10 @@
 package domain
 
+import "github.com/google/uuid"
+
 type Event struct {
 	Model
-	UserID uint   `json:"user_id"`
+	UserID uuid.UUID `json:"user_id" gorm:"type:uuid"`
 	User   *User  `json:"user,omitempty"`
 	Body   string `json:"body"`
 }

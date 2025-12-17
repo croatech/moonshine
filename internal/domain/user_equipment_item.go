@@ -1,9 +1,11 @@
 package domain
 
+import "github.com/google/uuid"
+
 type UserEquipmentItem struct {
 	Model
-	UserID          uint           `json:"user_id"`
+	UserID          uuid.UUID      `json:"user_id" gorm:"type:uuid"`
 	User            *User          `json:"user,omitempty"`
-	EquipmentItemID uint           `json:"equipment_item_id"`
+	EquipmentItemID uuid.UUID      `json:"equipment_item_id" gorm:"type:uuid"`
 	EquipmentItem   *EquipmentItem `json:"equipment_item,omitempty"`
 }

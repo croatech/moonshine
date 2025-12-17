@@ -1,0 +1,57 @@
+.map
+  max-width: 850px
+
+  .cells
+    .cell
+      display: inline-block
+      margin-right: 3px
+      margin-top: 3px
+
+      &:hover
+        cursor: pointer
+
+      .current_position
+        position: absolute
+        margin-left: 33px
+        margin-top: -83px
+
+      .arrow
+        position: absolute
+        margin-top: -80px
+        margin-left: 20px
+
+        .position-9
+          transform: rotate(-40deg)
+
+        .position-8
+          transform: rotate(0deg)
+
+        .position-7
+          transform: rotate(45deg)
+
+        .position-1
+          transform: rotate(-90deg)
+
+        .position--1
+          transform: rotate(90deg)
+
+        .position--7
+          transform: rotate(225deg)
+
+        .position--8
+          transform: rotate(180deg)
+
+        .position--9
+          transform: rotate(130deg)
+
+        .position-none
+          display: none
+
+      &.inactive
+        opacity: 0.4
+
+        &:hover
+          cursor: default
+
+.spinner
+  margin-top: 300px

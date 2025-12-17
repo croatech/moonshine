@@ -1,11 +1,11 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE rounds (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
-    fight_id INTEGER NOT NULL,
+    fight_id UUID NOT NULL,
     player_damage INTEGER NOT NULL DEFAULT 0,
     bot_damage INTEGER NOT NULL DEFAULT 0,
     status INTEGER NOT NULL DEFAULT 0,

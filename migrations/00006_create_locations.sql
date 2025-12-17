@@ -1,16 +1,16 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE locations (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
     name VARCHAR(255) NOT NULL,
     slug VARCHAR(255),
     cell BOOLEAN NOT NULL DEFAULT true,
-    inactive BOOLEAN NOT NULL DEFAULT true,
-    parent_id INTEGER,
-    CONSTRAINT fk_locations_parent FOREIGN KEY (parent_id) REFERENCES locations(id) ON DELETE SET NULL
+    inactive BOOLEAN NOT NULL DEFAULT false,
+    image VARCHAR(255),
+    image_bg VARCHAR(255)
 );
 -- +goose StatementEnd
 

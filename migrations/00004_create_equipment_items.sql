@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE equipment_items (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
@@ -12,7 +12,7 @@ CREATE TABLE equipment_items (
     required_level INTEGER NOT NULL DEFAULT 1,
     price INTEGER NOT NULL DEFAULT 0,
     artifact BOOLEAN NOT NULL DEFAULT false,
-    equipment_category_id INTEGER,
+    equipment_category_id UUID,
     image VARCHAR(255),
     CONSTRAINT fk_equipment_items_category FOREIGN KEY (equipment_category_id) REFERENCES equipment_categories(id) ON DELETE SET NULL
 );

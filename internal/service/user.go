@@ -1,6 +1,8 @@
 package service
 
 import (
+	"github.com/google/uuid"
+
 	"moonshine/internal/domain"
 	"moonshine/internal/repository"
 )
@@ -19,7 +21,7 @@ func (s *UserService) Create(user *domain.User) error {
 	return s.repo.Create(user)
 }
 
-func (s *UserService) GetByID(id uint) (*domain.User, error) {
+func (s *UserService) GetByID(id uuid.UUID) (*domain.User, error) {
 	return s.repo.FindByID(id)
 }
 

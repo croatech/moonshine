@@ -1,9 +1,11 @@
 package domain
 
+import "github.com/google/uuid"
+
 type Resource struct {
 	Model
 	Name              string              `json:"name"`
-	ItemID            uint                `json:"item_id"`
+	ItemID            uuid.UUID          `json:"item_id" gorm:"type:uuid"`
 	Price             uint                `json:"price"`
 	Type              string              `json:"type"`
 	Image             string              `json:"image"`

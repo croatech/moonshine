@@ -1,9 +1,11 @@
 package domain
 
+import "github.com/google/uuid"
+
 type LocationResource struct {
 	Model
-	LocationID uint      `json:"location_id"`
+	LocationID uuid.UUID `json:"location_id" gorm:"type:uuid"`
 	Location   *Location `json:"location,omitempty"`
-	ResourceID uint      `json:"resource_id"`
+	ResourceID uuid.UUID `json:"resource_id" gorm:"type:uuid"`
 	Resource   *Resource `json:"resource,omitempty"`
 }

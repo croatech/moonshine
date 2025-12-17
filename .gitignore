@@ -14,3 +14,5 @@ _testmain.go
 
 tmp/
 build-errors.log
+frontend/assets/images/
+internal/graphql/schema.resolvers.go
