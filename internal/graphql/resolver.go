@@ -9,9 +9,9 @@ type Resolver struct {
 	userRepo *repository.UserRepository
 }
 
-func NewResolver() *Resolver {
+func newResolver(userRepo *repository.UserRepository) *Resolver {
 	return &Resolver{
-		userRepo: repository.NewUserRepository(),
+		userRepo: userRepo,
 	}
 }
 

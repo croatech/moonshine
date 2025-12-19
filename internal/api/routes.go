@@ -7,16 +7,17 @@ import (
 
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 
 	"moonshine/internal/graphql"
 )
 
-func SetupRoutes(e *echo.Echo) {
+func SetupRoutes(e *echo.Echo, db *gorm.DB, isProduction bool) {
 	e.GET("/health", healthCheck)
 
-	if !isProduction() {
-		e.GET("/schema.graphql", graphql.SchemaHandler())
-		e.OPTIONS("/schema.graphql", graphql.SchemaHandler())
+	if !isProduction {
+		e.GET("/schema.graphql", graphql.SchemaHandler(isProduction))
+		e.OPTIONS("/schema.graphql", graphql.SchemaHandler(isProduction))
 	}
 
 	graphqlGroup := e.Group("/graphql")
@@ -28,7 +29,7 @@ func SetupRoutes(e *echo.Echo) {
 			return nil
 		},
 		Skipper: func(c echo.Context) bool {
-			if isProduction() {
+			if isProduction {
 				return isPublicOperation(c)
 			}
 			return isIntrospectionQuery(c) || isPublicOperation(c)
@@ -36,7 +37,7 @@ func SetupRoutes(e *echo.Echo) {
 	}
 
 	graphqlGroup.Use(echojwt.WithConfig(jwtConfig))
-	graphqlGroup.POST("", graphql.GraphQLHandler())
+	graphqlGroup.POST("", graphql.GraphQLHandler(db, isProduction))
 }
 
 func isIntrospectionQuery(c echo.Context) bool {
@@ -46,15 +47,10 @@ func isIntrospectionQuery(c echo.Context) bool {
 	}
 
 	body := strings.ToLower(string(bodyBytes))
-	introspectionQueries := []string{
-		"__schema",
-		"__type",
-		"introspection",
-		"query introspection",
-	}
+	patterns := []string{"__schema", "__type", "introspection", "query introspection"}
 
-	for _, query := range introspectionQueries {
-		if strings.Contains(body, query) {
+	for _, pattern := range patterns {
+		if strings.Contains(body, pattern) {
 			return true
 		}
 	}
@@ -78,11 +74,6 @@ func isPublicOperation(c echo.Context) bool {
 	}
 
 	return false
-}
-
-func isProduction() bool {
-	env := os.Getenv("ENV")
-	return env == "production" || env == "prod"
 }
 
 func healthCheck(c echo.Context) error {

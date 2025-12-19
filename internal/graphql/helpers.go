@@ -1,8 +1,6 @@
 package graphql
 
 import (
-	"context"
-	"errors"
 	"os"
 	"time"
 
@@ -15,7 +13,7 @@ import (
 
 func domainUserToGraphQL(user *domain.User) *models.User {
 	return &models.User{
-		ID:        formatID(user.ID),
+		ID:        user.ID.String(),
 		Username:  user.Username,
 		Email:     user.Email,
 		Hp:        int(user.Hp),
@@ -27,10 +25,6 @@ func domainUserToGraphQL(user *domain.User) *models.User {
 	}
 }
 
-func formatID(id uuid.UUID) string {
-	return id.String()
-}
-
 func generateJWTToken(id uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"id":  id.String(),
@@ -40,27 +34,3 @@ func generateJWTToken(id uuid.UUID) (string, error) {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 	return token.SignedString([]byte(os.Getenv("JWT_KEY")))
 }
-
-func getUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
-	userIDValue := ctx.Value("userID")
-	if userIDValue == nil {
-		return uuid.Nil, errors.New("unauthorized")
-	}
-
-	var userID uuid.UUID
-	switch v := userIDValue.(type) {
-	case uuid.UUID:
-		userID = v
-	case string:
-		var err error
-		userID, err = uuid.Parse(v)
-		if err != nil {
-			return uuid.Nil, errors.New("unauthorized: invalid user ID")
-		}
-	default:
-		return uuid.Nil, errors.New("unauthorized: invalid user ID type")
-	}
-
-	return userID, nil
-}
-

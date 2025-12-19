@@ -9,69 +9,48 @@ import (
 	"gorm.io/gorm"
 )
 
-var DB *gorm.DB
-
-type Config struct {
-	Host     string
-	Port     string
-	User     string
-	Password string
-	Database string
-	SSLMode  string
+type Database struct {
+	db *gorm.DB
 }
 
-func Init() error {
-	cfg := loadConfig()
-
+func New() (*Database, error) {
 	dsn := fmt.Sprintf(
 		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		cfg.Host, cfg.Port, cfg.User, cfg.Password, cfg.Database, cfg.SSLMode,
+		getEnv("DATABASE_HOST", "localhost"),
+		getEnv("DATABASE_PORT", "5433"),
+		getEnv("DATABASE_USER", "postgres"),
+		getEnv("DATABASE_PASSWORD", "postgres"),
+		getEnv("DATABASE_NAME", "moonshine"),
+		getEnv("DATABASE_SSL_MODE", "disable"),
 	)
 
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return fmt.Errorf("open database: %w", err)
+		return nil, fmt.Errorf("open database: %w", err)
 	}
 
 	sqlDB, err := db.DB()
 	if err != nil {
-		return fmt.Errorf("get underlying db: %w", err)
+		return nil, fmt.Errorf("get underlying db: %w", err)
 	}
 
 	sqlDB.SetMaxIdleConns(2)
 	sqlDB.SetMaxOpenConns(10)
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 
-	DB = db
-	return nil
+	return &Database{db: db}, nil
 }
 
-func Close() error {
-	if DB == nil {
-		return nil
-	}
-
-	sqlDB, err := DB.DB()
+func (d *Database) Close() error {
+	sqlDB, err := d.db.DB()
 	if err != nil {
 		return err
 	}
-
 	return sqlDB.Close()
 }
 
-func GetDB() *gorm.DB {
-	return DB
-}
-
-func loadConfig() Config {
-	return Config{
-		Host:     getEnv("DATABASE_HOST", "localhost"),
-		Port:     getEnv("DATABASE_PORT", "5433"),
-		User:     getEnv("DATABASE_USER", "postgres"),
-		Password: getEnv("DATABASE_PASSWORD", "postgres"),
-		Database: getEnv("DATABASE_NAME", "moonshine"),
-		SSLMode:  getEnv("DATABASE_SSL_MODE", "disable"),
-	}
+func (d *Database) DB() *gorm.DB {
+	return d.db
 }
 
 func getEnv(key, fallback string) string {

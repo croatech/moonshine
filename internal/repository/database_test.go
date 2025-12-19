@@ -8,23 +8,19 @@ import (
 	"github.com/joho/godotenv"
 )
 
+var testDB *Database
+
 func TestMain(m *testing.M) {
-	log.Println("Repository tests started")
+	_ = godotenv.Load("../../.env.test")
 
-	err := godotenv.Load("../../.env.test")
+	db, err := New()
 	if err != nil {
-		log.Println("Warning: .env.test not found, using environment variables")
-	}
-
-	if err := Init(); err != nil {
 		log.Fatalf("Failed to initialize test database: %v", err)
 	}
+	testDB = db
 
-	exitVal := m.Run()
+	code := m.Run()
 
-	Close()
-
-	os.Exit(exitVal)
-
-	log.Println("Repository tests finished")
+	testDB.Close()
+	os.Exit(code)
 }

@@ -2,7 +2,6 @@ package graphql
 
 import (
 	"context"
-	"os"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -10,35 +9,24 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 
 	"moonshine/internal/graphql/generated"
+	"moonshine/internal/repository"
 )
 
-func GraphQLHandler() echo.HandlerFunc {
-	resolver := NewResolver()
+func GraphQLHandler(db *gorm.DB, isProduction bool) echo.HandlerFunc {
+	userRepo := repository.NewUserRepository(db)
+	resolver := newResolver(userRepo)
+	
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(generated.Config{
 			Resolvers: resolver,
 		}),
 	)
 
-	if isProduction() {
-		srv.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
-			opCtx := graphql.GetOperationContext(ctx)
-			if opCtx != nil {
-				query := opCtx.RawQuery
-				if strings.Contains(strings.ToLower(query), "__schema") ||
-					strings.Contains(strings.ToLower(query), "__type") ||
-					opCtx.OperationName == "IntrospectionQuery" {
-					return func(ctx context.Context) *graphql.Response {
-						return &graphql.Response{
-							Errors: graphql.GetErrors(ctx),
-						}
-					}
-				}
-			}
-			return next(ctx)
-		})
+	if isProduction {
+		srv.AroundOperations(blockIntrospection)
 	}
 
 	return func(c echo.Context) error {
@@ -49,7 +37,7 @@ func GraphQLHandler() echo.HandlerFunc {
 				if claims, ok := token.Claims.(jwt.MapClaims); ok {
 					if idStr, ok := claims["id"].(string); ok {
 						if userID, err := uuid.Parse(idStr); err == nil {
-							ctx = context.WithValue(ctx, "userID", userID)
+							ctx = setUserIDToContext(ctx, userID)
 							c.SetRequest(c.Request().WithContext(ctx))
 						}
 					}
@@ -62,22 +50,25 @@ func GraphQLHandler() echo.HandlerFunc {
 	}
 }
 
-func SchemaHandler() echo.HandlerFunc {
-	return func(c echo.Context) error {
-		if isProduction() {
-			return c.String(404, "Not Found")
+func blockIntrospection(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+	opCtx := graphql.GetOperationContext(ctx)
+	if opCtx != nil {
+		query := strings.ToLower(opCtx.RawQuery)
+		if strings.Contains(query, "__schema") ||
+			strings.Contains(query, "__type") ||
+			opCtx.OperationName == "IntrospectionQuery" {
+			return func(ctx context.Context) *graphql.Response {
+				return &graphql.Response{
+					Errors: graphql.GetErrors(ctx),
+				}
+			}
 		}
+	}
+	return next(ctx)
+}
 
-		c.Response().Header().Set("Content-Type", "text/plain; charset=utf-8")
-		c.Response().Header().Set("Access-Control-Allow-Origin", "*")
-		c.Response().Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
-		c.Response().Header().Set("Access-Control-Allow-Headers", "Content-Type")
-
-		if c.Request().Method == "OPTIONS" {
-			return c.NoContent(204)
-		}
-
-		schema := `scalar Time
+func SchemaHandler(isProduction bool) echo.HandlerFunc {
+	schema := `scalar Time
 
 type User {
   id: ID!
@@ -116,11 +107,20 @@ input SignInInput {
   password: String!
 }
 `
+	return func(c echo.Context) error {
+		if isProduction {
+			return c.String(404, "Not Found")
+		}
+
+		c.Response().Header().Set("Content-Type", "text/plain; charset=utf-8")
+		c.Response().Header().Set("Access-Control-Allow-Origin", "*")
+		c.Response().Header().Set("Access-Control-Allow-Methods", "GET, OPTIONS")
+		c.Response().Header().Set("Access-Control-Allow-Headers", "Content-Type")
+
+		if c.Request().Method == "OPTIONS" {
+			return c.NoContent(204)
+		}
+
 		return c.String(200, schema)
 	}
-}
-
-func isProduction() bool {
-	env := os.Getenv("ENV")
-	return env == "production" || env == "prod"
 }

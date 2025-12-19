@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/joho/godotenv"
+	"gorm.io/gorm"
 
 	"moonshine/internal/domain"
 	"moonshine/internal/repository"
@@ -22,23 +23,24 @@ func main() {
 		log.Println(".env not loaded, relying on environment")
 	}
 
-	if err := repository.Init(); err != nil {
+	db, err := repository.New()
+	if err != nil {
 		log.Fatalf("failed to initialize database: %v", err)
 	}
-	defer repository.Close()
+	defer db.Close()
 
 	log.Println("Starting seed process...")
 
-	seedAvatars()
-	if err := seedLocations(); err != nil {
+	seedAvatars(db.DB())
+	if err := seedLocations(db.DB()); err != nil {
 		log.Printf("Failed to seed locations: %v", err)
 	}
-	seedUsers()
+	seedUsers(db.DB())
 
 	log.Println("Seed process completed!")
 }
 
-func seedAvatars() {
+func seedAvatars(db *gorm.DB) {
 	log.Println("Seeding avatars...")
 
 	avatarsDir := "frontend/assets/images/players/avatars"
@@ -59,7 +61,6 @@ func seedAvatars() {
 	}
 
 	count := 0
-	db := repository.GetDB()
 
 	for i, file := range files {
 		filename := filepath.Base(file)
@@ -89,10 +90,10 @@ func seedAvatars() {
 	log.Printf("Successfully created %d avatars", count)
 }
 
-func seedUsers() {
+func seedUsers(db *gorm.DB) {
 	log.Println("Seeding users...")
 
-	userRepo := repository.NewUserRepository()
+	userRepo := repository.NewUserRepository(db)
 
 	existingUser, err := userRepo.FindByUsername("admin")
 	if err == nil && existingUser != nil {
@@ -104,8 +105,6 @@ func seedUsers() {
 	if err != nil {
 		log.Fatalf("Failed to hash password: %v", err)
 	}
-
-	db := repository.GetDB()
 	var firstAvatar domain.Avatar
 	if err := db.First(&firstAvatar).Error; err != nil {
 		log.Printf("No avatars found, creating user without avatar")
@@ -142,10 +141,8 @@ func seedUsers() {
 	log.Printf("Successfully created user: %s (%s)", user.Username, user.Email)
 }
 
-func seedLocations() error {
+func seedLocations(db *gorm.DB) error {
 	log.Println("Seeding locations...")
-
-	db := repository.GetDB()
 
 	var moonshineLocation domain.Location
 	if err := db.Where("slug = ?", "moonshine").First(&moonshineLocation).Error; err == nil {
