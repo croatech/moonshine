@@ -4,45 +4,45 @@ import "github.com/google/uuid"
 
 type User struct {
 	Model
-	ArmorSlot          uint                 `json:"armor_slot"`
-	Attack             uint                 `json:"attack" gorm:"default:1"`
-	Avatar             *Avatar              `json:"avatar,omitempty"`
-	AvatarID           *uuid.UUID           `json:"avatar_id" gorm:"type:uuid"`
-	BeltSlot           uint                 `json:"belt_slot"`
-	BracersSlot        uint                 `json:"bracers_slot"`
-	CloakSlot          uint                 `json:"cloak_slot"`
-	CurrentHp          uint                 `json:"current_hp"`
-	Defense            uint                 `json:"defense" gorm:"default:1"`
-	Email              string               `json:"email" gorm:"type:varchar(100);uniqueIndex;not null"`
-	Events             []*Event             `json:"events,omitempty"`
-	Exp                uint                 `json:"exp" gorm:"default:0"`
-	ExpNext            uint                 `json:"exp_next" gorm:"default:100"`
-	Fights             []*Fight             `json:"fights,omitempty"`
-	FishingSkill       uint                 `json:"fishing_skill" gorm:"default:0"`
-	FishingSlot        uint                 `json:"fishing_slot"`
-	FootsSlot          uint                 `json:"foots_slot"`
-	FreeStats          uint                 `json:"free_stats" gorm:"default:10"`
-	GlovesSlot         uint                 `json:"gloves_slot"`
-	Gold               uint                 `json:"gold" gorm:"default:0"`
-	HelmetSlot         uint                 `json:"helmet_slot"`
-	Hp                 uint                 `json:"hp" gorm:"default:20"`
-	Level              uint                 `json:"level" gorm:"default:1"`
-	Location           *Location            `json:"location,omitempty"`
-	LocationID         uuid.UUID            `json:"location_id" gorm:"type:uuid;not null"`
-	LumberjackingSkill uint                 `json:"lumberjacking_skill" gorm:"default:0"`
-	LumberjackingSlot  uint                 `json:"lumberjacking_slot"`
-	MailSlot           uint                 `json:"mail_slot"`
-	Messages           []*Message           `json:"messages,omitempty"`
-	Movements          []*Movement          `json:"movements,omitempty"`
-	Name               string               `json:"name"`
-	NecklaceSlot       uint                 `json:"necklace_slot"`
-	PantsSlot          uint                 `json:"pants_slot"`
-	Password           string               `json:"-" gorm:"type:varchar(255);not null"`
-	RingSlot           uint                 `json:"ring_slot"`
-	ShieldSlot         uint                 `json:"shield_slot"`
-	Stuffs             []*Stuff             `json:"stuffs,omitempty"`
-	Tools              []*UserToolItem      `json:"tools,omitempty"`
-	Username           string               `json:"username" gorm:"type:varchar(100);uniqueIndex;not null"`
-	WeaponSlot         uint                 `json:"weapon_slot"`
-	Equipment          []*UserEquipmentItem `json:"equipment,omitempty"`
+	Attack                uint                 `json:"attack"`
+	Avatar                *Avatar              `json:"avatar,omitempty"`
+	AvatarID              *uuid.UUID           `json:"avatar_id"`
+	CurrentHp             uint                 `json:"current_hp"`
+	Defense               uint                 `json:"defense"`
+	Email                 string               `json:"email"`
+	Events                []*Event             `json:"events,omitempty"`
+	Exp                   uint                 `json:"exp"`
+	Fights                []*Fight             `json:"fights,omitempty"`
+	FishingSkill          uint                 `json:"fishing_skill"`
+	FishingSlot           uint                 `json:"fishing_slot"`
+	FreeStats             uint                 `json:"free_stats"`
+	Gold                  uint                 `json:"gold"`
+	Hp                    uint                 `json:"hp"`
+	Level                 uint                 `json:"level"`
+	Location              *Location            `json:"location,omitempty"`
+	LocationID            uuid.UUID            `json:"location_id"`
+	LumberjackingSkill    uint                 `json:"lumberjacking_skill"`
+	LumberjackingSlot     uint                 `json:"lumberjacking_slot"`
+	Messages              []*Message           `json:"messages,omitempty"`
+	Movements             []*Movement          `json:"movements,omitempty"`
+	Name                  string               `json:"name"`
+	Password              string               `json:"-"`
+	Stuffs                []*Stuff             `json:"stuffs,omitempty"`
+	Tools                 []*UserToolItem      `json:"tools,omitempty"`
+	Username              string               `json:"username"`
+	Equipment             []*UserEquipmentItem `json:"equipment,omitempty"`
+	ChestEquipmentItemID  *uuid.UUID           `json:"chest_equipment_item_id"`
+	BeltEquipmentItemID   *uuid.UUID           `json:"belt_equipment_item_id"`
+	HeadEquipmentItemID   *uuid.UUID           `json:"head_equipment_item_id"`
+	NeckEquipmentItemID   *uuid.UUID           `json:"neck_equipment_item_id"`
+	WeaponEquipmentItemID *uuid.UUID           `json:"weapon_equipment_item_id"`
+	ShieldEquipmentItemID *uuid.UUID           `json:"shield_equipment_item_id"`
+	LegsEquipmentItemID   *uuid.UUID           `json:"legs_equipment_item_id"`
+	FeetEquipmentItemID   *uuid.UUID           `json:"feet_equipment_item_id"`
+	ArmsEquipmentItemID   *uuid.UUID           `json:"arms_equipment_item_id"`
+	HandsEquipmentItemID  *uuid.UUID           `json:"hands_equipment_item_id"`
+	Ring1EquipmentItemID  *uuid.UUID           `json:"ring1_equipment_item_id"`
+	Ring2EquipmentItemID  *uuid.UUID           `json:"ring2_equipment_item_id"`
+	Ring3EquipmentItemID  *uuid.UUID           `json:"ring3_equipment_item_id"`
+	Ring4EquipmentItemID  *uuid.UUID           `json:"ring4_equipment_item_id"`
 }

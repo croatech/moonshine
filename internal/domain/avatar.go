@@ -2,7 +2,7 @@ package domain
 
 type Avatar struct {
 	Model
-	Private bool    `json:"private" gorm:"default:true"`
-	Image   string  `json:"image"`
+	Private bool    `json:"private" db:"private"`
+	Image   string  `json:"image" db:"image"`
 	Users   []*User `json:"users,omitempty"`
 }

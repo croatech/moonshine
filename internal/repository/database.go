@@ -5,12 +5,12 @@ import (
 	"os"
 	"time"
 
-	"gorm.io/driver/postgres"
-	"gorm.io/gorm"
+	"github.com/jmoiron/sqlx"
+	_ "github.com/lib/pq"
 )
 
 type Database struct {
-	db *gorm.DB
+	db *sqlx.DB
 }
 
 func New() (*Database, error) {
@@ -24,32 +24,23 @@ func New() (*Database, error) {
 		getEnv("DATABASE_SSL_MODE", "disable"),
 	)
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := sqlx.Connect("postgres", dsn)
 	if err != nil {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, fmt.Errorf("get underlying db: %w", err)
-	}
-
-	sqlDB.SetMaxIdleConns(2)
-	sqlDB.SetMaxOpenConns(10)
-	sqlDB.SetConnMaxLifetime(30 * time.Minute)
+	db.SetMaxIdleConns(2)
+	db.SetMaxOpenConns(10)
+	db.SetConnMaxLifetime(30 * time.Minute)
 
 	return &Database{db: db}, nil
 }
 
 func (d *Database) Close() error {
-	sqlDB, err := d.db.DB()
-	if err != nil {
-		return err
-	}
-	return sqlDB.Close()
+	return d.db.Close()
 }
 
-func (d *Database) DB() *gorm.DB {
+func (d *Database) DB() *sqlx.DB {
 	return d.db
 }
 

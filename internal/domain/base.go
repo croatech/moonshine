@@ -1,16 +1,16 @@
 package domain
 
 import (
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
-	"gorm.io/gorm"
 )
 
 type Model struct {
-	ID        uuid.UUID      `gorm:"type:uuid;primarykey;default:gen_random_uuid()" json:"id"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleted_at,omitempty"`
+	ID        uuid.UUID    `json:"id" db:"id"`
+	CreatedAt time.Time    `json:"created_at" db:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at" db:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at,omitempty" db:"deleted_at"`
 }
 

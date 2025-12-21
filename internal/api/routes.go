@@ -5,14 +5,14 @@ import (
 	"os"
 	"strings"
 
+	"github.com/jmoiron/sqlx"
 	echojwt "github.com/labstack/echo-jwt/v4"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 
 	"moonshine/internal/graphql"
 )
 
-func SetupRoutes(e *echo.Echo, db *gorm.DB, isProduction bool) {
+func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 	e.GET("/health", healthCheck)
 
 	if !isProduction {

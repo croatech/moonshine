@@ -8,10 +8,11 @@ import (
 	"sort"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/joho/godotenv"
-	"gorm.io/gorm"
 
 	"moonshine/internal/domain"
 	"moonshine/internal/repository"
@@ -32,6 +33,7 @@ func main() {
 	log.Println("Starting seed process...")
 
 	seedAvatars(db.DB())
+	seedEquipmentCategories(db.DB())
 	if err := seedLocations(db.DB()); err != nil {
 		log.Printf("Failed to seed locations: %v", err)
 	}
@@ -40,7 +42,7 @@ func main() {
 	log.Println("Seed process completed!")
 }
 
-func seedAvatars(db *gorm.DB) {
+func seedAvatars(db *sqlx.DB) {
 	log.Println("Seeding avatars...")
 
 	avatarsDir := "frontend/assets/images/players/avatars"
@@ -67,18 +69,16 @@ func seedAvatars(db *gorm.DB) {
 		imagePath := filepath.Join("players/avatars", filename)
 
 		var existingAvatar domain.Avatar
-		result := db.Where("image = ?", imagePath).First(&existingAvatar)
-		if result.Error == nil {
+		err := db.Get(&existingAvatar, "SELECT id, image, private, created_at, updated_at FROM avatars WHERE image = $1", imagePath)
+		if err == nil {
 			log.Printf("Avatar %s already exists, skipping", imagePath)
 			continue
 		}
 
-		avatar := &domain.Avatar{
-			Image:   imagePath,
-			Private: false,
-		}
-
-		if err := db.Create(avatar).Error; err != nil {
+		avatarID := uuid.New()
+		now := time.Now()
+		query := `INSERT INTO avatars (id, image, private, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`
+		if _, err := db.Exec(query, avatarID, imagePath, false, now, now); err != nil {
 			log.Printf("Failed to create avatar %s: %v", imagePath, err)
 			continue
 		}
@@ -90,7 +90,7 @@ func seedAvatars(db *gorm.DB) {
 	log.Printf("Successfully created %d avatars", count)
 }
 
-func seedUsers(db *gorm.DB) {
+func seedUsers(db *sqlx.DB) {
 	log.Println("Seeding users...")
 
 	userRepo := repository.NewUserRepository(db)
@@ -106,12 +106,14 @@ func seedUsers(db *gorm.DB) {
 		log.Fatalf("Failed to hash password: %v", err)
 	}
 	var firstAvatar domain.Avatar
-	if err := db.First(&firstAvatar).Error; err != nil {
+	if err := db.Get(&firstAvatar, "SELECT id, image, private, created_at, updated_at FROM avatars LIMIT 1"); err != nil {
 		log.Printf("No avatars found, creating user without avatar")
 	}
 
 	var moonshineLocation domain.Location
-	if err := db.Where("slug = ?", "moonshine").First(&moonshineLocation).Error; err != nil {
+	if err := db.Get(&moonshineLocation,
+		"SELECT id, name, slug, cell, inactive, image, image_bg, created_at, updated_at FROM locations WHERE slug = $1",
+		"moonshine"); err != nil {
 		log.Fatalf("Moonshine location not found, please seed locations first: %v", err)
 	}
 
@@ -123,6 +125,7 @@ func seedUsers(db *gorm.DB) {
 		Level:      1,
 		Gold:       100,
 		Exp:        0,
+		FreeStats:  15,
 		LocationID: moonshineLocation.ID,
 	}
 
@@ -141,25 +144,30 @@ func seedUsers(db *gorm.DB) {
 	log.Printf("Successfully created user: %s (%s)", user.Username, user.Email)
 }
 
-func seedLocations(db *gorm.DB) error {
+func seedLocations(db *sqlx.DB) error {
 	log.Println("Seeding locations...")
 
 	var moonshineLocation domain.Location
-	if err := db.Where("slug = ?", "moonshine").First(&moonshineLocation).Error; err == nil {
+	if err := db.Get(&moonshineLocation,
+		"SELECT id, name, slug, cell, inactive, image, image_bg, created_at, updated_at FROM locations WHERE slug = $1",
+		"moonshine"); err == nil {
 		log.Println("Locations already exist, updating cell values...")
-		if err := db.Exec("UPDATE locations SET cell = false WHERE slug IN ('moonshine', 'craft_shop', 'shop_of_artifacts', 'weapon_shop')").Error; err != nil {
+		if _, err := db.Exec("UPDATE locations SET cell = false WHERE slug IN ('moonshine', 'craft_shop', 'shop_of_artifacts', 'weapon_shop')"); err != nil {
 			log.Printf("Failed to update city and shops cell values: %v", err)
 		}
-		if err := db.Exec("UPDATE locations SET cell = true WHERE slug LIKE '%cell'").Error; err != nil {
+		if _, err := db.Exec("UPDATE locations SET cell = true WHERE slug LIKE '%cell'"); err != nil {
 			log.Printf("Failed to update cells cell values: %v", err)
 		}
 		return nil
 	}
 
 	moonshineID := uuid.New()
+	now := time.Now()
 	moonshineLocation = domain.Location{
 		Model: domain.Model{
-			ID: moonshineID,
+			ID:        moonshineID,
+			CreatedAt: now,
+			UpdatedAt: now,
 		},
 		Name:     "Moonshine",
 		Slug:     "moonshine",
@@ -169,7 +177,11 @@ func seedLocations(db *gorm.DB) error {
 		ImageBg:  "cities/moonshine/bg.jpg",
 	}
 
-	if err := db.Create(&moonshineLocation).Error; err != nil {
+	query := `INSERT INTO locations (id, name, slug, cell, inactive, image, image_bg, created_at, updated_at) 
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+	if _, err := db.Exec(query, moonshineLocation.ID, moonshineLocation.Name, moonshineLocation.Slug,
+		moonshineLocation.Cell, moonshineLocation.Inactive, moonshineLocation.Image, moonshineLocation.ImageBg,
+		moonshineLocation.CreatedAt, moonshineLocation.UpdatedAt); err != nil {
 		return fmt.Errorf("failed to create Moonshine location: %w", err)
 	}
 
@@ -190,12 +202,17 @@ func seedLocations(db *gorm.DB) error {
 		shopID := uuid.New()
 		shopNameParts := strings.Split(shop.name, "_")
 		for i, part := range shopNameParts {
-			shopNameParts[i] = strings.Title(part)
+			if len(part) > 0 {
+				shopNameParts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+			}
 		}
 		shopName := strings.Join(shopNameParts, " ")
+		shopNow := time.Now()
 		shopLocation := domain.Location{
 			Model: domain.Model{
-				ID: shopID,
+				ID:        shopID,
+				CreatedAt: shopNow,
+				UpdatedAt: shopNow,
 			},
 			Name:     shopName,
 			Slug:     shop.slug,
@@ -205,33 +222,27 @@ func seedLocations(db *gorm.DB) error {
 			ImageBg:  fmt.Sprintf("cities/moonshine/%s/bg.jpg", shop.slug),
 		}
 
-		if err := db.Create(&shopLocation).Error; err != nil {
+		shopQuery := `INSERT INTO locations (id, name, slug, cell, inactive, image, image_bg, created_at, updated_at) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+		if _, err := db.Exec(shopQuery, shopLocation.ID, shopLocation.Name, shopLocation.Slug,
+			shopLocation.Cell, shopLocation.Inactive, shopLocation.Image, shopLocation.ImageBg,
+			shopLocation.CreatedAt, shopLocation.UpdatedAt); err != nil {
 			return fmt.Errorf("failed to create shop location %s: %w", shop.slug, err)
 		}
 
 		shopLocations[shop.slug] = shopID
 
-		locationLocation := domain.LocationLocation{
-			Model: domain.Model{
-				ID: uuid.New(),
-			},
-			LocationID:     moonshineID,
-			NearLocationID: shopID,
-		}
-
-		if err := db.Create(&locationLocation).Error; err != nil {
+		locLocID := uuid.New()
+		locLocNow := time.Now()
+		locationLocationQuery := `INSERT INTO location_locations (id, location_id, near_location_id, created_at, updated_at) 
+			VALUES ($1, $2, $3, $4, $5)`
+		if _, err := db.Exec(locationLocationQuery, locLocID, moonshineID, shopID, locLocNow, locLocNow); err != nil {
 			return fmt.Errorf("failed to create location connection for %s: %w", shop.slug, err)
 		}
 
-		locationLocationReverse := domain.LocationLocation{
-			Model: domain.Model{
-				ID: uuid.New(),
-			},
-			LocationID:     shopID,
-			NearLocationID: moonshineID,
-		}
-
-		if err := db.Create(&locationLocationReverse).Error; err != nil {
+		locLocReverseID := uuid.New()
+		locLocReverseNow := time.Now()
+		if _, err := db.Exec(locationLocationQuery, locLocReverseID, shopID, moonshineID, locLocReverseNow, locLocReverseNow); err != nil {
 			return fmt.Errorf("failed to create reverse location connection for %s: %w", shop.slug, err)
 		}
 
@@ -264,9 +275,12 @@ func seedLocations(db *gorm.DB) error {
 
 		cellID := uuid.New()
 		cellSlug := fmt.Sprintf("%dcell", cellNum)
+		cellNow := time.Now()
 		cellLocation := domain.Location{
 			Model: domain.Model{
-				ID: cellID,
+				ID:        cellID,
+				CreatedAt: cellNow,
+				UpdatedAt: cellNow,
 			},
 			Name:     "",
 			Slug:     cellSlug,
@@ -276,7 +290,11 @@ func seedLocations(db *gorm.DB) error {
 			ImageBg:  "",
 		}
 
-		if err := db.Create(&cellLocation).Error; err != nil {
+		cellQuery := `INSERT INTO locations (id, name, slug, cell, inactive, image, image_bg, created_at, updated_at) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
+		if _, err := db.Exec(cellQuery, cellLocation.ID, cellLocation.Name, cellLocation.Slug,
+			cellLocation.Cell, cellLocation.Inactive, cellLocation.Image, cellLocation.ImageBg,
+			cellLocation.CreatedAt, cellLocation.UpdatedAt); err != nil {
 			return fmt.Errorf("failed to create cell location %d: %w", cellNum, err)
 		}
 
@@ -308,38 +326,32 @@ func seedLocations(db *gorm.DB) error {
 		for _, neighborNum := range neighbors {
 			neighborID := cellLocations[neighborNum]
 
-			var existingConnection domain.LocationLocation
-			err := db.Where("location_id = ? AND near_location_id = ?", cellID, neighborID).
-				First(&existingConnection).Error
+			var existingConnectionID uuid.UUID
+			err := db.Get(&existingConnectionID,
+				"SELECT id FROM location_locations WHERE location_id = $1 AND near_location_id = $2",
+				cellID, neighborID)
 
 			if err != nil {
-				locationLocation := domain.LocationLocation{
-					Model: domain.Model{
-						ID: uuid.New(),
-					},
-					LocationID:     cellID,
-					NearLocationID: neighborID,
-				}
-
-				if err := db.Create(&locationLocation).Error; err != nil {
+				locLocID := uuid.New()
+				locLocNow := time.Now()
+				locLocQuery := `INSERT INTO location_locations (id, location_id, near_location_id, created_at, updated_at) 
+					VALUES ($1, $2, $3, $4, $5)`
+				if _, err := db.Exec(locLocQuery, locLocID, cellID, neighborID, locLocNow, locLocNow); err != nil {
 					return fmt.Errorf("failed to create cell connection %d -> %d: %w", cellNum, neighborNum, err)
 				}
 			}
 
-			var existingReverseConnection domain.LocationLocation
-			err = db.Where("location_id = ? AND near_location_id = ?", neighborID, cellID).
-				First(&existingReverseConnection).Error
+			var existingReverseConnectionID uuid.UUID
+			err = db.Get(&existingReverseConnectionID,
+				"SELECT id FROM location_locations WHERE location_id = $1 AND near_location_id = $2",
+				neighborID, cellID)
 
 			if err != nil {
-				locationLocationReverse := domain.LocationLocation{
-					Model: domain.Model{
-						ID: uuid.New(),
-					},
-					LocationID:     neighborID,
-					NearLocationID: cellID,
-				}
-
-				if err := db.Create(&locationLocationReverse).Error; err != nil {
+				locLocReverseID := uuid.New()
+				locLocReverseNow := time.Now()
+				locLocQuery := `INSERT INTO location_locations (id, location_id, near_location_id, created_at, updated_at) 
+					VALUES ($1, $2, $3, $4, $5)`
+				if _, err := db.Exec(locLocQuery, locLocReverseID, neighborID, cellID, locLocReverseNow, locLocReverseNow); err != nil {
 					return fmt.Errorf("failed to create reverse cell connection %d -> %d: %w", neighborNum, cellNum, err)
 				}
 			}
@@ -349,6 +361,48 @@ func seedLocations(db *gorm.DB) error {
 	log.Println("Created all cell connections")
 
 	return nil
+}
+
+func seedEquipmentCategories(db *sqlx.DB) {
+	log.Println("Seeding equipment categories...")
+
+	categories := []struct {
+		name string
+		typ  string
+	}{
+		{"Chest", "chest"},
+		{"Belt", "belt"},
+		{"Head", "head"},
+		{"Neck", "neck"},
+		{"Weapon", "weapon"},
+		{"Shield", "shield"},
+		{"Legs", "legs"},
+		{"Feet", "feet"},
+		{"Arms", "arms"},
+		{"Hands", "hands"},
+		{"Ring", "ring"},
+	}
+
+	for _, cat := range categories {
+		var existingID uuid.UUID
+		err := db.Get(&existingID, "SELECT id FROM equipment_categories WHERE type = $1", cat.typ)
+		if err == nil {
+			log.Printf("Equipment category %s already exists, skipping", cat.name)
+			continue
+		}
+
+		categoryID := uuid.New()
+		now := time.Now()
+		query := `INSERT INTO equipment_categories (id, name, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`
+		if _, err := db.Exec(query, categoryID, cat.name, cat.typ, now, now); err != nil {
+			log.Printf("Failed to create equipment category %s: %v", cat.name, err)
+			continue
+		}
+
+		log.Printf("Created equipment category: %s (%s)", cat.name, cat.typ)
+	}
+
+	log.Println("Equipment categories seeding completed!")
 }
 
 func extractCellNumber(filename string) int {

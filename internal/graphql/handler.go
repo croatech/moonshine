@@ -8,14 +8,14 @@ import (
 	"github.com/99designs/gqlgen/graphql/handler"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
+	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
-	"gorm.io/gorm"
 
 	"moonshine/internal/graphql/generated"
 	"moonshine/internal/repository"
 )
 
-func GraphQLHandler(db *gorm.DB, isProduction bool) echo.HandlerFunc {
+func GraphQLHandler(db *sqlx.DB, isProduction bool) echo.HandlerFunc {
 	userRepo := repository.NewUserRepository(db)
 	resolver := newResolver(userRepo)
 	
