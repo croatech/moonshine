@@ -11,7 +11,7 @@ import (
 	"moonshine/internal/graphql/models"
 )
 
-func domainUserToGraphQL(user *domain.User) *models.User {
+func DomainUserToGraphQL(user *domain.User) *models.User {
 	return &models.User{
 		ID:        user.ID.String(),
 		Username:  user.Username,
@@ -25,7 +25,7 @@ func domainUserToGraphQL(user *domain.User) *models.User {
 	}
 }
 
-func generateJWTToken(id uuid.UUID) (string, error) {
+func GenerateJWTToken(id uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		"id":  id.String(),
 		"exp": time.Now().Add(72 * time.Hour).Unix(),

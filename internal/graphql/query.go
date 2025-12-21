@@ -4,21 +4,10 @@ import (
 	"context"
 
 	"moonshine/internal/graphql/models"
-	"moonshine/internal/repository"
+	"moonshine/internal/graphql/queries"
 )
 
-type queryResolver struct{ *Resolver }
-
+// CurrentUser returns the currently authenticated user
 func (r *queryResolver) CurrentUser(ctx context.Context) (*models.User, error) {
-	userID, err := getUserIDFromContext(ctx)
-	if err != nil {
-		return nil, errUnauthorized
-	}
-
-	user, err := r.userRepo.FindByID(userID)
-	if err != nil {
-		return nil, repository.ErrUserNotFound
-	}
-
-	return domainUserToGraphQL(user), nil
+	return queries.CurrentUser(ctx, r.UserRepo)
 }

@@ -1,0 +1,452 @@
+/* Main layout styles */
+.main-layout {
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px 20px;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.content {
+  margin-bottom: 20px;
+}
+
+/* Utility classes */
+.center {
+  margin: 0 auto;
+  display: table;
+}
+
+.background {
+  max-width: 100%;
+}
+
+.red {
+  color: red;
+}
+
+a {
+  color: #333333;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.alert {
+  margin-top: 20px;
+}
+
+/* Stats */
+.stats {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.stats a:hover {
+  cursor: pointer;
+  color: black;
+  text-decoration: none;
+}
+
+.stats .stat {
+  font-size: 3rem;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stats .stat img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Gold */
+.gold {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.gold img {
+  width: 32px;
+  height: 32px;
+}
+
+/* Grid for player equipment */
+.grid {
+  background: url('/images/players/grid.png') no-repeat;
+  background-size: contain;
+  min-height: 500px;
+  max-width: 455px;
+  position: relative;
+}
+
+/* Player styles */
+.player {
+  margin-top: 40px;
+}
+
+.player .avatar img {
+  margin: 0 auto;
+  display: block;
+  margin-top: 39px;
+}
+
+.player .player-name {
+  position: absolute;
+  margin-top: -35px;
+  margin-left: 172px;
+  font-size: 2rem;
+}
+
+.player .player-items {
+  float: left;
+}
+
+.player .player-items .weapon {
+  margin-top: -13px;
+}
+
+.player .player-items .cloak {
+  margin-top: 100px;
+}
+
+.player .player-items .belt {
+  margin-top: 208px;
+}
+
+.player .player-items .helmet,
+.player .player-items .armor,
+.player .player-items .gloves,
+.player .player-items .pants {
+  margin-left: 75px;
+}
+
+.player .player-items .necklace,
+.player .player-items .mail,
+.player .player-items .bracers,
+.player .player-items .shoes {
+  margin-left: 273px;
+}
+
+.player .player-items .shield,
+.player .player-items .ring {
+  margin-left: 350px;
+}
+
+.player .player-items .helmet,
+.player .player-items .necklace {
+  margin-top: -20px;
+}
+
+.player .player-items .armor,
+.player .player-items .mail {
+  margin-top: 53px;
+}
+
+.player .player-items .gloves,
+.player .player-items .bracers {
+  margin-top: 146px;
+}
+
+.player .player-items .shoes,
+.player .player-items .pants {
+  margin-top: 199px;
+}
+
+.player .player-items .shield {
+  margin-top: -14px;
+}
+
+.player .player-items .ring {
+  margin-top: 96px;
+}
+
+.player .player-items .item {
+  position: absolute;
+  padding-left: 4px;
+}
+
+.player .player-items .item a img {
+  max-width: 67px;
+}
+
+.player .player-items .item a img:hover {
+  cursor: pointer;
+}
+
+.player .player-items .tool {
+  margin-top: 42px;
+  display: inline-block;
+}
+
+.player .player-items .tool img {
+  height: 48px;
+}
+
+.player .player-items .tool.num-0 {
+  margin-left: 84px;
+}
+
+.player .progresses {
+  max-width: 255px;
+  margin-left: 85px;
+  margin-top: 16px;
+}
+
+.player .progresses .progress {
+  height: 22px;
+  margin-bottom: -5px;
+  margin-top: 8px;
+}
+
+/* Inventory */
+.inventory .navbar {
+  margin: 0px;
+}
+
+.inventory .navbar ul {
+  padding: 0px;
+  display: flex;
+  gap: 10px;
+  list-style: none;
+}
+
+/* Log and Framing */
+.frame {
+  border-top: 2px solid #DADADA;
+  margin-top: 50px;
+}
+
+.frame .log {
+  max-height: inherit;
+  overflow-y: scroll;
+  height: 200px;
+  padding-left: 40px;
+}
+
+.frame .log .switch {
+  float: right;
+}
+
+.frame .log span {
+  color: red;
+  font-weight: bold;
+}
+
+.frame .log .chat .input.row {
+  max-height: 40px;
+}
+
+.frame .log .chat .input .message-input {
+  width: 50%;
+  float: left;
+  margin-right: 30px;
+}
+
+.frame .log .chat .input .recipient {
+  display: flex;
+  margin-top: 8px;
+}
+
+.frame .log .chat .input .recipient .for {
+  margin-right: 5px;
+}
+
+.frame .log .chat .input .recipient .remove {
+  display: inline-block;
+  margin-left: 8px;
+  color: #8c8c8c;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.frame .log .chat .messages {
+  margin-left: -9px;
+  margin-top: 6px;
+}
+
+.frame .log .chat .messages .text {
+  margin: 0;
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+.frame .log .chat .messages .text.private {
+  display: inline-block;
+  background: rgba(226, 141, 141, 0.68);
+}
+
+.frame .log .chat .messages .message {
+  display: block;
+  margin-bottom: 5px;
+}
+
+.frame .log .chat .messages .message .name {
+  float: left;
+  margin-right: 10px;
+  cursor: pointer;
+}
+
+.frame .log .chat .messages .message .recipient {
+  cursor: pointer;
+  font-weight: bold;
+}
+
+.frame .players-online {
+  max-height: inherit;
+}
+
+.frame .players-online .player .name {
+  cursor: pointer;
+}
+
+.frame .players-online .player p {
+  margin: 0;
+}
+
+/* Fight */
+.fight .characters .character .progress {
+  max-width: 316px;
+}
+
+.fight .characters .character .avatar {
+  max-height: 300px;
+  margin-right: 30px;
+  float: left;
+}
+
+.fight .characters .character .block-title {
+  margin-bottom: 20px;
+}
+
+.fight .characters .character .points li {
+  list-style: none;
+}
+
+.fight .characters .character .points .btn {
+  max-height: 31px;
+  padding: 5px;
+  min-width: 80px;
+}
+
+.btn-attack {
+  margin: 0 auto;
+  display: block;
+  margin-top: 40px;
+  margin-left: 40%;
+}
+
+.rounds {
+  margin-top: 50px;
+}
+
+.rounds .damage span {
+  color: red;
+  font-weight: bold;
+}
+
+.winner .avatar {
+  margin-bottom: 30px;
+}
+
+.winner .drop {
+  margin-bottom: 11px;
+}
+
+.winner .drop b {
+  margin-right: 20px;
+}
+
+/* Map */
+.map {
+  max-width: 850px;
+}
+
+.map .cells .cell {
+  display: inline-block;
+  margin-right: 3px;
+  margin-top: 3px;
+}
+
+.map .cells .cell:hover {
+  cursor: pointer;
+}
+
+.map .cells .cell .current_position {
+  position: absolute;
+  margin-left: 33px;
+  margin-top: -83px;
+}
+
+.map .cells .cell .arrow {
+  position: absolute;
+  margin-top: -80px;
+  margin-left: 20px;
+}
+
+.map .cells .cell .arrow .position-9 {
+  transform: rotate(-40deg);
+}
+
+.map .cells .cell .arrow .position-8 {
+  transform: rotate(0deg);
+}
+
+.map .cells .cell .arrow .position-7 {
+  transform: rotate(45deg);
+}
+
+.map .cells .cell .arrow .position-1 {
+  transform: rotate(-90deg);
+}
+
+.map .cells .cell .arrow .position--1 {
+  transform: rotate(90deg);
+}
+
+.map .cells .cell .arrow .position--7 {
+  transform: rotate(225deg);
+}
+
+.map .cells .cell .arrow .position--8 {
+  transform: rotate(180deg);
+}
+
+.map .cells .cell .arrow .position--9 {
+  transform: rotate(130deg);
+}
+
+.map .cells .cell .arrow .position-none {
+  display: none;
+}
+
+.map .cells .cell.inactive {
+  opacity: 0.4;
+}
+
+.map .cells .cell.inactive:hover {
+  cursor: default;
+}
+
+.spinner {
+  margin-top: 300px;
+}
+
+.invisible {
+  display: none;
+}
+

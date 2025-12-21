@@ -1,10 +1,42 @@
 # Moonshine
 
-Backend API server built with Go using Echo framework and PostgreSQL.
+Backend API server built with Go using Echo framework and PostgreSQL, with React frontend.
+
+## Quick Start
+
+1. **Start PostgreSQL:**
+```bash
+docker-compose up -d
+```
+
+2. **Run migrations:**
+```bash
+make migrate-up
+```
+
+3. **Seed database (optional):**
+```bash
+make seed
+```
+
+4. **Start backend server:**
+```bash
+go run cmd/server/main.go
+```
+
+5. **Start frontend (in a new terminal):**
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+The frontend will be available at `http://localhost:3000` and the backend at `http://localhost:8080`.
 
 ## Requirements
 
 - Go 1.24+
+- Node.js 18+ and npm (for frontend)
 - Docker and Docker Compose (for PostgreSQL)
 - PostgreSQL 18.1+ (or use Docker Compose)
 
@@ -137,7 +169,9 @@ This will create two files in the `migrations/` folder:
 
 ## Running the Server
 
-### Standard Run
+### Backend Server
+
+#### Standard Run
 
 ```bash
 go run cmd/server/main.go
@@ -145,7 +179,7 @@ go run cmd/server/main.go
 
 The server will start on the address specified in `HTTP_ADDR` (default `:8080`).
 
-### Hot Reload (Development)
+#### Hot Reload (Development)
 
 For automatic server restart on file changes, use `air`:
 
@@ -170,6 +204,29 @@ go install github.com/air-verse/air@latest
 - Excludes test files, migrations, and generated code from watching
 
 **Configuration:** Settings are in `.air.toml` file.
+
+### Frontend Server
+
+The frontend is built with React and Vite. To run it:
+
+1. Install dependencies:
+```bash
+cd frontend
+npm install
+```
+
+2. Start the development server:
+```bash
+npm run dev
+```
+
+The frontend will start on `http://localhost:3000` and will proxy GraphQL requests to the backend at `http://localhost:8080`.
+
+**Available pages:**
+- `/signup` - User registration
+- `/signin` - User login
+
+**Note:** Make sure the backend server is running before starting the frontend.
 
 ### Debugging with Delve
 

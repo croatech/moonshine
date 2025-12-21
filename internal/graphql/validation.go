@@ -17,7 +17,7 @@ type signInValidator struct {
 	Password string `valid:"required,length(3|20)"`
 }
 
-func validateSignUpInput(input models.SignUpInput) error {
+func ValidateSignUpInput(input models.SignUpInput) error {
 	v := signUpValidator{
 		Username: input.Username,
 		Email:    input.Email,
@@ -30,7 +30,7 @@ func validateSignUpInput(input models.SignUpInput) error {
 	return nil
 }
 
-func validateSignInInput(input models.SignInInput) error {
+func ValidateSignInInput(input models.SignInInput) error {
 	v := signInValidator{
 		Username: input.Username,
 		Password: input.Password,

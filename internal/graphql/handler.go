@@ -2,6 +2,7 @@ package graphql
 
 import (
 	"context"
+	"reflect"
 	"strings"
 
 	"github.com/99designs/gqlgen/graphql"
@@ -17,35 +18,85 @@ import (
 
 func GraphQLHandler(db *sqlx.DB, isProduction bool) echo.HandlerFunc {
 	userRepo := repository.NewUserRepository(db)
-	resolver := newResolver(userRepo)
-	
+	avatarRepo := repository.NewAvatarRepository(db)
+	locationRepo := repository.NewLocationRepository(db)
+	resolver := newResolver(userRepo, avatarRepo, locationRepo)
+
 	srv := handler.NewDefaultServer(
 		generated.NewExecutableSchema(generated.Config{
 			Resolvers: resolver,
 		}),
 	)
 
-	if isProduction {
-		srv.AroundOperations(blockIntrospection)
-	}
+	// Pass context with userID to GraphQL operations
+	srv.AroundOperations(func(ctx context.Context, next graphql.OperationHandler) graphql.ResponseHandler {
+		if isProduction {
+			return blockIntrospection(ctx, next)
+		}
+		return next(ctx)
+	})
 
 	return func(c echo.Context) error {
 		ctx := c.Request().Context()
 
-		if tokenValue := c.Get("user"); tokenValue != nil {
-			if token, ok := tokenValue.(*jwt.Token); ok {
-				if claims, ok := token.Claims.(jwt.MapClaims); ok {
-					if idStr, ok := claims["id"].(string); ok {
-						if userID, err := uuid.Parse(idStr); err == nil {
-							ctx = setUserIDToContext(ctx, userID)
-							c.SetRequest(c.Request().WithContext(ctx))
+		// Extract token from Echo context (set by echo-jwt middleware)
+		tokenValue := c.Get("user")
+
+		if tokenValue != nil {
+			// Use reflection to extract claims since direct type assertion doesn't work
+			rv := reflect.ValueOf(tokenValue)
+			if rv.Kind() == reflect.Ptr {
+				rv = rv.Elem()
+			}
+
+			// Try to find Claims field
+			claimsField := rv.FieldByName("Claims")
+			if claimsField.IsValid() && claimsField.CanInterface() {
+				claims := claimsField.Interface()
+
+				// Work with claims as a map using reflection to access values
+				claimsValue := reflect.ValueOf(claims)
+				if claimsValue.Kind() == reflect.Map {
+					idValue := claimsValue.MapIndex(reflect.ValueOf("id"))
+					if idValue.IsValid() && idValue.CanInterface() {
+						idInterface := idValue.Interface()
+						if idStr, ok := idInterface.(string); ok {
+							if userID, err := uuid.Parse(idStr); err == nil {
+								ctx = SetUserIDToContext(ctx, userID)
+							}
+						}
+					}
+				}
+			} else {
+				// Try via interface
+				if tokenInterface, ok := tokenValue.(interface{ Claims() jwt.Claims }); ok {
+					claims := tokenInterface.Claims()
+
+					if mapClaims, ok := claims.(jwt.MapClaims); ok {
+						if idStr, ok := mapClaims["id"].(string); ok {
+							if userID, err := uuid.Parse(idStr); err == nil {
+								ctx = SetUserIDToContext(ctx, userID)
+							}
+						}
+					}
+				} else {
+					// Try direct type assertion
+					if t, ok := tokenValue.(*jwt.Token); ok {
+						if claims, ok := t.Claims.(jwt.MapClaims); ok {
+							if idStr, ok := claims["id"].(string); ok {
+								if userID, err := uuid.Parse(idStr); err == nil {
+									ctx = SetUserIDToContext(ctx, userID)
+								}
+							}
 						}
 					}
 				}
 			}
 		}
 
-		srv.ServeHTTP(c.Response(), c.Request())
+		// Create new request with updated context for GraphQL
+		req := c.Request().WithContext(ctx)
+		srv.ServeHTTP(c.Response(), req)
 		return nil
 	}
 }

@@ -22,10 +22,16 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 
 	graphqlGroup := e.Group("/graphql")
 	graphqlGroup.Use(cacheRequestBody())
+	graphqlGroup.OPTIONS("", func(c echo.Context) error {
+		return c.NoContent(http.StatusOK)
+	})
 
 	jwtConfig := echojwt.Config{
 		SigningKey: []byte(os.Getenv("JWT_KEY")),
+		ContextKey: "user",
 		ErrorHandler: func(c echo.Context, err error) error {
+			// Don't return error to allow request to continue
+			// Token may be missing for public operations
 			return nil
 		},
 		Skipper: func(c echo.Context) bool {

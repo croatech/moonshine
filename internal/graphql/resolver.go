@@ -6,12 +6,19 @@ import (
 )
 
 type Resolver struct {
-	userRepo *repository.UserRepository
+	UserRepo     *repository.UserRepository
+	AvatarRepo   *repository.AvatarRepository
+	LocationRepo *repository.LocationRepository
 }
 
-func newResolver(userRepo *repository.UserRepository) *Resolver {
+type queryResolver struct{ *Resolver }
+type mutationResolver struct{ *Resolver }
+
+func newResolver(userRepo *repository.UserRepository, avatarRepo *repository.AvatarRepository, locationRepo *repository.LocationRepository) *Resolver {
 	return &Resolver{
-		userRepo: userRepo,
+		UserRepo:     userRepo,
+		AvatarRepo:   avatarRepo,
+		LocationRepo: locationRepo,
 	}
 }
 
@@ -20,5 +27,5 @@ func (r *Resolver) Query() generated.QueryResolver {
 }
 
 func (r *Resolver) Mutation() generated.MutationResolver {
-	return &mutationResolver{r}
+	return &mutationResolver{Resolver: r}
 }

@@ -9,4 +9,20 @@ var (
 	errInvalidInput       = errors.New("invalid input")
 )
 
+func ErrInvalidCredentials() error {
+	return errInvalidCredentials
+}
+
+func ErrPasswordProcessing() error {
+	return errPasswordProcessing
+}
+
+func ErrTokenGeneration() error {
+	return errTokenGeneration
+}
+
+func ErrInvalidInput() error {
+	return errInvalidInput
+}
+
 

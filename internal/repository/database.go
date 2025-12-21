@@ -29,6 +29,10 @@ func New() (*Database, error) {
 		return nil, fmt.Errorf("open database: %w", err)
 	}
 
+	if err := db.Ping(); err != nil {
+		return nil, fmt.Errorf("ping database: %w", err)
+	}
+
 	db.SetMaxIdleConns(2)
 	db.SetMaxOpenConns(10)
 	db.SetConnMaxLifetime(30 * time.Minute)
