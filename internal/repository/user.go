@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"errors"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -35,46 +34,19 @@ func (r *UserRepository) Create(user *domain.User) error {
 	query := `
 		INSERT INTO users (
 			id, username, email, password, name, avatar_id, location_id,
-			current_hp, exp, free_stats, gold, hp, level,
-			created_at, updated_at
+			attack, defense, current_hp, exp, free_stats, gold, hp, level
 		) VALUES (
 			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
 		)
 	`
 
-	now := time.Now()
 	if user.ID == uuid.Nil {
 		user.ID = uuid.New()
-	}
-	if user.CreatedAt.IsZero() {
-		user.CreatedAt = now
-	}
-	if user.UpdatedAt.IsZero() {
-		user.UpdatedAt = now
-	}
-
-	// Set default location if not provided (moonshine)
-	if user.LocationID == uuid.Nil {
-		location, err := r.locationRepo.FindStartLocation()
-		if err != nil {
-			return errors.New("default location 'moonshine' not found")
-		}
-		user.LocationID = location.ID
-	}
-
-	// Set default avatar if not provided (first available avatar)
-	if user.AvatarID == nil {
-		avatar, err := r.avatarRepo.FindFirst()
-		if err == nil {
-			user.AvatarID = &avatar.ID
-		}
-		// Avatar is optional, so we don't return error if not found
 	}
 
 	_, err := r.db.Exec(query,
 		user.ID, user.Username, user.Email, user.Password, user.Name, user.AvatarID, user.LocationID,
-		user.CurrentHp, user.Exp, user.FreeStats, user.Gold, user.Hp, user.Level,
-		user.CreatedAt, user.UpdatedAt,
+		user.Attack, user.Defense, user.CurrentHp, user.Exp, user.FreeStats, user.Gold, user.Hp, user.Level,
 	)
 	if err != nil {
 		// Check for unique constraint violation
@@ -88,7 +60,7 @@ func (r *UserRepository) Create(user *domain.User) error {
 
 func (r *UserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, created_at, updated_at, deleted_at, username, email, password, name, 
+		SELECT id, created_at, deleted_at, username, email, password, name, 
 			avatar_id, location_id, attack, defense, current_hp, exp, fishing_skill, fishing_slot,
 			free_stats, gold, hp, level, lumberjacking_skill, lumberjacking_slot,
 			chest_equipment_item_id, belt_equipment_item_id, head_equipment_item_id,
@@ -114,7 +86,7 @@ func (r *UserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 
 func (r *UserRepository) FindByUsername(username string) (*domain.User, error) {
 	query := `
-		SELECT id, created_at, updated_at, deleted_at, username, email, password, name, 
+		SELECT id, created_at, deleted_at, username, email, password, name, 
 			avatar_id, location_id, attack, defense, current_hp, exp, fishing_skill, fishing_slot,
 			free_stats, gold, hp, level, lumberjacking_skill, lumberjacking_slot,
 			chest_equipment_item_id, belt_equipment_item_id, head_equipment_item_id,
@@ -135,7 +107,27 @@ func (r *UserRepository) FindByUsername(username string) (*domain.User, error) {
 		return nil, err
 	}
 
+	// Load avatar if avatar_id is set
+	if user.AvatarID != nil {
+		avatar, err := r.avatarRepo.FindByID(*user.AvatarID)
+		if err == nil && avatar != nil {
+			user.Avatar = avatar
+		}
+	}
+
 	return user, nil
+}
+
+func (r *UserRepository) UpdateGold(userID uuid.UUID, newGold uint) error {
+	query := `UPDATE users SET gold = $1 WHERE id = $2 AND deleted_at IS NULL`
+	_, err := r.db.Exec(query, newGold, userID)
+	return err
+}
+
+func (r *UserRepository) UpdateAvatarID(userID uuid.UUID, avatarID *uuid.UUID) error {
+	query := `UPDATE users SET avatar_id = $1 WHERE id = $2 AND deleted_at IS NULL`
+	_, err := r.db.Exec(query, avatarID, userID)
+	return err
 }
 
 func isUniqueConstraintError(err error) bool {

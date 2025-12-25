@@ -1,62 +1,52 @@
-import { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react'
-import { useLazyQuery, gql } from '@apollo/client'
-
-const GET_CURRENT_USER = gql`
-  query GetCurrentUser {
-    currentUser {
-      id
-      username
-      email
-      hp
-      level
-      gold
-      exp
-    }
-  }
-`
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
+import { userAPI } from '../lib/api'
 
 const AuthContext = createContext()
 
 export function AuthProvider({ children }) {
-  const [token, setToken] = useState(localStorage.getItem('token'))
+  // Инициализируем токен из localStorage сразу
+  const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [user, setUser] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const hasInitialized = useRef(false)
-  
-  const [getCurrentUser] = useLazyQuery(GET_CURRENT_USER, {
-    errorPolicy: 'ignore',
-    onCompleted: (data) => {
-      if (data?.currentUser) {
-        setUser(data.currentUser)
-      }
-      setLoading(false)
-    },
-    onError: () => {
-      // If query fails, clear token and user (invalid token)
-      setToken(null)
-      setUser(null)
-      localStorage.removeItem('token')
-      setLoading(false)
-    },
+  const [loading, setLoading] = useState(() => {
+    const hasToken = !!localStorage.getItem('token')
+    console.log('[AuthContext] Initial loading state:', hasToken)
+    return hasToken
   })
 
-  // Load user on mount if token exists (only once)
+  // Load user on mount if token exists
   useEffect(() => {
-    if (hasInitialized.current) return
-    hasInitialized.current = true
-
     const storedToken = localStorage.getItem('token')
+    console.log('[AuthContext] Mount effect, token exists:', !!storedToken)
+    
     if (storedToken) {
+      console.log('[AuthContext] Fetching current user...')
       setLoading(true)
-      getCurrentUser()
+      userAPI.getCurrentUser()
+        .then((userData) => {
+          console.log('[AuthContext] User data loaded:', userData)
+          setUser(userData)
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.error('[AuthContext] Error fetching current user:', err)
+          // If query fails, clear token and user (invalid token)
+          setToken(null)
+          setUser(null)
+          localStorage.removeItem('token')
+          setLoading(false)
+        })
+    } else {
+      setLoading(false)
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []) // Only run on mount
 
+  // Sync token with localStorage
   useEffect(() => {
     if (token) {
+      console.log('[AuthContext] Setting token to localStorage')
       localStorage.setItem('token', token)
     } else {
+      console.log('[AuthContext] Removing token from localStorage')
       localStorage.removeItem('token')
       setUser(null)
     }
@@ -69,22 +59,43 @@ export function AuthProvider({ children }) {
     } else {
       // If no user data provided, fetch it
       setLoading(true)
-      getCurrentUser()
+      userAPI.getCurrentUser()
+        .then((userData) => {
+          setUser(userData)
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.error('[AuthContext] Error fetching user after login:', err)
+          setToken(null)
+          setUser(null)
+          localStorage.removeItem('token')
+          setLoading(false)
+        })
     }
-  }, [getCurrentUser])
+    console.log('[AuthContext] Login called. New token:', newToken)
+  }, [])
 
   const logout = useCallback(() => {
     setToken(null)
     setUser(null)
-    localStorage.removeItem('token')
+    localStorage.clear()
+    console.log('[AuthContext] Logout called. localStorage cleared.')
   }, [])
 
   const refetchUser = useCallback(() => {
     if (token) {
       setLoading(true)
-      getCurrentUser()
+      userAPI.getCurrentUser()
+        .then((userData) => {
+          setUser(userData)
+          setLoading(false)
+        })
+        .catch((err) => {
+          console.error('[AuthContext] Error refetching user:', err)
+          setLoading(false)
+        })
     }
-  }, [token, getCurrentUser])
+  }, [token])
 
   const value = {
     user,
@@ -106,4 +117,3 @@ export function useAuth() {
   }
   return context
 }
-

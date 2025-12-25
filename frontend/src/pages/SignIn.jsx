@@ -1,24 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useMutation, gql } from '@apollo/client'
+import { authAPI } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import './Auth.css'
-
-const SIGN_IN = gql`
-  mutation SignIn($input: SignInInput!) {
-    signIn(input: $input) {
-      token
-      user {
-        id
-        username
-        email
-        hp
-        level
-        gold
-      }
-    }
-  }
-`
 
 export default function SignIn() {
   const navigate = useNavigate()
@@ -28,33 +12,33 @@ export default function SignIn() {
     password: '',
   })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const [signIn, { loading }] = useMutation(SIGN_IN, {
-    onCompleted: (data) => {
-      login(data.signIn.token, data.signIn.user)
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const result = await authAPI.signIn(formData.username, formData.password)
+      login(result.token, result.user)
       navigate('/locations/moonshine')
-    },
-    onError: (err) => {
-      const graphQLError = err.graphQLErrors?.[0]
-      const errorMessage = graphQLError?.message || err.message || ''
+    } catch (err) {
+      const errorMessage = err.message || ''
       const lowerMessage = errorMessage.toLowerCase()
       
       // Handle validation errors - show specific messages
       if (lowerMessage === 'invalid credentials') {
-        setError('Invalid username or password. Please try again.')
+        setError('Неверное имя пользователя или пароль. Попробуйте еще раз.')
       } else if (lowerMessage === 'invalid input') {
-        setError('Please check your input. Username and password must be 3-20 characters.')
+        setError('Проверьте введенные данные. Имя пользователя и пароль должны содержать от 3 до 20 символов.')
       } else {
         // All other errors (including internal server errors) - show generic message
-        setError('Something went wrong. Please try again later.')
+        setError('Что-то пошло не так. Попробуйте позже.')
       }
-    },
-  })
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setError('')
-    signIn({ variables: { input: formData } })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleChange = (e) => {
@@ -67,11 +51,11 @@ export default function SignIn() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>Sign In</h1>
+        <h1>Вход</h1>
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">Имя пользователя</label>
             <input
               type="text"
               id="username"
@@ -84,7 +68,7 @@ export default function SignIn() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Пароль</label>
             <input
               type="password"
               id="password"
@@ -97,11 +81,11 @@ export default function SignIn() {
             />
           </div>
           <button type="submit" disabled={loading}>
-            {loading ? 'Signing in...' : 'Sign In'}
+            {loading ? 'Вход...' : 'Войти'}
           </button>
         </form>
         <p className="auth-link">
-          Don't have an account? <Link to="/signup">Sign Up</Link>
+          Нет аккаунта? <Link to="/signup">Зарегистрироваться</Link>
         </p>
       </div>
     </div>

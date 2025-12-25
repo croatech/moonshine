@@ -1,25 +1,8 @@
 import { useState } from 'react'
 import { useNavigate, Link } from 'react-router-dom'
-import { useMutation, gql } from '@apollo/client'
+import { authAPI } from '../lib/api'
 import { useAuth } from '../context/AuthContext'
 import './Auth.css'
-
-const SIGN_UP = gql`
-  mutation SignUp($input: SignUpInput!) {
-    signUp(input: $input) {
-      token
-      user {
-        id
-        username
-        email
-        hp
-        level
-        gold
-        exp
-      }
-    }
-  }
-`
 
 export default function SignUp() {
   const navigate = useNavigate()
@@ -30,35 +13,35 @@ export default function SignUp() {
     password: '',
   })
   const [error, setError] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const [signUp, { loading }] = useMutation(SIGN_UP, {
-    onCompleted: (data) => {
-      login(data.signUp.token, data.signUp.user)
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    setError('')
+    setLoading(true)
+
+    try {
+      const result = await authAPI.signUp(formData.username, formData.email, formData.password)
+      login(result.token, result.user)
       navigate('/locations/moonshine')
-    },
-    onError: (err) => {
-      const graphQLError = err.graphQLErrors?.[0]
-      const errorMessage = graphQLError?.message || err.message || ''
+    } catch (err) {
+      const errorMessage = err.message || ''
       const lowerMessage = errorMessage.toLowerCase()
       
       // Handle validation errors - show specific messages
       if (lowerMessage === 'user already exists') {
-        setError('Username or email already exists. Please try a different one.')
+        setError('Пользователь с таким именем или email уже существует. Попробуйте другой.')
       } else if (lowerMessage === 'invalid input') {
-        setError('Please check your input. Username and password must be 3-20 characters.')
+        setError('Проверьте введенные данные. Имя пользователя и пароль должны содержать от 3 до 20 символов.')
       } else if (lowerMessage === 'invalid credentials') {
-        setError('Invalid credentials. Please check your input.')
+        setError('Неверные данные. Проверьте введенные данные.')
       } else {
         // All other errors (including internal server errors) - show generic message
-        setError('Something went wrong. Please try again later.')
+        setError('Что-то пошло не так. Попробуйте позже.')
       }
-    },
-  })
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setError('')
-    signUp({ variables: { input: formData } })
+    } finally {
+      setLoading(false)
+    }
   }
 
   const handleChange = (e) => {
@@ -71,11 +54,11 @@ export default function SignUp() {
   return (
     <div className="auth-container">
       <div className="auth-card">
-        <h1>Sign Up</h1>
+        <h1>Регистрация</h1>
         <form onSubmit={handleSubmit}>
           {error && <div className="error-message">{error}</div>}
           <div className="form-group">
-            <label htmlFor="username">Username</label>
+            <label htmlFor="username">Имя пользователя</label>
             <input
               type="text"
               id="username"
@@ -99,7 +82,7 @@ export default function SignUp() {
             />
           </div>
           <div className="form-group">
-            <label htmlFor="password">Password</label>
+            <label htmlFor="password">Пароль</label>
             <input
               type="password"
               id="password"
@@ -112,11 +95,11 @@ export default function SignUp() {
             />
           </div>
           <button type="submit" disabled={loading}>
-            {loading ? 'Signing up...' : 'Sign Up'}
+            {loading ? 'Регистрация...' : 'Зарегистрироваться'}
           </button>
         </form>
         <p className="auth-link">
-          Already have an account? <Link to="/signin">Sign In</Link>
+          Уже есть аккаунт? <Link to="/signin">Войти</Link>
         </p>
       </div>
     </div>

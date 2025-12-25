@@ -1,45 +1,104 @@
-// Placeholder component - Location query will be added to GraphQL schema later
-// For now, just render children with location name based on slug
+import { Link, useNavigate } from 'react-router-dom'
+import { useAuth } from '../../context/AuthContext'
+import { locationAPI } from '../../lib/api'
+import PlayerHeader from '../PlayerHeader'
+import './LocationView.css'
+
 export default function LocationView({ slug, children }) {
-  const locationNames = {
-    moonshine: 'Moonshine',
-    weapon_shop: 'Weapon Shop',
-    craft_shop: 'Craft Shop',
-    wayward_pines: 'Wayward Pines',
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  const handleLogout = () => {
+    logout()
+    // Очистка всего localStorage (кэша)
+    localStorage.clear()
+    navigate('/signin')
   }
 
-  const locationName = locationNames[slug] || slug
-
-  // Background images mapping
-  const locationBgs = {
-    moonshine: 'cities/moonshine/bg.jpg',
-    weapon_shop: 'cities/moonshine/weapon_shop/bg.jpg',
-    craft_shop: 'cities/moonshine/craft_shop/bg.jpg',
-    wayward_pines: 'wayward_pines/bg.png',
+  const handleLocationMove = async (e, targetSlug) => {
+    e.preventDefault()
+    
+    try {
+      await locationAPI.move(targetSlug)
+      // Navigate to the new location after successful API call
+      navigate(`/locations/${targetSlug}`)
+    } catch (error) {
+      console.error('[LocationView] Error moving to location:', error)
+      let errorMessage = 'Неизвестная ошибка'
+      if (error.message.includes('not connected')) {
+        errorMessage = 'Невозможно переместиться в эту локацию отсюда'
+      } else if (error.message.includes('already at this location')) {
+        errorMessage = 'Вы уже находитесь в этой локации'
+      } else if (error.message.includes('not found')) {
+        errorMessage = 'Локация не найдена'
+      } else {
+        errorMessage = error.message
+      }
+      alert(`Ошибка перемещения: ${errorMessage}`)
+    }
   }
 
-  const bgImage = locationBgs[slug]
+  // Определяем, является ли локация городом или магазином
+  const isCity = slug === 'moonshine'
+
+  // Ссылки для города
+  const cityLinks = [
+    { to: '/locations/weapon_shop', label: 'Оружейная' },
+    { to: '/locations/craft_shop', label: 'Мастерская' },
+    { to: '/locations/wayward_pines', label: 'Выйти из города' },
+  ]
+
+  // Ссылка для магазина или другой локации (не город)
+  const shopLinks = [
+    { to: '/locations/moonshine', label: 'Главная площадь' },
+  ]
+
+  const links = isCity ? cityLinks : shopLinks
 
   return (
     <div className="location-view">
-      <h1>{locationName}</h1>
-      {bgImage && (
-        <div 
-          className="location-bg"
-          style={{
-            backgroundImage: `url(/assets/assets/images/locations/${bgImage})`,
-            backgroundSize: 'cover',
-            backgroundPosition: 'center',
-            minHeight: '400px',
-            borderRadius: '8px',
-            marginBottom: '20px',
-          }}
-        />
-      )}
-      <div className="location-content">
-        {children}
+      <div className="location-main-block">
+        <div className="location-header">
+          <PlayerHeader user={user} />
+          <div className="location-nav-links">
+            {links.map((link) => {
+              // Extract slug from path: '/locations/weapon_shop' -> 'weapon_shop'
+              const targetSlug = link.to.split('/').pop()
+              return (
+                <a
+                  key={link.to}
+                  href={link.to}
+                  onClick={(e) => handleLocationMove(e, targetSlug)}
+                  className="fantasy-button"
+                >
+                  {link.label}
+                </a>
+              )
+            })}
+            <button 
+              onClick={handleLogout} 
+              className="logout-door-button"
+              title="Выйти из игры"
+            >
+              <svg 
+                width="24" 
+                height="24" 
+                viewBox="0 0 24 24" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path 
+                  d="M3 21V3h8v2H5v14h6v2H3zm13-4l-1.375-1.45 2.55-2.55H9v-2h8.175l-2.55-2.55L16 7l5 5-5 5z" 
+                  fill="currentColor"
+                />
+              </svg>
+            </button>
+          </div>
+        </div>
+        <div className="location-content">
+          {children}
+        </div>
       </div>
     </div>
   )
 }
-

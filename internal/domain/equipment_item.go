@@ -5,6 +5,7 @@ import "github.com/google/uuid"
 type EquipmentItem struct {
 	Model
 	Name                string             `json:"name" db:"name"`
+	Slug                string             `json:"slug" db:"slug"`
 	Attack              uint               `json:"attack" db:"attack"`
 	Defense             uint               `json:"defense" db:"defense"`
 	Hp                  uint               `json:"hp" db:"hp"`

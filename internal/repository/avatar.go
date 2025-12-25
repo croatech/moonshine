@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -26,24 +25,16 @@ func NewAvatarRepository(db *sqlx.DB) *AvatarRepository {
 
 func (r *AvatarRepository) Create(avatar *domain.Avatar) error {
 	query := `
-		INSERT INTO avatars (id, image, private, created_at, updated_at)
-		VALUES ($1, $2, $3, $4, $5)
+		INSERT INTO avatars (id, image, private)
+		VALUES ($1, $2, $3)
 	`
 
-	now := time.Now()
 	if avatar.ID == uuid.Nil {
 		avatar.ID = uuid.New()
-	}
-	if avatar.CreatedAt.IsZero() {
-		avatar.CreatedAt = now
-	}
-	if avatar.UpdatedAt.IsZero() {
-		avatar.UpdatedAt = now
 	}
 
 	_, err := r.db.Exec(query,
 		avatar.ID, avatar.Image, avatar.Private,
-		avatar.CreatedAt, avatar.UpdatedAt,
 	)
 	if err != nil {
 		// Check for unique constraint violation
@@ -57,7 +48,7 @@ func (r *AvatarRepository) Create(avatar *domain.Avatar) error {
 
 func (r *AvatarRepository) FindByID(id uuid.UUID) (*domain.Avatar, error) {
 	query := `
-		SELECT id, created_at, updated_at, deleted_at, image, private
+		SELECT id, created_at, deleted_at, image, private
 		FROM avatars
 		WHERE id = $1 AND deleted_at IS NULL
 	`
@@ -76,7 +67,7 @@ func (r *AvatarRepository) FindByID(id uuid.UUID) (*domain.Avatar, error) {
 
 func (r *AvatarRepository) FindByImage(image string) (*domain.Avatar, error) {
 	query := `
-		SELECT id, created_at, updated_at, deleted_at, image, private
+		SELECT id, created_at, deleted_at, image, private
 		FROM avatars
 		WHERE image = $1 AND deleted_at IS NULL
 	`
@@ -95,7 +86,7 @@ func (r *AvatarRepository) FindByImage(image string) (*domain.Avatar, error) {
 
 func (r *AvatarRepository) FindFirst() (*domain.Avatar, error) {
 	query := `
-		SELECT id, created_at, updated_at, deleted_at, image, private
+		SELECT id, created_at, deleted_at, image, private
 		FROM avatars
 		WHERE deleted_at IS NULL
 		LIMIT 1
@@ -111,4 +102,52 @@ func (r *AvatarRepository) FindFirst() (*domain.Avatar, error) {
 	}
 
 	return avatar, nil
+}
+
+// FindByIDs loads multiple avatars by their IDs (for DataLoader)
+func (r *AvatarRepository) FindByIDs(ids []uuid.UUID) (map[uuid.UUID]*domain.Avatar, error) {
+	if len(ids) == 0 {
+		return make(map[uuid.UUID]*domain.Avatar), nil
+	}
+
+	query, args, err := sqlx.In(`
+		SELECT id, created_at, deleted_at, image, private
+		FROM avatars
+		WHERE id IN (?) AND deleted_at IS NULL
+	`, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	query = r.db.Rebind(query)
+	var avatars []*domain.Avatar
+	err = r.db.Select(&avatars, query, args...)
+	if err != nil {
+		return nil, err
+	}
+
+	result := make(map[uuid.UUID]*domain.Avatar, len(avatars))
+	for _, avatar := range avatars {
+		result[avatar.ID] = avatar
+	}
+
+	return result, nil
+}
+
+// FindAll returns all non-deleted avatars
+func (r *AvatarRepository) FindAll() ([]*domain.Avatar, error) {
+	query := `
+		SELECT id, created_at, deleted_at, image, private
+		FROM avatars
+		WHERE deleted_at IS NULL
+		ORDER BY created_at ASC
+	`
+
+	var avatars []*domain.Avatar
+	err := r.db.Select(&avatars, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return avatars, nil
 }

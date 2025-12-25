@@ -1,0 +1,26 @@
+.moonshine-city-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.moonshine-city-bg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+}
+
+.moonshine-city-bg-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+
+
+

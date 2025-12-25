@@ -3,6 +3,8 @@ import { AuthProvider } from './context/AuthContext'
 import SignUp from './pages/SignUp'
 import SignIn from './pages/SignIn'
 import Location from './pages/Location'
+import Profile from './pages/Profile'
+import EquipmentItems from './pages/EquipmentItems'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -16,6 +18,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Location />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/profile"
+          element={
+            <ProtectedRoute>
+              <Profile />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/equipment_items"
+          element={
+            <ProtectedRoute>
+              <EquipmentItems />
             </ProtectedRoute>
           }
         />

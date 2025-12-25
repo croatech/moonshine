@@ -8,7 +8,6 @@ import (
 	"sort"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -32,6 +31,11 @@ func main() {
 
 	log.Println("Starting seed process...")
 
+	// Очистка всех таблиц перед заполнением
+	if err := truncateTables(db.DB()); err != nil {
+		log.Fatalf("Failed to truncate tables: %v", err)
+	}
+
 	seedAvatars(db.DB())
 	seedEquipmentCategories(db.DB())
 	if err := seedEquipmentItems(db.DB()); err != nil {
@@ -43,6 +47,33 @@ func main() {
 	seedUsers(db.DB())
 
 	log.Println("Seed process completed!")
+}
+
+func truncateTables(db *sqlx.DB) error {
+	log.Println("Truncating all seed tables...")
+
+	// Порядок важен - сначала зависимые таблицы, потом основные
+	// Примечание: не очищаем таблицу users, чтобы не удалять реальных пользователей
+	tables := []string{
+		"user_equipment_items",
+		"bot_equipment_items",
+		"location_locations",
+		"equipment_items",
+		"equipment_categories",
+		"locations",
+		"avatars",
+	}
+
+	for _, table := range tables {
+		query := fmt.Sprintf("TRUNCATE TABLE %s RESTART IDENTITY CASCADE", table)
+		if _, err := db.Exec(query); err != nil {
+			return fmt.Errorf("failed to truncate %s: %w", table, err)
+		}
+		log.Printf("Truncated table: %s", table)
+	}
+
+	log.Println("All tables truncated successfully")
+	return nil
 }
 
 func seedAvatars(db *sqlx.DB) {
@@ -230,16 +261,14 @@ func seedLocations(db *sqlx.DB) error {
 		shopLocations[shop.slug] = shopLocation.ID
 
 		locLocID := uuid.New()
-		locLocNow := time.Now()
-		locationLocationQuery := `INSERT INTO location_locations (id, location_id, near_location_id, created_at, updated_at) 
-			VALUES ($1, $2, $3, $4, $5)`
-		if _, err := db.Exec(locationLocationQuery, locLocID, moonshineLocation.ID, shopLocation.ID, locLocNow, locLocNow); err != nil {
+		locationLocationQuery := `INSERT INTO location_locations (id, location_id, near_location_id) 
+			VALUES ($1, $2, $3)`
+		if _, err := db.Exec(locationLocationQuery, locLocID, moonshineLocation.ID, shopLocation.ID); err != nil {
 			return fmt.Errorf("failed to create location connection for %s: %w", shop.slug, err)
 		}
 
 		locLocReverseID := uuid.New()
-		locLocReverseNow := time.Now()
-		if _, err := db.Exec(locationLocationQuery, locLocReverseID, shopLocation.ID, moonshineLocation.ID, locLocReverseNow, locLocReverseNow); err != nil {
+		if _, err := db.Exec(locationLocationQuery, locLocReverseID, shopLocation.ID, moonshineLocation.ID); err != nil {
 			return fmt.Errorf("failed to create reverse location connection for %s: %w", shop.slug, err)
 		}
 
@@ -319,10 +348,9 @@ func seedLocations(db *sqlx.DB) error {
 
 			if err != nil {
 				locLocID := uuid.New()
-				locLocNow := time.Now()
-				locLocQuery := `INSERT INTO location_locations (id, location_id, near_location_id, created_at, updated_at) 
-					VALUES ($1, $2, $3, $4, $5)`
-				if _, err := db.Exec(locLocQuery, locLocID, cellID, neighborID, locLocNow, locLocNow); err != nil {
+				locLocQuery := `INSERT INTO location_locations (id, location_id, near_location_id) 
+					VALUES ($1, $2, $3)`
+				if _, err := db.Exec(locLocQuery, locLocID, cellID, neighborID); err != nil {
 					return fmt.Errorf("failed to create cell connection %d -> %d: %w", cellNum, neighborNum, err)
 				}
 			}
@@ -334,10 +362,9 @@ func seedLocations(db *sqlx.DB) error {
 
 			if err != nil {
 				locLocReverseID := uuid.New()
-				locLocReverseNow := time.Now()
-				locLocQuery := `INSERT INTO location_locations (id, location_id, near_location_id, created_at, updated_at) 
-					VALUES ($1, $2, $3, $4, $5)`
-				if _, err := db.Exec(locLocQuery, locLocReverseID, neighborID, cellID, locLocReverseNow, locLocReverseNow); err != nil {
+				locLocQuery := `INSERT INTO location_locations (id, location_id, near_location_id) 
+					VALUES ($1, $2, $3)`
+				if _, err := db.Exec(locLocQuery, locLocReverseID, neighborID, cellID); err != nil {
 					return fmt.Errorf("failed to create reverse cell connection %d -> %d: %w", neighborNum, cellNum, err)
 				}
 			}
@@ -378,9 +405,8 @@ func seedEquipmentCategories(db *sqlx.DB) {
 		}
 
 		categoryID := uuid.New()
-		now := time.Now()
-		query := `INSERT INTO equipment_categories (id, name, type, created_at, updated_at) VALUES ($1, $2, $3, $4, $5)`
-		if _, err := db.Exec(query, categoryID, cat.name, cat.typ, now, now); err != nil {
+		query := `INSERT INTO equipment_categories (id, name, type) VALUES ($1, $2, $3)`
+		if _, err := db.Exec(query, categoryID, cat.name, cat.typ); err != nil {
 			log.Printf("Failed to create equipment category %s: %v", cat.name, err)
 			continue
 		}
@@ -395,11 +421,100 @@ type equipmentFileInfo struct {
 	path          string
 	categoryType  string
 	name          string
+	englishName   string // English name for slug generation
 	price         uint
 	attack        uint
 	requiredLevel uint
 	hp            uint
 	defense       uint
+}
+
+// Russian translations for equipment names: english -> russian
+var equipmentRussianNames = map[string]string{
+	// Axes
+	"Iron_Axe":          "Железный топор",
+	"Battle_Axe":        "Боевой топор",
+	"War_Axe":           "Топор войны",
+	"Great_Axe":         "Великий топор",
+	"Executioner_Axe":   "Топор палача",
+	"Bearded_Axe":       "Бородатый топор",
+	"Bloodthirster_Axe": "Кровожадный топор",
+	"Razor_Edge_Axe":    "Бритвенный топор",
+	"Titan_Blade":       "Клинок титана",
+	"Dragon_Slayer":     "Убийца драконов",
+	"Skull_Crusher":     "Сокрушитель черепов",
+	"Berserker_Axe":     "Топор берсерка",
+	"Frostbite_Axe":     "Морозный топор",
+	"Inferno_Cleave":    "Инфернальный топор",
+	"Thunder_Strike":    "Громовой удар",
+	"Soul_Eater":        "Пожиратель душ",
+	"Death_Bringer":     "Вестник смерти",
+	"Abyss_Reaper":      "Жнец бездны",
+	"Eternal_Wrath":     "Вечная ярость",
+	"Apocalypse_Axe":    "Топор апокалипсиса",
+
+	// Knifes
+	"Rusty_Dagger":   "Ржавый кинжал",
+	"Hunting_Knife":  "Охотничий нож",
+	"Stiletto":       "Стилет",
+	"Combat_Dagger":  "Боевой кинжал",
+	"Shadow_Blade":   "Теневой клинок",
+	"Venom_Dagger":   "Ядовитый кинжал",
+	"Rapier":         "Рапира",
+	"Assassin_Knife": "Нож ассасина",
+	"Phantom_Dagger": "Призрачный кинжал",
+	"Blood_Thorn":    "Кровавый шип",
+	"Dark_Edge":      "Темное лезвие",
+	"Crimson_Fang":   "Багровый клык",
+	"Shadow_Strike":  "Удар тени",
+	"Death_Kiss":     "Поцелуй смерти",
+	"Soul_Reaver":    "Жнец душ",
+	"Void_Cutter":    "Клинок пустоты",
+
+	// Maces
+	"Iron_Club":        "Железная дубина",
+	"Battle_Mace":      "Боевая булава",
+	"War_Hammer":       "Боевой молот",
+	"Flail":            "Цеп",
+	"Morning_Star":     "Утренняя звезда",
+	"Maul":             "Колотушка",
+	"Thunder_Mace":     "Громовая булава",
+	"Bone_Crusher":     "Костолом",
+	"Skull_Hammer":     "Молот черепов",
+	"Stone_Breaker":    "Камнедробитель",
+	"Earth_Shaker":     "Сотрясатель земли",
+	"Mighty_Maul":      "Могучий молот",
+	"Crushing_Blow":    "Сокрушительный удар",
+	"Dragon_Mace":      "Драконья булава",
+	"Titan_Strike":     "Удар титана",
+	"Celestial_Hammer": "Небесный молот",
+	"Divine_Judgment":  "Божий суд",
+	"Eternal_Crusher":  "Вечный сокрушитель",
+	"World_Breaker":    "Разрушитель миров",
+	"Oblivion_Mace":    "Булава забвения",
+
+	// Armor (chest)
+	"Cloth_Tunic":       "Тканевая туника",
+	"Leather_Vest":      "Кожаный жилет",
+	"Chainmail":         "Кольчуга",
+	"Plate_Armor":       "Латная броня",
+	"Scale_Mail":        "Чешуйчатая броня",
+	"Brigandine":        "Бригантина",
+	"Cuirass":           "Кираса",
+	"Hauberk":           "Хауберг",
+	"Breastplate":       "Нагрудная пластина",
+	"Chestguard":        "Нагрудник",
+	"Battle_Armor":      "Боевая броня",
+	"War_Plate":         "Доспехи войны",
+	"Dragon_Scale":      "Драконья чешуя",
+	"Titanium_Plate":    "Титановая броня",
+	"Mythril_Mail":      "Мифриловая кольчуга",
+	"Divine_Armor":      "Божественные доспехи",
+	"Celestial_Plate":   "Небесная броня",
+	"Eternal_Guard":     "Вечная защита",
+	"Legendary_Cuirass": "Легендарная кираса",
+	"Immortal_Plate":    "Бессмертная броня",
+	"Godforged_Armor":   "Богокованные доспехи",
 }
 
 func seedEquipmentItems(db *sqlx.DB) error {
@@ -528,16 +643,19 @@ func seedEquipmentItems(db *sqlx.DB) error {
 			continue
 		}
 
+		// Generate slug from English name (not translated Russian name)
+		slug := generateSlug(file.englishName)
+
 		// Создаем equipment item
 		itemID := uuid.New()
-		now := time.Now()
 		query := `INSERT INTO equipment_items 
-			(id, name, attack, defense, hp, required_level, price, equipment_category_id, image, created_at, updated_at) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+			(id, name, slug, attack, defense, hp, required_level, price, equipment_category_id, image) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
 
 		_, err = db.Exec(query,
 			itemID,
 			file.name,
+			slug,
 			file.attack,
 			file.defense,
 			file.hp,
@@ -545,8 +663,6 @@ func seedEquipmentItems(db *sqlx.DB) error {
 			file.price,
 			catID,
 			dbImagePath,
-			now,
-			now,
 		)
 
 		if err != nil {
@@ -597,8 +713,26 @@ func parseEquipmentFileName(filename string, info *equipmentFileInfo) bool {
 		return false
 	}
 
-	info.name = strings.Join(nameParts, " ")
-	info.name = strings.ReplaceAll(info.name, "_", " ")
+	// English name with underscores (for slug generation)
+	info.englishName = strings.Join(nameParts, "_")
+
+	// Capitalize each part for lookup in Russian names map
+	capitalizedParts := make([]string, len(nameParts))
+	for i, part := range nameParts {
+		if len(part) > 0 {
+			capitalizedParts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
+		}
+	}
+	capitalizedEnglishName := strings.Join(capitalizedParts, "_")
+
+	// Try to find Russian translation
+	if russianName, exists := equipmentRussianNames[capitalizedEnglishName]; exists {
+		info.name = russianName
+	} else {
+		// Fallback to English name with spaces if no translation found
+		info.name = strings.Join(nameParts, " ")
+		info.name = strings.ReplaceAll(info.name, "_", " ")
+	}
 
 	// Парсим числа: стоимость-урон-уровень-хп-защита
 	if numStartIdx+4 < len(parts) {
@@ -644,4 +778,34 @@ func extractCellNumber(filename string) int {
 	}
 
 	return num
+}
+
+// generateSlug creates a URL-friendly slug from a name
+func generateSlug(name string) string {
+	// Convert to lowercase
+	slug := strings.ToLower(name)
+
+	// Replace spaces and underscores with hyphens
+	slug = strings.ReplaceAll(slug, " ", "-")
+	slug = strings.ReplaceAll(slug, "_", "-")
+
+	// Remove any special characters, keep only alphanumeric and hyphens
+	var result strings.Builder
+	for _, r := range slug {
+		if (r >= 'a' && r <= 'z') || (r >= '0' && r <= '9') || r == '-' {
+			result.WriteRune(r)
+		}
+	}
+
+	slug = result.String()
+
+	// Remove multiple consecutive hyphens
+	for strings.Contains(slug, "--") {
+		slug = strings.ReplaceAll(slug, "--", "-")
+	}
+
+	// Trim hyphens from start and end
+	slug = strings.Trim(slug, "-")
+
+	return slug
 }

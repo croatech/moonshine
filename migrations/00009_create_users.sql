@@ -13,7 +13,7 @@ CREATE TABLE users (
     location_id UUID NOT NULL,
     attack INTEGER NOT NULL DEFAULT 1,
     defense INTEGER NOT NULL DEFAULT 1,
-    current_hp INTEGER NOT NULL DEFAULT 0,
+    current_hp INTEGER NOT NULL DEFAULT 20,
     exp INTEGER NOT NULL DEFAULT 0,
     fishing_skill INTEGER NOT NULL DEFAULT 0,
     fishing_slot INTEGER NOT NULL DEFAULT 0,
