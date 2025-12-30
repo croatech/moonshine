@@ -1,0 +1,40 @@
+.equipment-category-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 30px;
+}
+
+.equipment-category-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.equipment-category-item:hover {
+  transform: scale(1.1);
+}
+
+.equipment-category-item.active {
+  opacity: 0.7;
+}
+
+.equipment-category-icon {
+  width: auto;
+  height: auto;
+  max-width: 67px;
+  max-height: 67px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+
+
+
+
+
+

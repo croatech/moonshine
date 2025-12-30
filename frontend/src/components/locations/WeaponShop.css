@@ -1,0 +1,54 @@
+.weapon-shop-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  min-height: 100vh;
+  padding: 20px;
+}
+
+.weapon-shop-bg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 1200px;
+  margin-bottom: 40px;
+}
+
+.weapon-shop-bg-image {
+  max-width: 100%;
+  height: auto;
+  object-fit: contain;
+}
+
+.weapon-shop-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+  justify-content: center;
+  align-items: center;
+  max-width: 1200px;
+}
+
+.weapon-shop-category-link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  transition: transform 0.2s ease;
+}
+
+.weapon-shop-category-link:hover {
+  transform: scale(1.1);
+}
+
+.weapon-shop-category-icon {
+  width: auto;
+  height: auto;
+  max-width: 67px;
+  max-height: 67px;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+

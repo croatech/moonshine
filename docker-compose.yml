@@ -1,21 +1,24 @@
 services:
-  pg:
-    image: postgres:17.2
+  postgres:
+    image: postgres:18.1
     environment:
-      POSTGRES_DB: moonshine_db
+      POSTGRES_DB: moonshine
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
     volumes:
-      - pg_data:/var/lib/postgresql/data
-      - ./init-scripts:/docker-entrypoint-initdb.d
-    networks:
-      - moonshine_backend
+      - pgdata:/var/lib/postgresql
     ports:
-      - "5435:5432"
+      - "5433:5432"
+    networks:
+      - backend
 
 volumes:
-  pg_data:
+  pgdata:
 
 networks:
-  moonshine_backend:
-    driver: bridge
+  backend:
