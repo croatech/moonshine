@@ -13,6 +13,7 @@ import (
 var (
 	ErrLocationNotFound = errors.New("location not found")
 	ErrLocationExists   = errors.New("location already exists")
+	ErrShortestPath     = errors.New("shortest path resolving error")
 )
 
 type LocationRepository struct {
@@ -153,4 +154,39 @@ func (r *LocationRepository) FindAllConnections() ([]*domain.LocationLocation, e
 	}
 
 	return connections, nil
+}
+
+func (r *LocationRepository) FindAll() ([]*domain.Location, error) {
+	query := `
+		SELECT id, created_at, deleted_at, name, slug, cell, inactive, image, image_bg
+		FROM locations
+		WHERE deleted_at IS NULL
+	`
+
+	var locations []*domain.Location
+	err := r.db.Select(&locations, query)
+	if err != nil {
+		return nil, err
+	}
+
+	return locations, nil
+}
+
+func (r *LocationRepository) DefaultOutdoorLocation() (*domain.Location, error) {
+	query := `
+		SELECT id, created_at, deleted_at, name, slug, cell, inactive, image, image_bg
+		FROM locations
+		WHERE slug = $1 AND deleted_at IS NULL
+	`
+
+	location := &domain.Location{}
+	err := r.db.Get(location, query, "29cell")
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrLocationNotFound
+		}
+		return nil, err
+	}
+
+	return location, nil
 }

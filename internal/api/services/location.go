@@ -15,22 +15,36 @@ var (
 	ErrLocationNotConnected = errors.New("locations are not connected")
 )
 
+type MovingWorker interface {
+	StartMovement(userID uuid.UUID, cellSlugs []string) error
+}
+
 type LocationService struct {
 	db           *sqlx.DB
 	locationRepo *repository.LocationRepository
 	userRepo     *repository.UserRepository
+	movingWorker MovingWorker
+	graph        *LocationGraph
 }
 
 func NewLocationService(
 	db *sqlx.DB,
 	locationRepo *repository.LocationRepository,
 	userRepo *repository.UserRepository,
-) *LocationService {
+	movingWorker MovingWorker,
+) (*LocationService, error) {
+	graph, err := NewLocationGraph(locationRepo)
+	if err != nil {
+		return nil, err
+	}
+
 	return &LocationService{
 		db:           db,
 		locationRepo: locationRepo,
 		userRepo:     userRepo,
-	}
+		movingWorker: movingWorker,
+		graph:        graph,
+	}, nil
 }
 
 func (s *LocationService) MoveToLocation(ctx context.Context, userID uuid.UUID, targetLocationSlug string) error {
@@ -40,18 +54,11 @@ func (s *LocationService) MoveToLocation(ctx context.Context, userID uuid.UUID, 
 	}
 	defer tx.Rollback()
 
-	user, err := s.userRepo.FindByID(userID)
-	if err != nil {
-		return repository.ErrUserNotFound
-	}
-
-	currentLocation, err := s.locationRepo.FindByID(user.LocationID)
-	if err != nil {
-		return repository.ErrLocationNotFound
-	}
+	user, _ := s.userRepo.FindByID(userID)
+	currentLocation, _ := s.locationRepo.FindByID(user.LocationID)
 
 	var targetLocation *domain.Location
-	if targetLocationSlug == "wayward_pines" && currentLocation.Slug == "moonshine" {
+	if targetLocationSlug == domain.WaywardPinesSlug && currentLocation.Slug == domain.MoonshineSlug {
 		defaultOutDoorLocation, err := s.locationRepo.DefaultOutdoorLocation()
 		if err != nil {
 			return repository.ErrLocationNotFound
@@ -68,22 +75,6 @@ func (s *LocationService) MoveToLocation(ctx context.Context, userID uuid.UUID, 
 		return nil
 	}
 
-	var connectionCount int
-	checkConnectionQuery := `
-		SELECT COUNT(*) 
-		FROM location_locations 
-		WHERE (location_id = $1 AND near_location_id = $2)
-		   OR (location_id = $2 AND near_location_id = $1)
-	`
-	err = tx.Get(&connectionCount, checkConnectionQuery, user.LocationID, targetLocation.ID)
-	if err != nil {
-		return err
-	}
-
-	if connectionCount == 0 {
-		return ErrLocationNotConnected
-	}
-
 	updateLocationQuery := `UPDATE users SET location_id = $1 WHERE id = $2`
 	_, err = tx.Exec(updateLocationQuery, targetLocation.ID, userID)
 	if err != nil {
@@ -95,4 +86,12 @@ func (s *LocationService) MoveToLocation(ctx context.Context, userID uuid.UUID, 
 	}
 
 	return nil
+}
+
+func (s *LocationService) FindShortestPath(fromSlug, toSlug string) ([]string, error) {
+	return s.graph.FindShortestPath(fromSlug, toSlug)
+}
+
+func (s *LocationService) StartCellMovement(userID uuid.UUID, cellSlugs []string) error {
+	return s.movingWorker.StartMovement(userID, cellSlugs)
 }

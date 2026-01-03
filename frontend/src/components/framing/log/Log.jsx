@@ -34,3 +34,6 @@ export default function Log({ events = [], messages = [], recipient = null, onSe
 
 
 
+
+
+

@@ -4,10 +4,11 @@ import { locationAPI } from '../../lib/api'
 import './MapGrid.css'
 
 export default function MapGrid({ locationSlug }) {
-  const { user } = useAuth()
+  const { user, refetchUser } = useAuth()
   const [cells, setCells] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [moving, setMoving] = useState(false)
 
   useEffect(() => {
     const loadCells = async () => {
@@ -29,9 +30,33 @@ export default function MapGrid({ locationSlug }) {
     }
   }, [locationSlug])
 
-  const handleCellClick = (e, cellSlug) => {
+  useEffect(() => {
+    if (!locationSlug) return
+
+    const intervalId = setInterval(() => {
+      refetchUser()
+    }, 2000)
+
+    return () => clearInterval(intervalId)
+  }, [locationSlug, refetchUser])
+
+  const handleCellClick = async (e, cellSlug) => {
     e.preventDefault()
-    window.location.href = `/locations/${cellSlug}/move`
+    
+    if (moving || user?.locationSlug === cellSlug) {
+      return
+    }
+
+    try {
+      setMoving(true)
+      await locationAPI.moveToCell(locationSlug, cellSlug)
+      await refetchUser()
+    } catch (err) {
+      console.error('[MapGrid] Error moving to cell:', err)
+      alert(err.message || 'Ошибка при перемещении')
+    } finally {
+      setMoving(false)
+    }
   }
 
   if (loading) {
@@ -69,11 +94,11 @@ export default function MapGrid({ locationSlug }) {
 
           return (
             <div key={cell.id} className="map-cell-wrapper">
-              <a
-                href={`/locations/${cell.slug}/move`}
+              <div
                 onClick={(e) => handleCellClick(e, cell.slug)}
-                className={`map-cell ${cell.inactive ? 'map-cell-inactive' : ''}`}
+                className={`map-cell ${cell.inactive ? 'map-cell-inactive' : ''} ${moving ? 'map-cell-moving' : ''}`}
                 title={cell.name}
+                style={{ cursor: moving ? 'wait' : 'pointer' }}
               >
                 {cell.image && (
                   <img
@@ -82,7 +107,7 @@ export default function MapGrid({ locationSlug }) {
                     className="map-cell-image"
                   />
                 )}
-              </a>
+              </div>
               {isPlayerHere && (
                 <img
                   src="/assets/images/warrior.png"

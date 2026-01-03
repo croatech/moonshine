@@ -40,3 +40,6 @@ func (h *AvatarHandler) GetAllAvatars(c echo.Context) error {
 
 
 
+
+
+

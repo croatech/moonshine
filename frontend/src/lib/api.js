@@ -231,6 +231,20 @@ export const locationAPI = {
 
     return response.json()
   },
+
+  moveToCell: async (locationSlug, cellSlug) => {
+    const response = await fetch(`${API_BASE_URL}/locations/${locationSlug}/cells/${cellSlug}/move`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to move to cell')
+    }
+
+    return response.json()
+  },
   
   getCells: async (locationSlug) => {
     const response = await fetch(`${API_BASE_URL}/locations/${locationSlug}/cells`, {

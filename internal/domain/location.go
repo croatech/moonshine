@@ -13,3 +13,8 @@ type Location struct {
 	LocationLocations []*LocationLocation `json:"location_locations,omitempty"`
 	LocationResources []*LocationResource `json:"location_resources,omitempty"`
 }
+
+const (
+	WaywardPinesSlug = "wayward_pines"
+	MoonshineSlug    = "moonshine"
+)

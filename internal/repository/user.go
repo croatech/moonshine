@@ -157,3 +157,9 @@ func isUniqueConstraintError(err error) bool {
 		strings.Contains(errStr, "unique constraint") ||
 		strings.Contains(errStr, "duplicate key")
 }
+
+func (r *UserRepository) UpdateLocationID(userID uuid.UUID, locationID uuid.UUID) error {
+	query := `UPDATE users SET location_id = $1 WHERE id = $2`
+	_, err := r.db.Exec(query, locationID, userID)
+	return err
+}
