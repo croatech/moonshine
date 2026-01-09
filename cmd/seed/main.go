@@ -395,6 +395,7 @@ func seedLocations(db *sqlx.DB) error {
 
 		neighbors := []int{}
 
+		// Horizontal and vertical connections
 		if col > 0 {
 			neighbors = append(neighbors, cellNum-1)
 		}
@@ -406,6 +407,20 @@ func seedLocations(db *sqlx.DB) error {
 		}
 		if row < 7 {
 			neighbors = append(neighbors, cellNum+8)
+		}
+
+		// Diagonal connections
+		if row > 0 && col > 0 {
+			neighbors = append(neighbors, cellNum-9)
+		}
+		if row > 0 && col < 7 {
+			neighbors = append(neighbors, cellNum-7)
+		}
+		if row < 7 && col > 0 {
+			neighbors = append(neighbors, cellNum+7)
+		}
+		if row < 7 && col < 7 {
+			neighbors = append(neighbors, cellNum+9)
 		}
 
 		for _, neighborNum := range neighbors {

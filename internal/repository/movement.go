@@ -60,3 +60,6 @@ func (r *MovementRepository) CreateMovementCell(cell *domain.MovementCell) error
 		Scan(&cell.ID, &cell.CreatedAt)
 }
 
+
+
+

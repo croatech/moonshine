@@ -21,3 +21,6 @@ ALTER TABLE users ALTER COLUMN current_hp SET DEFAULT 0;
 
 
 
+
+
+
