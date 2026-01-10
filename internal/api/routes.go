@@ -105,6 +105,7 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 	apiGroup.POST("/locations/:slug/move", locationHandler.MoveToLocation)
 	apiGroup.POST("/locations/:slug/cells/:cell_slug/move", locationHandler.MoveToCell)
 	apiGroup.GET("/locations/:slug/cells", locationHandler.GetLocationCells)
+	apiGroup.GET("/locations/:slug/bots", locationHandler.GetLocationBots)
 
 	equipmentItemHandler := handlers.NewEquipmentItemHandler(db)
 	apiGroup.GET("/equipment_items", equipmentItemHandler.GetEquipmentItems)

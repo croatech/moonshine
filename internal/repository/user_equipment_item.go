@@ -5,8 +5,9 @@ import (
 	"errors"
 	"log"
 
-	"github.com/google/uuid"
 	"moonshine/internal/domain"
+
+	"github.com/google/uuid"
 )
 
 var (
@@ -63,7 +64,7 @@ func (r *UserEquipmentItemRepository) FindByUserID(userID uuid.UUID) ([]*domain.
 
 	log.Printf("[UserEquipmentItemRepository] Querying inventory for user: %s", userID)
 	var items []*domain.EquipmentItem
-	
+
 	err := r.db.Select(&items, query, userID)
 	if err != nil {
 		log.Printf("[UserEquipmentItemRepository] Error querying inventory for user %s: %+v", userID, err)
@@ -73,4 +74,3 @@ func (r *UserEquipmentItemRepository) FindByUserID(userID uuid.UUID) ([]*domain.
 	log.Printf("[UserEquipmentItemRepository] Found %d items in inventory for user: %s", len(items), userID)
 	return items, nil
 }
-
