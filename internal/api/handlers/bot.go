@@ -7,7 +7,6 @@ import (
 	"github.com/labstack/echo/v4"
 
 	"moonshine/internal/api/dto"
-	"moonshine/internal/api/middleware"
 	"moonshine/internal/repository"
 )
 
@@ -36,17 +35,17 @@ func NewBotHandler(db *sqlx.DB) *BotHandler {
 }
 
 func (h *BotHandler) GetBots(c echo.Context) error {
-	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
-	if err != nil {
-		return ErrUnauthorized(c)
+	locationSlug := c.Param("location_slug")
+	if locationSlug == "" {
+		return ErrBadRequest(c, "location slug is required")
 	}
 
-	user, err := h.userRepo.FindByID(userID)
+	location, err := h.locationRepo.FindBySlug(locationSlug)
 	if err != nil {
-		return ErrNotFound(c, "user not found")
+		return ErrNotFound(c, "location not found")
 	}
 
-	bots, err := h.botRepo.FindBotsByLocationID(user.LocationID)
+	bots, err := h.botRepo.FindBotsByLocationID(location.ID)
 	if err != nil {
 		return ErrInternalServerError(c)
 	}
@@ -54,4 +53,21 @@ func (h *BotHandler) GetBots(c echo.Context) error {
 	return c.JSON(http.StatusOK, &BotResponse{
 		Bots: dto.BotsFromDomain(bots),
 	})
+}
+
+func (h *BotHandler) AttackBot(c echo.Context) error {
+	botSlug := c.Param("slug")
+	if botSlug == "" {
+		return ErrBadRequest(c, "bot slug is required")
+	}
+
+	_, err := h.botRepo.FindBySlug(botSlug)
+	if err != nil {
+		if err == repository.ErrBotNotFound {
+			return ErrNotFound(c, "bot not found")
+		}
+		return ErrInternalServerError(c)
+	}
+
+	return SuccessResponse(c, "attack endpoint - implementation pending")
 }

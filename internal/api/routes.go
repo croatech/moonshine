@@ -112,6 +112,7 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 
 	botHandler := handlers.NewBotHandler(db)
 	apiGroup.GET("/bots/:location_slug", botHandler.GetBots)
+	apiGroup.POST("/bots/:slug/attack", botHandler.AttackBot)
 }
 
 func healthCheck(c echo.Context) error {

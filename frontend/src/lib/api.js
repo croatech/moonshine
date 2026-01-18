@@ -260,3 +260,34 @@ export const locationAPI = {
   },
 }
 
+// Bot API
+export const botAPI = {
+  getBots: async (locationSlug) => {
+    const response = await fetch(`${API_BASE_URL}/bots/${locationSlug}`, {
+      method: 'GET',
+      headers: getAuthHeaders(),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to fetch bots')
+    }
+
+    const data = await response.json()
+    return data.bots || []
+  },
+
+  attack: async (botSlug) => {
+    const response = await fetch(`${API_BASE_URL}/bots/${botSlug}/attack`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    })
+
+    if (!response.ok) {
+      const error = await response.json()
+      throw new Error(error.error || 'Failed to attack bot')
+    }
+
+    return response.json()
+  },
+}

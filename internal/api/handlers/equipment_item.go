@@ -81,7 +81,7 @@ func (h *EquipmentItemHandler) BuyEquipmentItem(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "item purchased successfully"})
+	return SuccessResponse(c, "item purchased successfully")
 }
 
 func (h *EquipmentItemHandler) TakeOnEquipmentItem(c echo.Context) error {
@@ -119,7 +119,7 @@ func (h *EquipmentItemHandler) TakeOnEquipmentItem(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "item equipped successfully"})
+	return SuccessResponse(c, "item equipped successfully")
 }
 
 func (h *EquipmentItemHandler) TakeOffEquipmentItem(c echo.Context) error {
@@ -147,7 +147,7 @@ func (h *EquipmentItemHandler) TakeOffEquipmentItem(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "item removed successfully"})
+	return SuccessResponse(c, "item removed successfully")
 }
 
 func (h *EquipmentItemHandler) SellEquipmentItem(c echo.Context) error {
@@ -175,5 +175,5 @@ func (h *EquipmentItemHandler) SellEquipmentItem(c echo.Context) error {
 		}
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{"message": "item sold successfully"})
+	return SuccessResponse(c, "item sold successfully")
 }

@@ -38,3 +38,10 @@ func ErrConflict(c echo.Context, message string) error {
 func ErrUnauthorizedWithMessage(c echo.Context, message string) error {
 	return c.JSON(http.StatusUnauthorized, map[string]string{"error": message})
 }
+
+func SuccessResponse(c echo.Context, message string) error {
+	if message == "" {
+		message = "ok"
+	}
+	return c.JSON(http.StatusOK, map[string]string{"message": message})
+}

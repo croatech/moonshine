@@ -5,6 +5,7 @@ import SignIn from './pages/SignIn'
 import Location from './pages/Location'
 import Profile from './pages/Profile'
 import EquipmentItems from './pages/EquipmentItems'
+import Bots from './pages/Bots'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -34,6 +35,14 @@ function App() {
           element={
             <ProtectedRoute>
               <EquipmentItems />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/bots/:location_slug"
+          element={
+            <ProtectedRoute>
+              <Bots />
             </ProtectedRoute>
           }
         />

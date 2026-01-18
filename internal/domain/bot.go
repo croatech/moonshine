@@ -3,6 +3,7 @@ package domain
 type Bot struct {
 	Model
 	Name    string `db:"name"`
+	Slug    string `db:"slug"`
 	Attack  uint8  `db:"attack"`
 	Defense uint8  `db:"defense"`
 	Hp      uint8  `db:"hp"`

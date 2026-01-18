@@ -9,6 +9,7 @@ import (
 type Bot struct {
 	ID        string    `json:"id"`
 	Name      string    `json:"name"`
+	Slug      string    `json:"slug"`
 	Attack    int       `json:"attack"`
 	Defense   int       `json:"defense"`
 	Hp        int       `json:"hp"`
@@ -25,6 +26,7 @@ func BotFromDomain(bot *domain.Bot) *Bot {
 	return &Bot{
 		ID:        bot.ID.String(),
 		Name:      bot.Name,
+		Slug:      bot.Slug,
 		Attack:    int(bot.Attack),
 		Defense:   int(bot.Defense),
 		Hp:        int(bot.Hp),

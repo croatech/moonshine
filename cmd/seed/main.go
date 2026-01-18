@@ -485,9 +485,9 @@ func seedBots(db *sqlx.DB) error {
 	locationRepo := repository.NewLocationRepository(db)
 
 	var existingBotID uuid.UUID
-	err := db.QueryRow("SELECT id FROM bots WHERE name = $1 AND deleted_at IS NULL", "Крыса").Scan(&existingBotID)
+	err := db.QueryRow("SELECT id FROM bots WHERE slug = $1 AND deleted_at IS NULL", "rat").Scan(&existingBotID)
 	if err == nil {
-		log.Println("Bot 'Крыса' already exists, skipping")
+		log.Println("Bot 'rat' already exists, skipping")
 		cell29Location, err := locationRepo.FindBySlug("29cell")
 		if err != nil {
 			return fmt.Errorf("failed to find 29cell location: %w", err)
@@ -499,17 +499,18 @@ func seedBots(db *sqlx.DB) error {
 			cell29Location.ID, existingBotID,
 		).Scan(&existingLinkID)
 		if err == nil {
-			log.Println("Bot 'Крыса' already linked to 29cell, skipping")
+			log.Println("Bot 'rat' already linked to 29cell, skipping")
 			return nil
 		}
 	} else {
 		ratBot := &domain.Bot{
 			Name:    "Крыса",
-			Attack:  1,
-			Defense: 3,
+			Slug:    "rat",
+			Attack:  2,
+			Defense: 10,
 			Hp:      20,
 			Level:   1,
-			Avatar:  "images/bots/rat.jpg",
+			Avatar:  "images/bots/rat",
 		}
 
 		if err := botRepo.Create(ratBot); err != nil {
