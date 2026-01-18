@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"log"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -66,20 +65,17 @@ func getFieldNameFromSlot(slotName string) (string, error) {
 func (s *EquipmentItemTakeOffService) TakeOffEquipmentItem(ctx context.Context, userID uuid.UUID, slotName string) error {
 	tx, err := s.db.BeginTxx(ctx, nil)
 	if err != nil {
-		log.Printf("[EquipmentItemTakeOffService] Failed to begin transaction: %+v", err)
 		return err
 	}
 	defer tx.Rollback()
 
 	_, err = s.userRepo.FindByID(userID)
 	if err != nil {
-		log.Printf("[EquipmentItemTakeOffService] User not found: %+v", err)
 		return repository.ErrUserNotFound
 	}
 
 	fieldName, err := getFieldNameFromSlot(slotName)
 	if err != nil {
-		log.Printf("[EquipmentItemTakeOffService] Invalid slot name: %s", slotName)
 		return err
 	}
 
@@ -93,27 +89,22 @@ func (s *EquipmentItemTakeOffService) TakeOffEquipmentItem(ctx context.Context, 
 	err = tx.Get(&equippedItemIDStr, getItemQuery, userID)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			log.Printf("[EquipmentItemTakeOffService] User not found")
 			return repository.ErrUserNotFound
 		}
-		log.Printf("[EquipmentItemTakeOffService] Failed to get equipped item: %+v", err)
 		return err
 	}
 
 	if !equippedItemIDStr.Valid || equippedItemIDStr.String == "" {
-		log.Printf("[EquipmentItemTakeOffService] No item equipped in slot %s for user %s", slotName, userID)
 		return ErrNoItemEquipped
 	}
 
 	equippedItemID, err := uuid.Parse(equippedItemIDStr.String)
 	if err != nil {
-		log.Printf("[EquipmentItemTakeOffService] Invalid UUID format: %+v", err)
 		return err
 	}
 
 	item, err := s.equipmentItemRepo.FindByID(equippedItemID)
 	if err != nil {
-		log.Printf("[EquipmentItemTakeOffService] Failed to get equipment item: %+v", err)
 		return err
 	}
 
@@ -123,7 +114,6 @@ func (s *EquipmentItemTakeOffService) TakeOffEquipmentItem(ctx context.Context, 
 	`
 	_, err = tx.Exec(returnToInventoryQuery, uuid.New(), userID, equippedItemID)
 	if err != nil {
-		log.Printf("[EquipmentItemTakeOffService] Failed to return item to inventory: %+v", err)
 		return err
 	}
 
@@ -138,15 +128,12 @@ func (s *EquipmentItemTakeOffService) TakeOffEquipmentItem(ctx context.Context, 
 	`, fieldName)
 	_, err = tx.Exec(clearSlotQuery, userID, item.Attack, item.Defense, item.Hp)
 	if err != nil {
-		log.Printf("[EquipmentItemTakeOffService] Failed to clear equipment slot and update stats: %+v", err)
 		return err
 	}
 
 	if err := tx.Commit(); err != nil {
-		log.Printf("[EquipmentItemTakeOffService] Failed to commit transaction: %+v", err)
 		return err
 	}
 
-	log.Printf("[EquipmentItemTakeOffService] Successfully removed item %s from slot %s for user %s", equippedItemID, slotName, userID)
 	return nil
 }

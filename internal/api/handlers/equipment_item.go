@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -46,48 +45,39 @@ func NewEquipmentItemHandler(db *sqlx.DB) *EquipmentItemHandler {
 func (h *EquipmentItemHandler) GetEquipmentItems(c echo.Context) error {
 	category := c.QueryParam("category")
 	if category == "" {
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "category parameter is required"})
+		return ErrBadRequest(c, "category parameter is required")
 	}
 
-	log.Printf("[EquipmentItemHandler] Fetching items for category: %s", category)
 	items, err := h.equipmentItemService.GetByCategorySlug(c.Request().Context(), category)
 	if err != nil {
-		log.Printf("[EquipmentItemHandler] Error fetching items for category %s: %+v", category, err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return ErrInternalServerError(c)
 	}
 
-	log.Printf("[EquipmentItemHandler] Found %d items for category: %s", len(items), category)
 	return c.JSON(http.StatusOK, dto.EquipmentItemsFromDomain(items))
 }
 
 func (h *EquipmentItemHandler) BuyEquipmentItem(c echo.Context) error {
 	itemSlug := c.Param("slug")
 	if itemSlug == "" {
-		log.Printf("[EquipmentItemHandler] Bad Request: empty item slug")
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "item slug is required"})
+		return ErrBadRequest(c, "item slug is required")
 	}
 
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		log.Printf("[EquipmentItemHandler] Unauthorized: user ID not found in context: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
 
 	err = h.equipmentItemBuyService.BuyEquipmentItem(c.Request().Context(), userID, itemSlug)
 	if err != nil {
 		switch err {
 		case services.ErrEquipmentItemNotFound:
-			log.Printf("[EquipmentItemHandler] Not Found: equipment item with slug %s not found", itemSlug)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "equipment item not found"})
+			return ErrNotFound(c, "equipment item not found")
 		case services.ErrInsufficientGold:
-			log.Printf("[EquipmentItemHandler] Bad Request: insufficient gold for user %s to buy item %s", userID, itemSlug)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "insufficient gold"})
+			return ErrBadRequest(c, "insufficient gold")
 		case repository.ErrUserNotFound:
-			log.Printf("[EquipmentItemHandler] Not Found: user %s not found", userID)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+			return ErrNotFound(c, "user not found")
 		default:
-			log.Printf("[EquipmentItemHandler] Internal Server Error: failed to buy equipment item: %+v", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+			return ErrInternalServerError(c)
 		}
 	}
 
@@ -97,44 +87,35 @@ func (h *EquipmentItemHandler) BuyEquipmentItem(c echo.Context) error {
 func (h *EquipmentItemHandler) TakeOnEquipmentItem(c echo.Context) error {
 	itemSlug := c.Param("slug")
 	if itemSlug == "" {
-		log.Printf("[EquipmentItemHandler] Bad Request: empty item slug")
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "item slug is required"})
+		return ErrBadRequest(c, "item slug is required")
 	}
 
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		log.Printf("[EquipmentItemHandler] Unauthorized: user ID not found in context: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
 
 	equipmentItemRepo := repository.NewEquipmentItemRepository(h.db)
 	item, err := equipmentItemRepo.FindBySlug(itemSlug)
 	if err != nil {
-		log.Printf("[EquipmentItemHandler] Not Found: equipment item with slug %s not found", itemSlug)
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "equipment item not found"})
+		return ErrNotFound(c, "equipment item not found")
 	}
 
 	err = h.equipmentItemTakeOnService.TakeOnEquipmentItem(c.Request().Context(), userID, item.ID)
 	if err != nil {
 		switch err {
 		case services.ErrEquipmentItemNotFound:
-			log.Printf("[EquipmentItemHandler] Not Found: equipment item with slug %s not found", itemSlug)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "equipment item not found"})
+			return ErrNotFound(c, "equipment item not found")
 		case services.ErrItemNotInInventory:
-			log.Printf("[EquipmentItemHandler] Bad Request: item %s not in inventory for user %s", itemSlug, userID)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "item not in inventory"})
+			return ErrBadRequest(c, "item not in inventory")
 		case services.ErrInsufficientLevel:
-			log.Printf("[EquipmentItemHandler] Bad Request: insufficient level for user %s to equip item %s", userID, itemSlug)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "insufficient level"})
+			return ErrBadRequest(c, "insufficient level")
 		case services.ErrInvalidEquipmentType:
-			log.Printf("[EquipmentItemHandler] Bad Request: invalid equipment type for item %s", itemSlug)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid equipment type"})
+			return ErrBadRequest(c, "invalid equipment type")
 		case repository.ErrUserNotFound:
-			log.Printf("[EquipmentItemHandler] Not Found: user %s not found", userID)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+			return ErrNotFound(c, "user not found")
 		default:
-			log.Printf("[EquipmentItemHandler] Internal Server Error: failed to equip item: %+v", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+			return ErrInternalServerError(c)
 		}
 	}
 
@@ -144,31 +125,25 @@ func (h *EquipmentItemHandler) TakeOnEquipmentItem(c echo.Context) error {
 func (h *EquipmentItemHandler) TakeOffEquipmentItem(c echo.Context) error {
 	slotName := c.Param("slot")
 	if slotName == "" {
-		log.Printf("[EquipmentItemHandler] Bad Request: empty slot name")
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "slot name is required"})
+		return ErrBadRequest(c, "slot name is required")
 	}
 
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		log.Printf("[EquipmentItemHandler] Unauthorized: user ID not found in context: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
 
 	err = h.equipmentItemTakeOffService.TakeOffEquipmentItem(c.Request().Context(), userID, slotName)
 	if err != nil {
 		switch err {
 		case services.ErrNoItemEquipped:
-			log.Printf("[EquipmentItemHandler] Bad Request: no item in slot %s for user %s", slotName, userID)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "no item equipped in this slot"})
+			return ErrBadRequest(c, "no item equipped in this slot")
 		case services.ErrInvalidEquipmentType:
-			log.Printf("[EquipmentItemHandler] Bad Request: invalid slot name %s", slotName)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid slot name"})
+			return ErrBadRequest(c, "invalid slot name")
 		case repository.ErrUserNotFound:
-			log.Printf("[EquipmentItemHandler] Not Found: user %s not found", userID)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+			return ErrNotFound(c, "user not found")
 		default:
-			log.Printf("[EquipmentItemHandler] Internal Server Error: failed to take off item: %+v", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+			return ErrInternalServerError(c)
 		}
 	}
 
@@ -178,31 +153,25 @@ func (h *EquipmentItemHandler) TakeOffEquipmentItem(c echo.Context) error {
 func (h *EquipmentItemHandler) SellEquipmentItem(c echo.Context) error {
 	itemSlug := c.Param("slug")
 	if itemSlug == "" {
-		log.Printf("[EquipmentItemHandler] Bad Request: empty item slug")
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "item slug is required"})
+		return ErrBadRequest(c, "item slug is required")
 	}
 
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		log.Printf("[EquipmentItemHandler] Unauthorized: user ID not found in context: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
 
 	err = h.equipmentItemSellService.SellEquipmentItem(c.Request().Context(), userID, itemSlug)
 	if err != nil {
 		switch err {
 		case services.ErrItemNotOwned:
-			log.Printf("[EquipmentItemHandler] Bad Request: user %s does not own item %s", userID, itemSlug)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "item not owned"})
+			return ErrBadRequest(c, "item not owned")
 		case services.ErrEquipmentItemNotFound:
-			log.Printf("[EquipmentItemHandler] Not Found: equipment item %s not found", itemSlug)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "equipment item not found"})
+			return ErrNotFound(c, "equipment item not found")
 		case repository.ErrUserNotFound:
-			log.Printf("[EquipmentItemHandler] Not Found: user %s not found", userID)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+			return ErrNotFound(c, "user not found")
 		default:
-			log.Printf("[EquipmentItemHandler] Internal Server Error: failed to sell item: %+v", err)
-			return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+			return ErrInternalServerError(c)
 		}
 	}
 

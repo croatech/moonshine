@@ -32,19 +32,13 @@ type MoveToCellResponse struct {
 }
 
 type locationCell struct {
-	ID       string
-	Slug     string
-	Name     string
-	Image    string
-	Inactive bool
+	ID       string `json:"id"`
+	Slug     string `json:"slug"`
+	Name     string `json:"name"`
+	Image    string `json:"image"`
+	Inactive bool   `json:"inactive"`
 }
 
-var (
-	errLocationNotFound       = map[string]string{"error": "location not found"}
-	errLocationsNotConnected  = map[string]string{"error": "locations not connected"}
-	errLocationSlugIsRequired = map[string]string{"error": "location slug is required"}
-	errCellSlugIsRequired     = map[string]string{"error": "cell slug is required"}
-)
 
 func NewLocationHandler(db *sqlx.DB) *LocationHandler {
 	locationRepo := repository.NewLocationRepository(db)
@@ -67,23 +61,23 @@ func NewLocationHandler(db *sqlx.DB) *LocationHandler {
 func (h *LocationHandler) MoveToLocation(c echo.Context) error {
 	locationSlug := c.Param("slug")
 	if locationSlug == "" {
-		return c.JSON(http.StatusBadRequest, errLocationSlugIsRequired)
+		return ErrBadRequest(c, "location slug is required")
 	}
 
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, "")
+		return ErrUnauthorized(c)
 	}
 
 	err = h.locationService.MoveToLocation(c.Request().Context(), userID, locationSlug)
 	if err != nil {
 		switch err {
 		case services.ErrLocationNotConnected:
-			return c.JSON(http.StatusBadRequest, errLocationsNotConnected)
+			return ErrBadRequest(c, "locations not connected")
 		case repository.ErrLocationNotFound:
-			return c.JSON(http.StatusNotFound, errLocationNotFound)
+			return ErrNotFound(c, "location not found")
 		default:
-			return c.JSON(http.StatusInternalServerError, "")
+			return ErrInternalServerError(c)
 		}
 	}
 
@@ -93,19 +87,22 @@ func (h *LocationHandler) MoveToLocation(c echo.Context) error {
 func (h *LocationHandler) MoveToCell(c echo.Context) error {
 	cellSlug := c.Param("cell_slug")
 	if cellSlug == "" {
-		return c.JSON(http.StatusBadRequest, errCellSlugIsRequired)
+		return ErrBadRequest(c, "cell slug is required")
 	}
 
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
-	user, err := h.userRepo.FindByID(userID)
-
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, nil)
+		return ErrUnauthorized(c)
+	}
+
+	user, err := h.userRepo.FindByID(userID)
+	if err != nil {
+		return ErrNotFound(c, "user not found")
 	}
 
 	currentLocation, err := h.locationRepo.FindByID(user.LocationID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, errLocationNotFound)
+		return ErrNotFound(c, "location not found")
 	}
 
 	if currentLocation.Slug == cellSlug {
@@ -116,16 +113,16 @@ func (h *LocationHandler) MoveToCell(c echo.Context) error {
 	if err != nil {
 		switch err {
 		case services.ErrLocationNotConnected:
-			return c.JSON(http.StatusBadRequest, errLocationsNotConnected)
+			return ErrBadRequest(c, "locations not connected")
 		case repository.ErrLocationNotFound:
-			return c.JSON(http.StatusNotFound, errLocationNotFound)
+			return ErrNotFound(c, "location not found")
 		default:
-			return c.JSON(http.StatusInternalServerError, nil)
+			return ErrInternalServerError(c)
 		}
 	}
 
 	if err := h.locationService.StartCellMovement(userID, path); err != nil {
-		return c.JSON(http.StatusBadRequest, nil)
+		return ErrBadRequest(c, "")
 	}
 
 	return c.JSON(http.StatusOK, &MoveToCellResponse{
@@ -137,21 +134,21 @@ func (h *LocationHandler) MoveToCell(c echo.Context) error {
 func (h *LocationHandler) GetLocationCells(c echo.Context) error {
 	locationSlug := c.Param("slug")
 	if locationSlug == "" {
-		return c.JSON(http.StatusBadRequest, errLocationSlugIsRequired)
+		return ErrBadRequest(c, "location slug is required")
 	}
 
 	locationRepo := repository.NewLocationRepository(h.db)
 	location, err := locationRepo.FindBySlug(locationSlug)
 	if err != nil {
 		if errors.Is(err, repository.ErrLocationNotFound) {
-			return c.JSON(http.StatusNotFound, errLocationNotFound)
+			return ErrNotFound(c, "location not found")
 		}
-		return c.JSON(http.StatusInternalServerError, nil)
+		return ErrInternalServerError(c)
 	}
 
 	cells, err := locationRepo.FindCellsByLocationID(location.ID)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, nil)
+		return ErrInternalServerError(c)
 	}
 
 	cellsList := make([]locationCell, len(cells))

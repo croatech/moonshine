@@ -2,14 +2,12 @@ package domain
 
 type Location struct {
 	Model
-	Name     string  `json:"name" db:"name"`
-	Slug     string  `json:"slug" db:"slug"`
-	Cell     bool    `json:"cell" db:"cell"`
-	Inactive bool    `json:"inactive" db:"inactive"`
-	Image    string  `json:"image" db:"image"`
-	ImageBg  string  `json:"image_bg" db:"image_bg"`
-	Users    []*User `json:"users,omitempty"`
-	Bots     []*Bot  `json:"bots,omitempty"`
+	Name     string `db:"name"`
+	Slug     string `db:"slug"`
+	Cell     bool   `db:"cell"`
+	Inactive bool   `db:"inactive"`
+	Image    string `db:"image"`
+	ImageBg  string `db:"image_bg"`
 }
 
 const (

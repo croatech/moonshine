@@ -1,7 +1,6 @@
 package api
 
 import (
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -67,10 +66,8 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 
 	if assetsPath != "" {
 		e.Static("/assets", assetsPath)
-		log.Printf("[Static Assets] Serving /assets from: %s", assetsPath)
 	} else {
 		e.Static("/assets", "frontend/assets")
-		log.Printf("[Static Assets] Using default relative path: frontend/assets")
 	}
 
 	e.Validator = NewValidator()

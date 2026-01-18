@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"log"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -35,19 +34,12 @@ func (r *EquipmentItemRepository) FindByCategorySlug(slug string) ([]*domain.Equ
 		ORDER BY ei.required_level ASC
 	`
 
-	log.Printf("[EquipmentItemRepository] Querying items for category type: %s", slug)
 	var items []*domain.EquipmentItem
 	err := r.db.Select(&items, query, slug)
 	if err != nil {
-		log.Printf("[EquipmentItemRepository] Error querying items for category %s: %+v", slug, err)
 		return nil, err
 	}
 
-	for i, item := range items {
-		log.Printf("[EquipmentItemRepository] Item %d: name=%s, slug=%s", i, item.Name, item.Slug)
-	}
-
-	log.Printf("[EquipmentItemRepository] Found %d items for category: %s", len(items), slug)
 	return items, nil
 }
 

@@ -83,18 +83,15 @@ func seedAvatars(db *sqlx.DB) {
 
 	avatarsDir := "frontend/assets/images/players/avatars"
 	if _, err := os.Stat(avatarsDir); os.IsNotExist(err) {
-		log.Printf("Avatars directory not found: %s, skipping avatars", avatarsDir)
 		return
 	}
 
 	files, err := filepath.Glob(filepath.Join(avatarsDir, "*.png"))
 	if err != nil {
-		log.Printf("Failed to read avatars directory: %v, skipping avatars", err)
 		return
 	}
 
 	if len(files) == 0 {
-		log.Println("No PNG avatar files found, skipping avatars")
 		return
 	}
 
@@ -106,7 +103,6 @@ func seedAvatars(db *sqlx.DB) {
 
 		_, err := avatarRepo.FindByImage(imagePath)
 		if err == nil {
-			log.Printf("Avatar %s already exists, skipping", imagePath)
 			continue
 		}
 
@@ -116,7 +112,6 @@ func seedAvatars(db *sqlx.DB) {
 		}
 
 		if err := avatarRepo.Create(avatar); err != nil {
-			log.Printf("Failed to create avatar %s: %v", imagePath, err)
 			continue
 		}
 
@@ -154,10 +149,8 @@ func seedUsers(db *sqlx.DB) {
 		imagePath := filepath.Join("players/avatars", filename)
 		firstAvatar, err = avatarRepo.FindByImage(imagePath)
 		if err != nil {
-			log.Printf("No avatars found, creating user without avatar")
 		}
 	} else {
-		log.Printf("No avatars found, creating user without avatar")
 	}
 
 	moonshineLocation, err := locationRepo.FindStartLocation()
@@ -203,12 +196,9 @@ func seedLocations(db *sqlx.DB) error {
 
 	moonshineLocation, err := locationRepo.FindStartLocation()
 	if err == nil && moonshineLocation != nil {
-		log.Println("Locations already exist, updating cell values...")
 		if _, err := db.Exec("UPDATE locations SET cell = false WHERE slug IN ('moonshine', 'craft_shop', 'shop_of_artifacts', 'weapon_shop')"); err != nil {
-			log.Printf("Failed to update city and shops cell values: %v", err)
 		}
 		if _, err := db.Exec("UPDATE locations SET cell = true WHERE slug LIKE '%cell'"); err != nil {
-			log.Printf("Failed to update cells cell values: %v", err)
 		}
 		return nil
 	}
@@ -226,7 +216,6 @@ func seedLocations(db *sqlx.DB) error {
 		return fmt.Errorf("failed to create Moonshine location: %w", err)
 	}
 
-	log.Printf("Created Moonshine location: %s", moonshineLocation.ID)
 
 	shops := []struct {
 		name string
@@ -274,7 +263,6 @@ func seedLocations(db *sqlx.DB) error {
 			return fmt.Errorf("failed to create reverse location connection for %s: %w", shop.slug, err)
 		}
 
-		log.Printf("Created shop location: %s (%s)", shop.slug, shopLocation.ID)
 	}
 
 	waywardPinesLocation := &domain.Location{
@@ -302,7 +290,6 @@ func seedLocations(db *sqlx.DB) error {
 		return fmt.Errorf("failed to create reverse location connection for wayward_pines: %w", err)
 	}
 
-	log.Printf("Created wayward_pines location: %s", waywardPinesLocation.ID)
 
 	internalLocations := map[string]uuid.UUID{
 		"moonshine":         moonshineLocation.ID,
@@ -349,7 +336,6 @@ func seedLocations(db *sqlx.DB) error {
 		}
 	}
 
-	log.Println("Created connections between all internal city locations")
 
 	cellsDir := "frontend/assets/images/locations/wayward_pines/cells"
 	files, err := filepath.Glob(filepath.Join(cellsDir, "*.png"))
@@ -392,7 +378,6 @@ func seedLocations(db *sqlx.DB) error {
 		cellLocations[cellNum] = cellLocation.ID
 	}
 
-	log.Printf("Created %d cell locations", len(cellLocations))
 
 	for cellNum := 1; cellNum <= 64; cellNum++ {
 		cellID := cellLocations[cellNum]
@@ -401,7 +386,6 @@ func seedLocations(db *sqlx.DB) error {
 
 		neighbors := []int{}
 
-		// Horizontal and vertical connections
 		if col > 0 {
 			neighbors = append(neighbors, cellNum-1)
 		}
@@ -415,7 +399,6 @@ func seedLocations(db *sqlx.DB) error {
 			neighbors = append(neighbors, cellNum+8)
 		}
 
-		// Diagonal connections
 		if row > 0 && col > 0 {
 			neighbors = append(neighbors, cellNum-9)
 		}
@@ -462,7 +445,6 @@ func seedLocations(db *sqlx.DB) error {
 		}
 	}
 
-	log.Println("Created all cell connections")
 
 	moonshineLocation, err = locationRepo.FindBySlug("moonshine")
 	if err != nil {
@@ -492,7 +474,6 @@ func seedLocations(db *sqlx.DB) error {
 		return fmt.Errorf("failed to create connection moonshine -> 37cell: %w", err)
 	}
 
-	log.Println("Created connections between moonshine and cells 29, 37")
 
 	return nil
 }
@@ -503,12 +484,10 @@ func seedBots(db *sqlx.DB) error {
 	botRepo := repository.NewBotRepository(db)
 	locationRepo := repository.NewLocationRepository(db)
 
-	// Проверяем, существует ли уже Крыса
 	var existingBotID uuid.UUID
 	err := db.QueryRow("SELECT id FROM bots WHERE name = $1 AND deleted_at IS NULL", "Крыса").Scan(&existingBotID)
 	if err == nil {
 		log.Println("Bot 'Крыса' already exists, skipping")
-		// Проверяем связь с локацией
 		cell29Location, err := locationRepo.FindBySlug("29cell")
 		if err != nil {
 			return fmt.Errorf("failed to find 29cell location: %w", err)
@@ -524,7 +503,6 @@ func seedBots(db *sqlx.DB) error {
 			return nil
 		}
 	} else {
-		// Создаем Крысу
 		ratBot := &domain.Bot{
 			Name:    "Крыса",
 			Attack:  1,
@@ -542,13 +520,11 @@ func seedBots(db *sqlx.DB) error {
 		existingBotID = ratBot.ID
 	}
 
-	// Связываем с начальной локацией (29cell)
 	cell29Location, err := locationRepo.FindBySlug("29cell")
 	if err != nil {
 		return fmt.Errorf("failed to find 29cell location: %w", err)
 	}
 
-	// Проверяем, существует ли уже связь
 	var existingLinkID uuid.UUID
 	err = db.QueryRow(
 		"SELECT id FROM location_bots WHERE location_id = $1 AND bot_id = $2 AND deleted_at IS NULL",
@@ -556,7 +532,6 @@ func seedBots(db *sqlx.DB) error {
 	).Scan(&existingLinkID)
 
 	if err != nil {
-		// Связь не существует, создаем
 		linkID := uuid.New()
 		linkQuery := `INSERT INTO location_bots (id, location_id, bot_id) VALUES ($1, $2, $3)`
 		if _, err := db.Exec(linkQuery, linkID, cell29Location.ID, existingBotID); err != nil {
@@ -603,7 +578,6 @@ func seedEquipmentCategories(db *sqlx.DB) {
 			log.Printf("Failed to create equipment category %s: %v", cat.name, err)
 			continue
 		}
-
 		log.Printf("Created equipment category: %s (%s)", cat.name, cat.typ)
 	}
 
@@ -680,7 +654,6 @@ func seedEquipmentItems(db *sqlx.DB) error {
 		}
 
 		if !parseEquipmentFileName(fileName, &fileInfo) {
-			log.Printf("Failed to parse equipment file name: %s, skipping", fileName)
 			return nil
 		}
 
@@ -710,7 +683,6 @@ func seedEquipmentItems(db *sqlx.DB) error {
 	for _, file := range allFiles {
 		catID := categoryIDs[file.categoryType]
 		if catID == uuid.Nil {
-			log.Printf("Category %s not found, skipping item %s", file.categoryType, filepath.Base(file.path))
 			continue
 		}
 
@@ -720,7 +692,6 @@ func seedEquipmentItems(db *sqlx.DB) error {
 		var existingID uuid.UUID
 		err := db.QueryRow("SELECT id FROM equipment_items WHERE image = $1", dbImagePath).Scan(&existingID)
 		if err == nil {
-			log.Printf("Equipment item %s already exists, skipping", dbImagePath)
 			continue
 		}
 

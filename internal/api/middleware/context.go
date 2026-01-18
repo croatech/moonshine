@@ -13,7 +13,6 @@ const userIDKey contextKey = "userID"
 
 var errUnauthorized = errors.New("unauthorized")
 
-// GetUserIDFromContext extracts user ID from context
 func GetUserIDFromContext(ctx context.Context) (uuid.UUID, error) {
 	v := ctx.Value(userIDKey)
 	if v == nil {

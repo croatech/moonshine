@@ -2,7 +2,6 @@ package worker
 
 import (
 	"context"
-	"log"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -32,7 +31,6 @@ func (w *HpWorker) StartWorker(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Println("health regeneration worker stopped")
 			return
 		case <-w.ticker.C:
 			w.regenerateHp()
@@ -42,6 +40,5 @@ func (w *HpWorker) StartWorker(ctx context.Context) {
 
 func (w *HpWorker) regenerateHp() {
 	if err := w.healthRegenerationService.RegenerateAllUsers(1.0); err != nil {
-		log.Printf("[HpWorker] Error regenerating health: %v", err)
 	}
 }

@@ -3,7 +3,6 @@ package repository
 import (
 	"database/sql"
 	"errors"
-	"log"
 
 	"moonshine/internal/domain"
 
@@ -62,15 +61,12 @@ func (r *UserEquipmentItemRepository) FindByUserID(userID uuid.UUID) ([]*domain.
 		ORDER BY ei.name ASC
 	`
 
-	log.Printf("[UserEquipmentItemRepository] Querying inventory for user: %s", userID)
 	var items []*domain.EquipmentItem
 
 	err := r.db.Select(&items, query, userID)
 	if err != nil {
-		log.Printf("[UserEquipmentItemRepository] Error querying inventory for user %s: %+v", userID, err)
 		return nil, err
 	}
 
-	log.Printf("[UserEquipmentItemRepository] Found %d items in inventory for user: %s", len(items), userID)
 	return items, nil
 }

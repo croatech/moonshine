@@ -36,10 +36,10 @@ func (r *BotRepository) Create(bot *domain.Bot) error {
 
 func (r *BotRepository) FindBotsByLocationID(locationID uuid.UUID) ([]*domain.Bot, error) {
 	query := `
-		SELECT id, name, level
+		SELECT b.id, b.created_at, b.deleted_at, b.name, b.attack, b.defense, b.hp, b.level, b.avatar
 		FROM bots b
 		INNER JOIN location_bots lb ON lb.bot_id = b.id
-		WHERE lb.location_id = $1 AND lb.deleted_at IS NULL
+		WHERE lb.location_id = $1 AND b.deleted_at IS NULL AND lb.deleted_at IS NULL
 	`
 
 	var bots []*domain.Bot

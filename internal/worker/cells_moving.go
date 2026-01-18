@@ -3,7 +3,6 @@ package worker
 import (
 	"context"
 	"database/sql"
-	"log"
 	"sync"
 	"time"
 
@@ -71,7 +70,6 @@ func (w *CellsMovingWorker) StartMovement(userID uuid.UUID, cellSlugs []string) 
 			w.mu.Unlock()
 
 			if err := w.movementRepo.UpdateStatus(movement.ID, domain.MovementStatusFinished); err != nil {
-				log.Printf("Error updating movement status: %v", err)
 			}
 		}()
 
@@ -80,7 +78,6 @@ func (w *CellsMovingWorker) StartMovement(userID uuid.UUID, cellSlugs []string) 
 
 		user, err := w.userRepo.FindByID(userID)
 		if err != nil {
-			log.Printf("Error finding user: %v", err)
 			return
 		}
 
@@ -102,12 +99,10 @@ func (w *CellsMovingWorker) StartMovement(userID uuid.UUID, cellSlugs []string) 
 					ToCellID:   location.ID,
 				}
 				if err := w.movementRepo.CreateMovementCell(cell); err != nil {
-					log.Printf("Error creating movement cell: %v", err)
 				}
 
 				err := w.userRepo.UpdateLocationID(userID, location.ID)
 				if err != nil {
-					log.Printf("Error updating user %s location: %v", userID, err)
 					return
 				}
 

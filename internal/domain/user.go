@@ -4,44 +4,38 @@ import "github.com/google/uuid"
 
 type User struct {
 	Model
-	Attack                uint        `json:"attack" db:"attack"`
-	Avatar                *Avatar     `json:"avatar,omitempty"`
-	AvatarID              *uuid.UUID  `json:"avatar_id" db:"avatar_id"`
-	CurrentHp             uint        `json:"current_hp" db:"current_hp"`
-	Defense               uint        `json:"defense" db:"defense"`
-	Email                 string      `json:"email" db:"email"`
-	Events                []*Event    `json:"events,omitempty"`
-	Exp                   uint        `json:"exp" db:"exp"`
-	Fights                []*Fight    `json:"fights,omitempty"`
-	FishingSkill          uint        `json:"fishing_skill" db:"fishing_skill"`
-	FishingSlot           uint        `json:"fishing_slot" db:"fishing_slot"`
-	FreeStats             uint        `json:"free_stats" db:"free_stats"`
-	Gold                  uint        `json:"gold" db:"gold"`
-	Hp                    uint        `json:"hp" db:"hp"`
-	Level                 uint        `json:"level" db:"level"`
-	Location              *Location   `json:"location,omitempty"`
-	LocationID            uuid.UUID   `json:"location_id" db:"location_id"`
-	LumberjackingSkill    uint        `json:"lumberjacking_skill" db:"lumberjacking_skill"`
-	LumberjackingSlot     uint        `json:"lumberjacking_slot" db:"lumberjacking_slot"`
-	Messages              []*Message  `json:"messages,omitempty"`
-	Movements             []*Movement `json:"movements,omitempty"`
-	Name                  string      `json:"name" db:"name"`
-	Password              string      `json:"-" db:"password"`
-	Username              string      `json:"username" db:"username"`
-	ChestEquipmentItemID  *uuid.UUID  `json:"chest_equipment_item_id" db:"chest_equipment_item_id"`
-	BeltEquipmentItemID   *uuid.UUID  `json:"belt_equipment_item_id" db:"belt_equipment_item_id"`
-	HeadEquipmentItemID   *uuid.UUID  `json:"head_equipment_item_id" db:"head_equipment_item_id"`
-	NeckEquipmentItemID   *uuid.UUID  `json:"neck_equipment_item_id" db:"neck_equipment_item_id"`
-	WeaponEquipmentItemID *uuid.UUID  `json:"weapon_equipment_item_id" db:"weapon_equipment_item_id"`
-	ShieldEquipmentItemID *uuid.UUID  `json:"shield_equipment_item_id" db:"shield_equipment_item_id"`
-	LegsEquipmentItemID   *uuid.UUID  `json:"legs_equipment_item_id" db:"legs_equipment_item_id"`
-	FeetEquipmentItemID   *uuid.UUID  `json:"feet_equipment_item_id" db:"feet_equipment_item_id"`
-	ArmsEquipmentItemID   *uuid.UUID  `json:"arms_equipment_item_id" db:"arms_equipment_item_id"`
-	HandsEquipmentItemID  *uuid.UUID  `json:"hands_equipment_item_id" db:"hands_equipment_item_id"`
-	Ring1EquipmentItemID  *uuid.UUID  `json:"ring1_equipment_item_id" db:"ring1_equipment_item_id"`
-	Ring2EquipmentItemID  *uuid.UUID  `json:"ring2_equipment_item_id" db:"ring2_equipment_item_id"`
-	Ring3EquipmentItemID  *uuid.UUID  `json:"ring3_equipment_item_id" db:"ring3_equipment_item_id"`
-	Ring4EquipmentItemID  *uuid.UUID  `json:"ring4_equipment_item_id" db:"ring4_equipment_item_id"`
+	Attack                uint       `db:"attack"`
+	AvatarID              *uuid.UUID `db:"avatar_id"`
+	CurrentHp             uint       `db:"current_hp"`
+	Defense               uint       `db:"defense"`
+	Email                 string     `db:"email"`
+	Exp                   uint       `db:"exp"`
+	FishingSkill          uint       `db:"fishing_skill"`
+	FishingSlot           uint       `db:"fishing_slot"`
+	FreeStats             uint       `db:"free_stats"`
+	Gold                  uint       `db:"gold"`
+	Hp                    uint       `db:"hp"`
+	Level                 uint       `db:"level"`
+	LocationID            uuid.UUID  `db:"location_id"`
+	LumberjackingSkill    uint       `db:"lumberjacking_skill"`
+	LumberjackingSlot     uint       `db:"lumberjacking_slot"`
+	Name                  string     `db:"name"`
+	Password              string     `db:"password"`
+	Username              string     `db:"username"`
+	ChestEquipmentItemID  *uuid.UUID `db:"chest_equipment_item_id"`
+	BeltEquipmentItemID   *uuid.UUID `db:"belt_equipment_item_id"`
+	HeadEquipmentItemID   *uuid.UUID `db:"head_equipment_item_id"`
+	NeckEquipmentItemID   *uuid.UUID `db:"neck_equipment_item_id"`
+	WeaponEquipmentItemID *uuid.UUID `db:"weapon_equipment_item_id"`
+	ShieldEquipmentItemID *uuid.UUID `db:"shield_equipment_item_id"`
+	LegsEquipmentItemID   *uuid.UUID `db:"legs_equipment_item_id"`
+	FeetEquipmentItemID   *uuid.UUID `db:"feet_equipment_item_id"`
+	ArmsEquipmentItemID   *uuid.UUID `db:"arms_equipment_item_id"`
+	HandsEquipmentItemID  *uuid.UUID `db:"hands_equipment_item_id"`
+	Ring1EquipmentItemID  *uuid.UUID `db:"ring1_equipment_item_id"`
+	Ring2EquipmentItemID  *uuid.UUID `db:"ring2_equipment_item_id"`
+	Ring3EquipmentItemID  *uuid.UUID `db:"ring3_equipment_item_id"`
+	Ring4EquipmentItemID  *uuid.UUID `db:"ring4_equipment_item_id"`
 }
 
 var levelMatrix = map[uint]uint{

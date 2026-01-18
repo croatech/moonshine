@@ -1,7 +1,6 @@
 package services
 
 import (
-	"log"
 	"sync"
 
 	"moonshine/internal/repository"
@@ -43,7 +42,6 @@ func NewLocationGraph(locationRepo *repository.LocationRepository) (*LocationGra
 		graph.adjacency[conn.NearLocationID] = append(graph.adjacency[conn.NearLocationID], conn.LocationID)
 	}
 
-	log.Printf("[LocationGraph] Loaded %d locations and %d connections", len(locations), len(connections))
 	return graph, nil
 }
 

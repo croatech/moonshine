@@ -6,7 +6,6 @@ import (
 	"moonshine/internal/domain"
 )
 
-// EquipmentItem represents an EquipmentItem in REST API response
 type EquipmentItem struct {
 	ID            string    `json:"id"`
 	Name          string    `json:"name"`
@@ -21,7 +20,6 @@ type EquipmentItem struct {
 	CreatedAt     time.Time `json:"createdAt"`
 }
 
-// EquipmentItemFromDomain converts domain.EquipmentItem to REST API EquipmentItem DTO
 func EquipmentItemFromDomain(item *domain.EquipmentItem) *EquipmentItem {
 	if item == nil {
 		return nil
@@ -42,7 +40,6 @@ func EquipmentItemFromDomain(item *domain.EquipmentItem) *EquipmentItem {
 	}
 }
 
-// EquipmentItemsFromDomain converts slice of domain.EquipmentItem to slice of REST API EquipmentItem DTO
 func EquipmentItemsFromDomain(items []*domain.EquipmentItem) []*EquipmentItem {
 	result := make([]*EquipmentItem, len(items))
 	for i, item := range items {

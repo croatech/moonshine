@@ -6,7 +6,6 @@ import (
 	"moonshine/internal/domain"
 )
 
-// User represents a User in REST API response
 type User struct {
 	ID                    string    `json:"id"`
 	Username              string    `json:"username"`
@@ -38,15 +37,13 @@ type User struct {
 	LocationSlug          *string   `json:"locationSlug,omitempty"`
 }
 
-// Avatar represents an Avatar in REST API response
 type Avatar struct {
 	ID      string `json:"id"`
 	Image   string `json:"image"`
 	Private bool   `json:"private"`
 }
 
-// UserFromDomain converts domain.User to REST API User DTO
-func UserFromDomain(user *domain.User) *User {
+func UserFromDomain(user *domain.User, avatar *domain.Avatar, location *domain.Location) *User {
 	if user == nil {
 		return nil
 	}
@@ -66,11 +63,11 @@ func UserFromDomain(user *domain.User) *User {
 		CreatedAt: user.CreatedAt,
 	}
 
-	if user.Avatar != nil {
+	if avatar != nil {
 		result.Avatar = &Avatar{
-			ID:      user.Avatar.ID.String(),
-			Image:   user.Avatar.Image,
-			Private: user.Avatar.Private,
+			ID:      avatar.ID.String(),
+			Image:   avatar.Image,
+			Private: avatar.Private,
 		}
 	}
 
@@ -131,19 +128,17 @@ func UserFromDomain(user *domain.User) *User {
 		result.Ring4EquipmentItemID = &id
 	}
 
-	if user.Location != nil && user.Location.Slug != "" {
-		result.LocationSlug = &user.Location.Slug
+	if location != nil && location.Slug != "" {
+		result.LocationSlug = &location.Slug
 	}
 
 	return result
 }
 
-// UpdateUserRequest represents a request to update user
 type UpdateUserRequest struct {
 	AvatarID *string `json:"avatarId,omitempty"`
 }
 
-// AvatarFromDomain converts domain.Avatar to REST API Avatar DTO
 func AvatarFromDomain(avatar *domain.Avatar) *Avatar {
 	if avatar == nil {
 		return nil
@@ -155,7 +150,6 @@ func AvatarFromDomain(avatar *domain.Avatar) *Avatar {
 	}
 }
 
-// AvatarsFromDomain converts slice of domain.Avatar to slice of REST API Avatar DTO
 func AvatarsFromDomain(avatars []*domain.Avatar) []*Avatar {
 	result := make([]*Avatar, len(avatars))
 	for i, avatar := range avatars {

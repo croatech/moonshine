@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -39,52 +38,44 @@ func NewUserHandler(db *sqlx.DB) *UserHandler {
 func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
 
-	user, err := h.userService.GetCurrentUser(c.Request().Context(), userID)
+	user, avatar, location, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+			return ErrNotFound(c, "user not found")
 		}
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return ErrInternalServerError(c)
 	}
 
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user))
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location))
 }
 
 func (h *UserHandler) GetUserInventory(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		log.Printf("[UserHandler] Unauthorized: user ID not found in context: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
 
-	log.Printf("[UserHandler] Fetching inventory for user ID: %s", userID)
 	items, err := h.inventoryService.GetUserInventory(c.Request().Context(), userID)
 	if err != nil {
-		log.Printf("[UserHandler] Error fetching inventory: %+v", err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return ErrInternalServerError(c)
 	}
 
-	log.Printf("[UserHandler] Found %d items in inventory for user: %s", len(items), userID)
 	return c.JSON(http.StatusOK, dto.EquipmentItemsFromDomain(items))
 }
 
 func (h *UserHandler) GetUserEquippedItems(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		log.Printf("[UserHandler] Unauthorized: user ID not found in context: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
-
-	log.Printf("[UserHandler] Fetching equipped items for user ID: %s", userID)
 
 	userRepo := repository.NewUserRepository(h.db)
 	user, err := userRepo.FindByID(userID)
 	if err != nil {
-		log.Printf("[UserHandler] User not found: %+v", err)
-		return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+		return ErrNotFound(c, "user not found")
 	}
 
 	itemIDs := make(map[string]*string)
@@ -152,41 +143,35 @@ func (h *UserHandler) GetUserEquippedItems(c echo.Context) error {
 		if itemIDPtr != nil {
 			itemID, err := uuid.Parse(*itemIDPtr)
 			if err != nil {
-				log.Printf("[UserHandler] Invalid item ID for slot %s: %v", slot, err)
 				continue
 			}
 			item, err := equipmentItemRepo.FindByID(itemID)
 			if err != nil {
-				log.Printf("[UserHandler] Item not found for slot %s: %v", slot, err)
 				continue
 			}
 			equippedItems[slot] = dto.EquipmentItemFromDomain(item)
 		}
 	}
 
-	log.Printf("[UserHandler] Found %d equipped items for user: %s", len(equippedItems), userID)
 	return c.JSON(http.StatusOK, equippedItems)
 }
 
 func (h *UserHandler) UpdateCurrentUser(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
-		log.Printf("[UserHandler] Unauthorized: user ID not found in context: %v", err)
-		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
+		return ErrUnauthorized(c)
 	}
 
 	var req dto.UpdateUserRequest
 	if err := c.Bind(&req); err != nil {
-		log.Printf("[UserHandler] Bad Request: failed to bind request: %v", err)
-		return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid request"})
+		return ErrBadRequest(c, "invalid request")
 	}
 
 	var avatarID *uuid.UUID
 	if req.AvatarID != nil {
 		parsedID, err := uuid.Parse(*req.AvatarID)
 		if err != nil {
-			log.Printf("[UserHandler] Bad Request: invalid avatar ID: %v", err)
-			return c.JSON(http.StatusBadRequest, map[string]string{"error": "invalid avatar ID"})
+			return ErrBadRequest(c, "invalid avatar ID")
 		}
 		avatarID = &parsedID
 	}
@@ -194,17 +179,18 @@ func (h *UserHandler) UpdateCurrentUser(c echo.Context) error {
 	user, err := h.userService.UpdateUser(c.Request().Context(), userID, avatarID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
-			log.Printf("[UserHandler] Not Found: user %s not found", userID)
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "user not found"})
+			return ErrNotFound(c, "user not found")
 		}
 		if err == repository.ErrAvatarNotFound {
-			log.Printf("[UserHandler] Not Found: avatar not found")
-			return c.JSON(http.StatusNotFound, map[string]string{"error": "avatar not found"})
+			return ErrNotFound(c, "avatar not found")
 		}
-		log.Printf("[UserHandler] Internal Server Error: failed to update user: %+v", err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return ErrInternalServerError(c)
 	}
 
-	log.Printf("[UserHandler] Successfully updated user %s", userID)
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user))
+	user, avatar, location, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
+	if err != nil {
+		return ErrInternalServerError(c)
+	}
+
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location))
 }

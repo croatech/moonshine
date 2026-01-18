@@ -20,7 +20,6 @@ import (
 
 func main() {
 	if err := godotenv.Load(); err != nil {
-		log.Println(".env not loaded, relying on environment")
 	}
 
 	cfg := config.Load()
@@ -42,7 +41,6 @@ func main() {
 	defer stop()
 
 	go func() {
-		log.Printf("http server starting on %s", cfg.HTTPAddr)
 		if err := e.Start(cfg.HTTPAddr); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("server failed: %v", err)
 		}
@@ -52,7 +50,6 @@ func main() {
 	go hpWorker.StartWorker(ctx)
 
 	<-ctx.Done()
-	log.Println("shutting down gracefully...")
 
 	shutdownCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()

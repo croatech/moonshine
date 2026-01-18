@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"log"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
@@ -26,14 +25,11 @@ func NewAvatarHandler(db *sqlx.DB) *AvatarHandler {
 }
 
 func (h *AvatarHandler) GetAllAvatars(c echo.Context) error {
-	log.Printf("[AvatarHandler] Fetching all avatars")
 	avatars, err := h.avatarService.GetAllAvatars(c.Request().Context())
 	if err != nil {
-		log.Printf("[AvatarHandler] Error fetching avatars: %+v", err)
-		return c.JSON(http.StatusInternalServerError, map[string]string{"error": "internal server error"})
+		return ErrInternalServerError(c)
 	}
 
-	log.Printf("[AvatarHandler] Found %d avatars", len(avatars))
 	return c.JSON(http.StatusOK, dto.AvatarsFromDomain(avatars))
 }
 

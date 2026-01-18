@@ -3,7 +3,6 @@ package api
 import (
 	"bytes"
 	"io"
-	"log"
 
 	"github.com/labstack/echo/v4"
 )
@@ -17,7 +16,6 @@ func cacheRequestBody() echo.MiddlewareFunc {
 					c.Request().Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 					c.Set("body", bodyBytes)
 					if len(bodyBytes) > 0 {
-						log.Printf("[GraphQL Request Body] %s", string(bodyBytes))
 					}
 				}
 			}

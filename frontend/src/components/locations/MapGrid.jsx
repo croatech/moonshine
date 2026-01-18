@@ -71,6 +71,9 @@ export default function MapGrid({ locationSlug }) {
   const totalCells = gridSize * gridSize
   const cellMap = new Map()
   cells.forEach((cell) => {
+    if (!cell || !cell.slug) {
+      return
+    }
     const match = cell.slug.match(/^(\d+)cell$/)
     if (match) {
       const cellNum = parseInt(match[1], 10)

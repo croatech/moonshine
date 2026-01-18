@@ -106,13 +106,6 @@ func (r *UserRepository) FindByUsername(username string) (*domain.User, error) {
 		return nil, err
 	}
 
-	if user.AvatarID != nil {
-		avatar, err := r.avatarRepo.FindByID(*user.AvatarID)
-		if err == nil && avatar != nil {
-			user.Avatar = avatar
-		}
-	}
-
 	return user, nil
 }
 

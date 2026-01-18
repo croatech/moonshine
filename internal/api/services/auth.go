@@ -4,7 +4,6 @@ import (
 	"context"
 	"database/sql"
 	"errors"
-	"log"
 	"os"
 	"time"
 
@@ -56,13 +55,11 @@ func (s *AuthService) SignUp(ctx context.Context, input SignUpInput) (*domain.Us
 
 	hashedPassword, err := util.HashPassword(input.Password)
 	if err != nil {
-		log.Printf("[SignUp ERROR] Failed to hash password - Full error: %+v, Type: %T", err, err)
 		return nil, "", ErrInternalError
 	}
 
 	location, err := s.locationRepo.FindStartLocation()
 	if err != nil {
-		log.Printf("[SignUp ERROR] Failed to find start location - Full error: %+v, Type: %T", err, err)
 		return nil, "", ErrInternalError
 	}
 
@@ -91,16 +88,13 @@ func (s *AuthService) SignUp(ctx context.Context, input SignUpInput) (*domain.Us
 
 	if err := s.userRepo.Create(user); err != nil {
 		if errors.Is(err, repository.ErrUserExists) {
-			log.Printf("[SignUp] User already exists: %s", input.Username)
 			return nil, "", ErrUserAlreadyExists
 		}
-		log.Printf("[SignUp ERROR] Failed to create user - Full error: %+v, Type: %T, Username: %s", err, err, input.Username)
 		return nil, "", ErrInternalError
 	}
 
 	token, err := s.generateJWTToken(user.ID)
 	if err != nil {
-		log.Printf("[SignUp ERROR] Failed to generate JWT token - Full error: %+v, Type: %T, UserID: %s", err, err, user.ID)
 		return nil, "", ErrInternalError
 	}
 
@@ -115,26 +109,21 @@ func (s *AuthService) SignIn(ctx context.Context, input SignInInput) (*domain.Us
 	user, err := s.userRepo.FindByUsername(input.Username)
 	if err != nil {
 		if errors.Is(err, repository.ErrUserNotFound) || errors.Is(err, sql.ErrNoRows) {
-			log.Printf("[SignIn] User not found: %s", input.Username)
 			return nil, "", ErrInvalidCredentials
 		}
-		log.Printf("[SignIn ERROR] Failed to find user by username - Full error: %+v, Type: %T, Username: %s", err, err, input.Username)
 		return nil, "", ErrInternalError
 	}
 
 	if len(user.Password) == 0 {
-		log.Printf("[SignIn ERROR] Password not found for user - Username: %s, UserID: %s", user.Username, user.ID)
 		return nil, "", ErrInternalError
 	}
 
 	if err := util.CheckPassword(user.Password, input.Password); err != nil {
-		log.Printf("[SignIn] Invalid password for user: %s, Error: %v, Hash length: %d", input.Username, err, len(user.Password))
 		return nil, "", ErrInvalidCredentials
 	}
 
 	token, err := s.generateJWTToken(user.ID)
 	if err != nil {
-		log.Printf("[SignIn ERROR] Failed to generate JWT token - Full error: %+v, Type: %T, UserID: %s", err, err, user.ID)
 		return nil, "", ErrInternalError
 	}
 
