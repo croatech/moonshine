@@ -37,11 +37,24 @@ type SignInRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
+// AuthResponse represents authentication response
 type AuthResponse struct {
 	Token string    `json:"token"`
 	User  *dto.User `json:"user"`
 }
 
+// SignUp godoc
+// @Summary Sign up a new user
+// @Description Register a new user with username, email and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body SignUpRequest true "Sign up data"
+// @Success 200 {object} AuthResponse
+// @Failure 400 {object} map[string]string "Invalid request or input"
+// @Failure 409 {object} map[string]string "User already exists"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /auth/signup [post]
 func (h *AuthHandler) SignUp(c echo.Context) error {
 	var req SignUpRequest
 	if err := c.Bind(&req); err != nil {
@@ -75,6 +88,18 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 	})
 }
 
+// SignIn godoc
+// @Summary Sign in a user
+// @Description Authenticate a user with username and password
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param body body SignInRequest true "Sign in data"
+// @Success 200 {object} AuthResponse
+// @Failure 400 {object} map[string]string "Invalid request or input"
+// @Failure 401 {object} map[string]string "Invalid credentials"
+// @Failure 500 {object} map[string]string "Internal server error"
+// @Router /auth/signin [post]
 func (h *AuthHandler) SignIn(c echo.Context) error {
 	var req SignInRequest
 	if err := c.Bind(&req); err != nil {

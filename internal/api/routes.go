@@ -105,7 +105,6 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 	apiGroup.POST("/locations/:slug/move", locationHandler.MoveToLocation)
 	apiGroup.POST("/locations/:slug/cells/:cell_slug/move", locationHandler.MoveToCell)
 	apiGroup.GET("/locations/:slug/cells", locationHandler.GetLocationCells)
-	apiGroup.GET("/locations/:slug/bots", locationHandler.GetLocationBots)
 
 	equipmentItemHandler := handlers.NewEquipmentItemHandler(db)
 	apiGroup.GET("/equipment_items", equipmentItemHandler.GetEquipmentItems)
@@ -113,6 +112,9 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 	apiGroup.POST("/equipment_items/:slug/buy", equipmentItemHandler.BuyEquipmentItem)
 	apiGroup.POST("/equipment_items/:slug/sell", equipmentItemHandler.SellEquipmentItem)
 	apiGroup.POST("/equipment_items/:slug/take_on", equipmentItemHandler.TakeOnEquipmentItem)
+
+	botHandler := handlers.NewBotHandler(db)
+	apiGroup.GET("/bots/:location_slug", botHandler.GetBots)
 }
 
 func healthCheck(c echo.Context) error {

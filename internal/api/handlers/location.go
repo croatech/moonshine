@@ -31,22 +31,12 @@ type MoveToCellResponse struct {
 	PathLength int    `json:"path_length"`
 }
 
-type LocationBotsResponse struct {
-	Bots []locationBot `json:"bots"`
-}
-
 type locationCell struct {
 	ID       string
 	Slug     string
 	Name     string
 	Image    string
 	Inactive bool
-}
-
-type locationBot struct {
-	ID    string
-	Name  string
-	Level uint8
 }
 
 var (
@@ -177,38 +167,5 @@ func (h *LocationHandler) GetLocationCells(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, &LocationCellsResponse{
 		Cells: cellsList,
-	})
-}
-
-func (h *LocationHandler) GetLocationBots(c echo.Context) error {
-	locationSlug := c.Param("slug")
-	if locationSlug == "" {
-		return c.JSON(http.StatusBadRequest, errLocationSlugIsRequired)
-	}
-
-	locationRepo := repository.NewLocationRepository(h.db)
-	location, err := locationRepo.FindBySlug(locationSlug)
-	if err != nil {
-		if errors.Is(err, repository.ErrLocationNotFound) {
-			return c.JSON(http.StatusNotFound, errLocationNotFound)
-		}
-	}
-
-	botRepo := repository.NewBotRepository(h.db)
-	bots, err := botRepo.FindBotsByLocationID(location.ID)
-	if err != nil {
-		return c.JSON(http.StatusNotFound, errLocationNotFound)
-	}
-	botsList := make([]locationBot, len(bots))
-	for i, bot := range bots {
-		botsList[i] = locationBot{
-			ID:    bot.ID.String(),
-			Name:  bot.Name,
-			Level: bot.Level,
-		}
-	}
-
-	return c.JSON(http.StatusOK, &LocationBotsResponse{
-		Bots: botsList,
 	})
 }

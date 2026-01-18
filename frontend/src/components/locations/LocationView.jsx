@@ -2,6 +2,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import { useAuth } from '../../context/AuthContext'
 import { locationAPI } from '../../lib/api'
 import PlayerHeader from '../PlayerHeader'
+import LocationBots from './LocationBots'
 import './LocationView.css'
 
 export default function LocationView({ slug, children }) {
@@ -106,6 +107,7 @@ export default function LocationView({ slug, children }) {
           {children}
         </div>
       </div>
+      <LocationBots />
     </div>
   )
 }

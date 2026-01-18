@@ -128,7 +128,7 @@ func (s *AuthService) SignIn(ctx context.Context, input SignInInput) (*domain.Us
 	}
 
 	if err := util.CheckPassword(user.Password, input.Password); err != nil {
-		log.Printf("[SignIn] Invalid password for user: %s", input.Username)
+		log.Printf("[SignIn] Invalid password for user: %s, Error: %v, Hash length: %d", input.Username, err, len(user.Password))
 		return nil, "", ErrInvalidCredentials
 	}
 

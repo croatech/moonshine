@@ -9,6 +9,7 @@ type Location struct {
 	Image    string  `json:"image" db:"image"`
 	ImageBg  string  `json:"image_bg" db:"image_bg"`
 	Users    []*User `json:"users,omitempty"`
+	Bots     []*Bot  `json:"bots,omitempty"`
 }
 
 const (

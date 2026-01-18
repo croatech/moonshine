@@ -43,6 +43,9 @@ func main() {
 	if err := seedLocations(db.DB()); err != nil {
 		log.Printf("Failed to seed locations: %v", err)
 	}
+	if err := seedBots(db.DB()); err != nil {
+		log.Printf("Failed to seed bots: %v", err)
+	}
 	seedUsers(db.DB())
 
 	log.Println("Seed process completed!")
@@ -164,8 +167,11 @@ func seedUsers(db *sqlx.DB) {
 
 	user := &domain.User{
 		Username:   "admin",
+		Name:       "admin",
 		Email:      "admin@gmail.com",
 		Password:   hashedPassword,
+		Attack:     1,
+		Defense:    1,
 		Hp:         20,
 		CurrentHp:  20,
 		Level:      1,
@@ -488,6 +494,78 @@ func seedLocations(db *sqlx.DB) error {
 
 	log.Println("Created connections between moonshine and cells 29, 37")
 
+	return nil
+}
+
+func seedBots(db *sqlx.DB) error {
+	log.Println("Seeding bots...")
+
+	botRepo := repository.NewBotRepository(db)
+	locationRepo := repository.NewLocationRepository(db)
+
+	// Проверяем, существует ли уже Крыса
+	var existingBotID uuid.UUID
+	err := db.QueryRow("SELECT id FROM bots WHERE name = $1 AND deleted_at IS NULL", "Крыса").Scan(&existingBotID)
+	if err == nil {
+		log.Println("Bot 'Крыса' already exists, skipping")
+		// Проверяем связь с локацией
+		cell29Location, err := locationRepo.FindBySlug("29cell")
+		if err != nil {
+			return fmt.Errorf("failed to find 29cell location: %w", err)
+		}
+
+		var existingLinkID uuid.UUID
+		err = db.QueryRow(
+			"SELECT id FROM location_bots WHERE location_id = $1 AND bot_id = $2 AND deleted_at IS NULL",
+			cell29Location.ID, existingBotID,
+		).Scan(&existingLinkID)
+		if err == nil {
+			log.Println("Bot 'Крыса' already linked to 29cell, skipping")
+			return nil
+		}
+	} else {
+		// Создаем Крысу
+		ratBot := &domain.Bot{
+			Name:    "Крыса",
+			Attack:  1,
+			Defense: 3,
+			Hp:      20,
+			Level:   1,
+			Avatar:  "images/bots/rat.jpg",
+		}
+
+		if err := botRepo.Create(ratBot); err != nil {
+			return fmt.Errorf("failed to create rat bot: %w", err)
+		}
+
+		log.Printf("Created bot: Крыса (ID: %s)", ratBot.ID.String())
+		existingBotID = ratBot.ID
+	}
+
+	// Связываем с начальной локацией (29cell)
+	cell29Location, err := locationRepo.FindBySlug("29cell")
+	if err != nil {
+		return fmt.Errorf("failed to find 29cell location: %w", err)
+	}
+
+	// Проверяем, существует ли уже связь
+	var existingLinkID uuid.UUID
+	err = db.QueryRow(
+		"SELECT id FROM location_bots WHERE location_id = $1 AND bot_id = $2 AND deleted_at IS NULL",
+		cell29Location.ID, existingBotID,
+	).Scan(&existingLinkID)
+
+	if err != nil {
+		// Связь не существует, создаем
+		linkID := uuid.New()
+		linkQuery := `INSERT INTO location_bots (id, location_id, bot_id) VALUES ($1, $2, $3)`
+		if _, err := db.Exec(linkQuery, linkID, cell29Location.ID, existingBotID); err != nil {
+			return fmt.Errorf("failed to link rat bot to 29cell: %w", err)
+		}
+		log.Printf("Linked bot 'Крыса' to location 29cell")
+	}
+
+	log.Println("Bots seeding completed!")
 	return nil
 }
 
