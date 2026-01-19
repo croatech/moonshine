@@ -2,7 +2,7 @@ import { useState } from 'react'
 import Log from './log/Log'
 import OnlinePlayers from './OnlinePlayers'
 
-export default function Framing({ events = [], messages = [] }) {
+export default function Framing({ messages = [] }) {
   const [recipient, setRecipient] = useState(null)
 
   const handleSetRecipient = (player) => {
@@ -16,7 +16,6 @@ export default function Framing({ events = [], messages = [] }) {
   return (
     <div className="frame">
       <Log
-        events={events}
         messages={messages}
         recipient={recipient}
         onSetRecipient={handleSetRecipient}

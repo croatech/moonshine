@@ -1,17 +1,22 @@
 package repository
 
 import (
-	"errors"
 	"fmt"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"moonshine/internal/domain"
 )
 
 func TestUserRepository_Create(t *testing.T) {
+	if testDB == nil {
+		t.Skip("Test database not initialized")
+	}
+
 	repo := NewUserRepository(testDB.DB())
 	locationRepo := NewLocationRepository(testDB.DB())
 	ts := time.Now().UnixNano()
@@ -22,9 +27,8 @@ func TestUserRepository_Create(t *testing.T) {
 		Cell:     false,
 		Inactive: false,
 	}
-	if err := locationRepo.Create(location); err != nil {
-		t.Fatalf("Failed to create location: %v", err)
-	}
+	err := locationRepo.Create(location)
+	require.NoError(t, err)
 
 	user := &domain.User{
 		Username:   fmt.Sprintf("testuser%d", ts),
@@ -33,16 +37,16 @@ func TestUserRepository_Create(t *testing.T) {
 		LocationID: location.ID,
 	}
 
-	if err := repo.Create(user); err != nil {
-		t.Fatalf("Failed to create user: %v", err)
-	}
-
-	if user.ID == uuid.Nil {
-		t.Error("User ID should be set after creation")
-	}
+	err = repo.Create(user)
+	require.NoError(t, err)
+	assert.NotEqual(t, uuid.Nil, user.ID)
 }
 
 func TestUserRepository_FindByUsername(t *testing.T) {
+	if testDB == nil {
+		t.Skip("Test database not initialized")
+	}
+
 	repo := NewUserRepository(testDB.DB())
 	locationRepo := NewLocationRepository(testDB.DB())
 	ts := time.Now().UnixNano()
@@ -53,9 +57,8 @@ func TestUserRepository_FindByUsername(t *testing.T) {
 		Cell:     false,
 		Inactive: false,
 	}
-	if err := locationRepo.Create(location); err != nil {
-		t.Fatalf("Failed to create location: %v", err)
-	}
+	err := locationRepo.Create(location)
+	require.NoError(t, err)
 
 	username := fmt.Sprintf("finduser%d", ts)
 	user := &domain.User{
@@ -64,21 +67,19 @@ func TestUserRepository_FindByUsername(t *testing.T) {
 		Password:   "hashedpassword",
 		LocationID: location.ID,
 	}
-	if err := repo.Create(user); err != nil {
-		t.Fatalf("Failed to create test user: %v", err)
-	}
+	err = repo.Create(user)
+	require.NoError(t, err)
 
 	found, err := repo.FindByUsername(username)
-	if err != nil {
-		t.Fatalf("Failed to find user: %v", err)
-	}
-
-	if found.Username != username {
-		t.Errorf("Expected username '%s', got '%s'", username, found.Username)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, username, found.Username)
 }
 
 func TestUserRepository_FindByID(t *testing.T) {
+	if testDB == nil {
+		t.Skip("Test database not initialized")
+	}
+
 	repo := NewUserRepository(testDB.DB())
 	locationRepo := NewLocationRepository(testDB.DB())
 	ts := time.Now().UnixNano()
@@ -89,9 +90,8 @@ func TestUserRepository_FindByID(t *testing.T) {
 		Cell:     false,
 		Inactive: false,
 	}
-	if err := locationRepo.Create(location); err != nil {
-		t.Fatalf("Failed to create location: %v", err)
-	}
+	err := locationRepo.Create(location)
+	require.NoError(t, err)
 
 	user := &domain.User{
 		Username:   fmt.Sprintf("iduser%d", ts),
@@ -99,34 +99,32 @@ func TestUserRepository_FindByID(t *testing.T) {
 		Password:   "hashedpassword",
 		LocationID: location.ID,
 	}
-	if err := repo.Create(user); err != nil {
-		t.Fatalf("Failed to create test user: %v", err)
-	}
+	err = repo.Create(user)
+	require.NoError(t, err)
 
 	found, err := repo.FindByID(user.ID)
-	if err != nil {
-		t.Fatalf("Failed to find user: %v", err)
-	}
-
-	if found.ID != user.ID {
-		t.Errorf("Expected ID %s, got %s", user.ID, found.ID)
-	}
+	require.NoError(t, err)
+	assert.Equal(t, user.ID, found.ID)
 }
 
 func TestUserRepository_FindByUsername_NotFound(t *testing.T) {
+	if testDB == nil {
+		t.Skip("Test database not initialized")
+	}
+
 	repo := NewUserRepository(testDB.DB())
 
 	_, err := repo.FindByUsername("nonexistent")
-	if !errors.Is(err, ErrUserNotFound) {
-		t.Errorf("Expected ErrUserNotFound, got %v", err)
-	}
+	assert.ErrorIs(t, err, ErrUserNotFound)
 }
 
 func TestUserRepository_FindByID_NotFound(t *testing.T) {
+	if testDB == nil {
+		t.Skip("Test database not initialized")
+	}
+
 	repo := NewUserRepository(testDB.DB())
 
 	_, err := repo.FindByID(uuid.New())
-	if !errors.Is(err, ErrUserNotFound) {
-		t.Errorf("Expected ErrUserNotFound, got %v", err)
-	}
+	assert.ErrorIs(t, err, ErrUserNotFound)
 }

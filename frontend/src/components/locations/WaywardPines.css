@@ -19,6 +19,49 @@
   font-weight: bold;
 }
 
+.wayward-pines-content {
+  display: flex;
+  gap: 30px;
+  align-items: flex-start;
+}
+
+.wayward-pines-map {
+  flex: 1;
+}
+
+.wayward-pines-bots {
+  width: 300px;
+}
+
+.wayward-pines-bots h3 {
+  margin: 0 0 15px 0;
+  color: #5a4730;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.bots-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.bot-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bot-attack-link {
+  color: #d32f2f;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.bot-attack-link:hover {
+  color: #b71c1c;
+}
+
 
 
 

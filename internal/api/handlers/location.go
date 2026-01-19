@@ -43,8 +43,7 @@ type locationCell struct {
 func NewLocationHandler(db *sqlx.DB) *LocationHandler {
 	locationRepo := repository.NewLocationRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	movementRepo := repository.NewMovementRepository(db)
-	movingWorker := worker.NewCellsMovingWorker(locationRepo, userRepo, movementRepo, 5*time.Second)
+	movingWorker := worker.NewCellsMovingWorker(locationRepo, userRepo, 5*time.Second)
 	locationService, err := services.NewLocationService(db, locationRepo, userRepo, movingWorker)
 	if err != nil {
 		log.Fatalf("Failed to create LocationService: %v", err)

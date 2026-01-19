@@ -2,17 +2,26 @@ package domain
 
 import "github.com/google/uuid"
 
+type BodyPart string
+
+const (
+	BodyPartHead  BodyPart = "HEAD"
+	BodyPartChest BodyPart = "CHEST"
+	BodyPartBelt  BodyPart = "BELT"
+	BodyPartLegs  BodyPart = "LEGS"
+	BodyPartHands BodyPart = "HANDS"
+)
+
 type Round struct {
 	Model
-	FightID            uuid.UUID `json:"fight_id"`
-	Fight              *Fight `json:"fight,omitempty"`
-	PlayerDamage       uint   `json:"player_damage"`
-	BotDamage          uint   `json:"bot_damage"`
-	Status             uint   `json:"status"`
-	PlayerHp           uint   `json:"player_hp"`
-	BotHp              uint   `json:"bot_hp"`
-	PlayerAttackPoint  string `json:"player_attack_point"`
-	PlayerDefensePoint string `json:"player_defense_point"`
-	BotAttackPoint     string `json:"bot_attack_point"`
-	BotDefensePoint    string `json:"bot_defense_point"`
+	FightID            uuid.UUID  `db:"fight_id"`
+	PlayerDamage       uint       `db:"player_damage"`
+	BotDamage          uint       `db:"bot_damage"`
+	Status             FightStatus `db:"status"`
+	PlayerHp           uint       `db:"player_hp"`
+	BotHp              uint       `db:"bot_hp"`
+	PlayerAttackPoint  *BodyPart  `db:"player_attack_point"`
+	PlayerDefensePoint *BodyPart  `db:"player_defense_point"`
+	BotAttackPoint     *BodyPart  `db:"bot_attack_point"`
+	BotDefensePoint    *BodyPart  `db:"bot_defense_point"`
 }

@@ -1,20 +1,21 @@
 package handlers
 
 import (
+	"moonshine/internal/api/middleware"
 	"net/http"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/labstack/echo/v4"
 
 	"moonshine/internal/api/dto"
+	"moonshine/internal/api/services"
+	"moonshine/internal/domain"
 	"moonshine/internal/repository"
 )
 
 type BotHandler struct {
-	db           *sqlx.DB
-	locationRepo *repository.LocationRepository
-	userRepo     *repository.UserRepository
-	botRepo      *repository.BotRepository
+	botService *services.BotService
+	avatarRepo *repository.AvatarRepository
 }
 
 type BotResponse struct {
@@ -22,15 +23,13 @@ type BotResponse struct {
 }
 
 func NewBotHandler(db *sqlx.DB) *BotHandler {
-	locationRepo := repository.NewLocationRepository(db)
-	userRepo := repository.NewUserRepository(db)
-	botRepo := repository.NewBotRepository(db)
+	botService := services.NewBotService(db)
+
+	avatarRepo := repository.NewAvatarRepository(db)
 
 	return &BotHandler{
-		db:           db,
-		locationRepo: locationRepo,
-		userRepo:     userRepo,
-		botRepo:      botRepo,
+		botService: botService,
+		avatarRepo: avatarRepo,
 	}
 }
 
@@ -40,12 +39,7 @@ func (h *BotHandler) GetBots(c echo.Context) error {
 		return ErrBadRequest(c, "location slug is required")
 	}
 
-	location, err := h.locationRepo.FindBySlug(locationSlug)
-	if err != nil {
-		return ErrNotFound(c, "location not found")
-	}
-
-	bots, err := h.botRepo.FindBotsByLocationID(location.ID)
+	bots, err := h.botService.GetBotsByLocationSlug(locationSlug)
 	if err != nil {
 		return ErrInternalServerError(c)
 	}
@@ -55,19 +49,35 @@ func (h *BotHandler) GetBots(c echo.Context) error {
 	})
 }
 
-func (h *BotHandler) AttackBot(c echo.Context) error {
+func (h *BotHandler) Attack(c echo.Context) error {
 	botSlug := c.Param("slug")
 	if botSlug == "" {
 		return ErrBadRequest(c, "bot slug is required")
 	}
 
-	_, err := h.botRepo.FindBySlug(botSlug)
+	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		return ErrUnauthorized(c)
+	}
+
+	result, err := h.botService.Attack(c.Request().Context(), botSlug, userID)
 	if err != nil {
 		if err == repository.ErrBotNotFound {
 			return ErrNotFound(c, "bot not found")
 		}
-		return ErrInternalServerError(c)
+		if err == repository.ErrUserNotFound {
+			return ErrNotFound(c, "user not found")
+		}
+		return ErrBadRequest(c, err.Error())
 	}
 
-	return SuccessResponse(c, "attack endpoint - implementation pending")
+	var avatar *domain.Avatar
+	if result.User.AvatarID != nil {
+		avatar, _ = h.avatarRepo.FindByID(*result.User.AvatarID)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"user": dto.UserFromDomain(result.User, avatar, nil, nil),
+		"bot":  dto.BotFromDomain(result.Bot),
+	})
 }

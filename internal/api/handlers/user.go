@@ -25,8 +25,8 @@ func NewUserHandler(db *sqlx.DB) *UserHandler {
 	locationRepo := repository.NewLocationRepository(db)
 	userService := services.NewUserService(userRepo, avatarRepo, locationRepo)
 
-	userEquipmentRepo := repository.NewUserEquipmentItemRepository(db)
-	inventoryService := services.NewInventoryService(userEquipmentRepo)
+	inventoryRepo := repository.NewInventoryRepository(db)
+	inventoryService := services.NewInventoryService(inventoryRepo)
 
 	return &UserHandler{
 		db:               db,
@@ -41,7 +41,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 		return ErrUnauthorized(c)
 	}
 
-	user, avatar, location, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
+	user, avatar, location, inFight, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
 			return ErrNotFound(c, "user not found")
@@ -49,7 +49,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location))
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location, inFight))
 }
 
 func (h *UserHandler) GetUserInventory(c echo.Context) error {
@@ -187,10 +187,10 @@ func (h *UserHandler) UpdateCurrentUser(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	user, avatar, location, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
+	user, avatar, location, inFight, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
 	if err != nil {
 		return ErrInternalServerError(c)
 	}
 
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location))
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location, inFight))
 }

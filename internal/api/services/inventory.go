@@ -10,16 +10,16 @@ import (
 )
 
 type InventoryService struct {
-	userEquipmentRepo *repository.UserEquipmentItemRepository
+	inventoryRepo *repository.InventoryRepository
 }
 
-func NewInventoryService(userEquipmentRepo *repository.UserEquipmentItemRepository) *InventoryService {
+func NewInventoryService(inventoryRepo *repository.InventoryRepository) *InventoryService {
 	return &InventoryService{
-		userEquipmentRepo: userEquipmentRepo,
+		inventoryRepo: inventoryRepo,
 	}
 }
 
 func (s *InventoryService) GetUserInventory(ctx context.Context, userID uuid.UUID) ([]*domain.EquipmentItem, error) {
-	return s.userEquipmentRepo.FindByUserID(userID)
+	return s.inventoryRepo.FindByUserID(userID)
 }
 

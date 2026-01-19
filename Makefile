@@ -17,7 +17,9 @@ migrate-create:
 	go run cmd/migrate/main.go -command create $(NAME)
 
 migrate-reset:
-	go run cmd/migrate/main.go -command down-to 0
+	@echo "Dropping and recreating database..."
+	@docker-compose exec -T postgres psql -U postgres -c "DROP DATABASE IF EXISTS moonshine;" 2>/dev/null || true
+	@docker-compose exec -T postgres psql -U postgres -c "CREATE DATABASE moonshine;" 2>/dev/null || true
 
 dev:
 	@if command -v air > /dev/null; then \
@@ -60,9 +62,7 @@ setup: migrate-reset migrate-up seed
 
 test-db-setup:
 	@echo "Setting up test database..."
-	@PGPASSWORD=$${DATABASE_PASSWORD:-postgres} psql -h $${DATABASE_HOST:-localhost} -p $${DATABASE_PORT:-5433} -U $${DATABASE_USER:-postgres} -d postgres -tc "SELECT 1 FROM pg_database WHERE datname = 'moonshine_test'" | grep -q 1 || \
-		PGPASSWORD=$${DATABASE_PASSWORD:-postgres} psql -h $${DATABASE_HOST:-localhost} -p $${DATABASE_PORT:-5433} -U $${DATABASE_USER:-postgres} -d postgres -c "CREATE DATABASE moonshine_test"
-	@echo "Applying migrations to test database..."
+	@echo "Applying migrations to test database (database will be created automatically if needed)..."
 	@DATABASE_NAME=moonshine_test go run cmd/migrate/main.go -command up
 
 test: test-db-setup

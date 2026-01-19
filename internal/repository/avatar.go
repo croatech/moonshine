@@ -25,17 +25,14 @@ func NewAvatarRepository(db *sqlx.DB) *AvatarRepository {
 
 func (r *AvatarRepository) Create(avatar *domain.Avatar) error {
 	query := `
-		INSERT INTO avatars (id, image, private)
-		VALUES ($1, $2, $3)
+		INSERT INTO avatars (image, private)
+		VALUES ($1, $2)
+		RETURNING id, created_at
 	`
 
-	if avatar.ID == uuid.Nil {
-		avatar.ID = uuid.New()
-	}
-
-	_, err := r.db.Exec(query,
-		avatar.ID, avatar.Image, avatar.Private,
-	)
+	err := r.db.QueryRow(query,
+		avatar.Image, avatar.Private,
+	).Scan(&avatar.ID, &avatar.CreatedAt)
 	if err != nil {
 		if isUniqueConstraintError(err) {
 			return ErrAvatarExists

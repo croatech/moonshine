@@ -9,6 +9,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
 
+	"moonshine/internal/domain"
 	"moonshine/internal/repository"
 )
 
@@ -17,23 +18,23 @@ var (
 )
 
 type EquipmentItemTakeOffService struct {
-	db                    *sqlx.DB
-	equipmentItemRepo     *repository.EquipmentItemRepository
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository
-	userRepo              *repository.UserRepository
+	db                *sqlx.DB
+	equipmentItemRepo *repository.EquipmentItemRepository
+	inventoryRepo     *repository.InventoryRepository
+	userRepo          *repository.UserRepository
 }
 
 func NewEquipmentItemTakeOffService(
 	db *sqlx.DB,
 	equipmentItemRepo *repository.EquipmentItemRepository,
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository,
+	inventoryRepo *repository.InventoryRepository,
 	userRepo *repository.UserRepository,
 ) *EquipmentItemTakeOffService {
 	return &EquipmentItemTakeOffService{
-		db:                    db,
-		equipmentItemRepo:     equipmentItemRepo,
-		userEquipmentItemRepo: userEquipmentItemRepo,
-		userRepo:              userRepo,
+		db:                db,
+		equipmentItemRepo: equipmentItemRepo,
+		inventoryRepo:     inventoryRepo,
+		userRepo:          userRepo,
 	}
 }
 
@@ -108,11 +109,11 @@ func (s *EquipmentItemTakeOffService) TakeOffEquipmentItem(ctx context.Context, 
 		return err
 	}
 
-	returnToInventoryQuery := `
-		INSERT INTO user_equipment_items (id, user_id, equipment_item_id, created_at)
-		VALUES ($1, $2, $3, NOW())
-	`
-	_, err = tx.Exec(returnToInventoryQuery, uuid.New(), userID, equippedItemID)
+	inventory := &domain.Inventory{
+		UserID:          userID,
+		EquipmentItemID: equippedItemID,
+	}
+	err = s.inventoryRepo.Create(inventory)
 	if err != nil {
 		return err
 	}

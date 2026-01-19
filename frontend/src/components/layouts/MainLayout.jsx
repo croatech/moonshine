@@ -3,8 +3,6 @@ import Stats from '../player/Stats'
 import Gold from '../player/Gold'
 
 export default function MainLayout({ children }) {
-  // TODO: Load events and messages from context/store
-  const events = []
   const messages = []
 
   return (
@@ -16,7 +14,7 @@ export default function MainLayout({ children }) {
       <div className="content">
         {children}
       </div>
-      <Framing events={events} messages={messages} />
+      <Framing messages={messages} />
     </div>
   )
 }

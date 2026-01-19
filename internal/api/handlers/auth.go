@@ -87,7 +87,7 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, avatar, location),
+		User:  dto.UserFromDomain(user, avatar, location, nil),
 	})
 }
 
@@ -129,6 +129,6 @@ func (h *AuthHandler) SignIn(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, avatar, location),
+		User:  dto.UserFromDomain(user, avatar, location, nil),
 	})
 }

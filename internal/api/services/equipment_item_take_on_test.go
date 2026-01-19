@@ -9,65 +9,37 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 
 	"moonshine/internal/domain"
 	"moonshine/internal/repository"
 )
 
 func setupTestData(db *sqlx.DB) (*domain.User, *domain.EquipmentItem, uuid.UUID, error) {
-	locationID := uuid.New()
-	locationQuery := `INSERT INTO locations (id, name, slug, cell, inactive) VALUES ($1, $2, $3, $4, $5)`
-	_, err := db.Exec(locationQuery, locationID, "Test Location", "test_location", false, false)
+	location := &domain.Location{
+		Name:     "Test Location",
+		Slug:     fmt.Sprintf("test_location_%d", time.Now().UnixNano()),
+		Cell:     false,
+		Inactive: false,
+	}
+	locationRepo := repository.NewLocationRepository(db)
+	err := locationRepo.Create(location)
 	if err != nil {
 		return nil, nil, uuid.Nil, fmt.Errorf("failed to create location: %w", err)
 	}
 
-	categoryID := uuid.New()
-	categoryQuery := `INSERT INTO equipment_categories (id, name, type) VALUES ($1, $2, $3::equipment_category_type)`
-	_, err = db.Exec(categoryQuery, categoryID, "Weapon", "weapon")
+	categoryQuery := `INSERT INTO equipment_categories (name, type) VALUES ($1, $2::equipment_category_type) RETURNING id, created_at, updated_at`
+	category := &domain.EquipmentCategory{
+		Name: "Weapon",
+		Type: "weapon",
+	}
+	err = db.QueryRow(categoryQuery, category.Name, category.Type).Scan(&category.ID, &category.CreatedAt, &category.UpdatedAt)
 	if err != nil {
 		return nil, nil, uuid.Nil, fmt.Errorf("failed to create category: %w", err)
 	}
 
-	itemID := uuid.New()
-	itemQuery := `INSERT INTO equipment_items (id, name, slug, attack, defense, hp, required_level, price, equipment_category_id)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-	_, err = db.Exec(itemQuery, itemID, "Test Sword", "test-sword", 10, 5, 20, 1, 100, categoryID)
-	if err != nil {
-		return nil, nil, uuid.Nil, fmt.Errorf("failed to create item: %w", err)
-	}
-
-	userID := uuid.New()
-	userQuery := `INSERT INTO users (id, username, email, password, location_id, attack, defense, hp, current_hp, level)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
-	ts := time.Now().UnixNano()
-	username := fmt.Sprintf("testuser%d", ts)
-	_, err = db.Exec(userQuery, userID, username, fmt.Sprintf("test%d@example.com", ts), "password", locationID, 1, 1, 20, 20, 5)
-	if err != nil {
-		return nil, nil, uuid.Nil, fmt.Errorf("failed to create user: %w", err)
-	}
-
-	inventoryQuery := `INSERT INTO user_equipment_items (id, user_id, equipment_item_id) VALUES ($1, $2, $3)`
-	_, err = db.Exec(inventoryQuery, uuid.New(), userID, itemID)
-	if err != nil {
-		return nil, nil, uuid.Nil, fmt.Errorf("failed to add item to inventory: %w", err)
-	}
-
-	user := &domain.User{
-		Model: domain.Model{
-			ID: userID,
-		},
-		Username: username,
-		Level:    5,
-		Attack:   1,
-		Defense:  1,
-		Hp:       20,
-	}
-
 	item := &domain.EquipmentItem{
-		Model: domain.Model{
-			ID: itemID,
-		},
 		Name:              "Test Sword",
 		Slug:              "test-sword",
 		Attack:            10,
@@ -75,10 +47,42 @@ func setupTestData(db *sqlx.DB) (*domain.User, *domain.EquipmentItem, uuid.UUID,
 		Hp:                20,
 		RequiredLevel:     1,
 		Price:             100,
-		EquipmentCategoryID: categoryID,
+		EquipmentCategoryID: category.ID,
+	}
+	itemRepo := repository.NewEquipmentItemRepository(db)
+	err = itemRepo.Create(item)
+	if err != nil {
+		return nil, nil, uuid.Nil, fmt.Errorf("failed to create item: %w", err)
 	}
 
-	return user, item, categoryID, nil
+	user := &domain.User{
+		Username:   fmt.Sprintf("testuser%d", time.Now().UnixNano()),
+		Email:      fmt.Sprintf("test%d@example.com", time.Now().UnixNano()),
+		Password:   "password",
+		LocationID: location.ID,
+		Attack:     1,
+		Defense:    1,
+		Hp:         20,
+		CurrentHp:  20,
+		Level:      5,
+	}
+	userRepo := repository.NewUserRepository(db)
+	err = userRepo.Create(user)
+	if err != nil {
+		return nil, nil, uuid.Nil, fmt.Errorf("failed to create user: %w", err)
+	}
+
+	inventory := &domain.Inventory{
+		UserID:          user.ID,
+		EquipmentItemID: item.ID,
+	}
+	inventoryRepo := repository.NewInventoryRepository(db)
+	err = inventoryRepo.Create(inventory)
+	if err != nil {
+		return nil, nil, uuid.Nil, fmt.Errorf("failed to add item to inventory: %w", err)
+	}
+
+	return user, item, category.ID, nil
 }
 
 func TestEquipmentItemTakeOnService_TakeOnEquipmentItem(t *testing.T) {
@@ -90,31 +94,22 @@ func TestEquipmentItemTakeOnService_TakeOnEquipmentItem(t *testing.T) {
 	ctx := context.Background()
 
 	user, item, categoryID, err := setupTestData(db)
-	if err != nil {
-		t.Fatalf("Failed to setup test data: %v", err)
-	}
+	require.NoError(t, err)
 
 	equipmentItemRepo := repository.NewEquipmentItemRepository(db)
-	userEquipmentItemRepo := repository.NewUserEquipmentItemRepository(db)
+	inventoryRepo := repository.NewInventoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	service := NewEquipmentItemTakeOnService(db, equipmentItemRepo, userEquipmentItemRepo, userRepo)
+	service := NewEquipmentItemTakeOnService(db, equipmentItemRepo, inventoryRepo, userRepo)
 
 	t.Run("successfully equip item", func(t *testing.T) {
 		err := service.TakeOnEquipmentItem(ctx, user.ID, item.ID)
-		if err != nil {
-			t.Fatalf("Failed to equip item: %v", err)
-		}
+		require.NoError(t, err)
 
 		var equippedItemID uuid.UUID
 		query := `SELECT weapon_equipment_item_id FROM users WHERE id = $1`
 		err = db.Get(&equippedItemID, query, user.ID)
-		if err != nil {
-			t.Fatalf("Failed to get equipped item: %v", err)
-		}
-
-		if equippedItemID != item.ID {
-			t.Errorf("Expected equipped item ID %s, got %s", item.ID, equippedItemID)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, item.ID, equippedItemID)
 
 		type stats struct {
 			Attack  uint `db:"attack"`
@@ -124,91 +119,85 @@ func TestEquipmentItemTakeOnService_TakeOnEquipmentItem(t *testing.T) {
 		var userStats stats
 		statsQuery := `SELECT attack, defense, hp FROM users WHERE id = $1`
 		err = db.Get(&userStats, statsQuery, user.ID)
-		if err != nil {
-			t.Fatalf("Failed to get user stats: %v", err)
-		}
+		require.NoError(t, err)
 
-		expectedAttack := uint(11)
-		expectedDefense := uint(6)
-		expectedHp := uint(40)
-
-		if userStats.Attack != expectedAttack {
-			t.Errorf("Expected attack %d, got %d", expectedAttack, userStats.Attack)
-		}
-		if userStats.Defense != expectedDefense {
-			t.Errorf("Expected defense %d, got %d", expectedDefense, userStats.Defense)
-		}
-		if userStats.Hp != expectedHp {
-			t.Errorf("Expected hp %d, got %d", expectedHp, userStats.Hp)
-		}
+		assert.Equal(t, uint(11), userStats.Attack)
+		assert.Equal(t, uint(6), userStats.Defense)
+		assert.Equal(t, uint(40), userStats.Hp)
 	})
 
 	t.Run("item not in inventory", func(t *testing.T) {
-		newItemID := uuid.New()
-		newItemQuery := `INSERT INTO equipment_items (id, name, slug, attack, defense, hp, required_level, price, equipment_category_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-		_, err := db.Exec(newItemQuery, newItemID, "New Sword", "new-sword", 10, 5, 20, 1, 100, categoryID)
-		if err != nil {
-			t.Fatalf("Failed to create new item: %v", err)
+		newItem := &domain.EquipmentItem{
+			Name:              "New Sword",
+			Slug:              fmt.Sprintf("new-sword-%d", time.Now().UnixNano()),
+			Attack:            10,
+			Defense:           5,
+			Hp:                20,
+			RequiredLevel:     1,
+			Price:             100,
+			EquipmentCategoryID: categoryID,
 		}
+		err := equipmentItemRepo.Create(newItem)
+		require.NoError(t, err)
 
 		err = service.TakeOnEquipmentItem(ctx, user.ID, newItemID)
-		if !errors.Is(err, ErrItemNotInInventory) {
-			t.Errorf("Expected ErrItemNotInInventory, got %v", err)
-		}
+		assert.ErrorIs(t, err, ErrItemNotInInventory)
 	})
 
 	t.Run("insufficient level", func(t *testing.T) {
-		highLevelItemID := uuid.New()
-		highLevelItemQuery := `INSERT INTO equipment_items (id, name, slug, attack, defense, hp, required_level, price, equipment_category_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-		_, err := db.Exec(highLevelItemQuery, highLevelItemID, "High Level Sword", "high-level-sword", 10, 5, 20, 10, 100, categoryID)
-		if err != nil {
-			t.Fatalf("Failed to create high level item: %v", err)
+		highLevelItem := &domain.EquipmentItem{
+			Name:              "High Level Sword",
+			Slug:              fmt.Sprintf("high-level-sword-%d", time.Now().UnixNano()),
+			Attack:            10,
+			Defense:           5,
+			Hp:                20,
+			RequiredLevel:     10,
+			Price:             100,
+			EquipmentCategoryID: categoryID,
 		}
+		err := equipmentItemRepo.Create(highLevelItem)
+		require.NoError(t, err)
 
-		inventoryQuery := `INSERT INTO user_equipment_items (id, user_id, equipment_item_id) VALUES ($1, $2, $3)`
-		_, err = db.Exec(inventoryQuery, uuid.New(), user.ID, highLevelItemID)
-		if err != nil {
-			t.Fatalf("Failed to add item to inventory: %v", err)
+		inventory := &domain.Inventory{
+			UserID:          user.ID,
+			EquipmentItemID: highLevelItem.ID,
 		}
+		err = inventoryRepo.Create(inventory)
+		require.NoError(t, err)
 
-		err = service.TakeOnEquipmentItem(ctx, user.ID, highLevelItemID)
-		if !errors.Is(err, ErrInsufficientLevel) {
-			t.Errorf("Expected ErrInsufficientLevel, got %v", err)
-		}
+		err = service.TakeOnEquipmentItem(ctx, user.ID, highLevelItem.ID)
+		assert.ErrorIs(t, err, ErrInsufficientLevel)
 	})
 
 	t.Run("replace existing equipment", func(t *testing.T) {
-		newItemID := uuid.New()
-		newItemQuery := `INSERT INTO equipment_items (id, name, slug, attack, defense, hp, required_level, price, equipment_category_id)
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`
-		_, err := db.Exec(newItemQuery, newItemID, "New Sword 2", "new-sword-2", 15, 8, 25, 1, 100, categoryID)
-		if err != nil {
-			t.Fatalf("Failed to create new item: %v", err)
+		newItem2 := &domain.EquipmentItem{
+			Name:              "New Sword 2",
+			Slug:              fmt.Sprintf("new-sword-2-%d", time.Now().UnixNano()),
+			Attack:            15,
+			Defense:           8,
+			Hp:                25,
+			RequiredLevel:     1,
+			Price:             100,
+			EquipmentCategoryID: categoryID,
 		}
+		err := equipmentItemRepo.Create(newItem2)
+		require.NoError(t, err)
 
-		inventoryQuery := `INSERT INTO user_equipment_items (id, user_id, equipment_item_id) VALUES ($1, $2, $3)`
-		_, err = db.Exec(inventoryQuery, uuid.New(), user.ID, newItemID)
-		if err != nil {
-			t.Fatalf("Failed to add item to inventory: %v", err)
+		inventory2 := &domain.Inventory{
+			UserID:          user.ID,
+			EquipmentItemID: newItem2.ID,
 		}
+		err = inventoryRepo.Create(inventory2)
+		require.NoError(t, err)
 
-		err = service.TakeOnEquipmentItem(ctx, user.ID, newItemID)
-		if err != nil {
-			t.Fatalf("Failed to equip new item: %v", err)
-		}
+		err = service.TakeOnEquipmentItem(ctx, user.ID, newItem2.ID)
+		require.NoError(t, err)
 
 		var equippedItemID uuid.UUID
 		query := `SELECT weapon_equipment_item_id FROM users WHERE id = $1`
 		err = db.Get(&equippedItemID, query, user.ID)
-		if err != nil {
-			t.Fatalf("Failed to get equipped item: %v", err)
-		}
-
-		if equippedItemID != newItemID {
-			t.Errorf("Expected equipped item ID %s, got %s", newItemID, equippedItemID)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, newItem2.ID, equippedItemID)
 
 		type stats struct {
 			Attack  uint `db:"attack"`
@@ -218,33 +207,16 @@ func TestEquipmentItemTakeOnService_TakeOnEquipmentItem(t *testing.T) {
 		var userStats stats
 		statsQuery := `SELECT attack, defense, hp FROM users WHERE id = $1`
 		err = db.Get(&userStats, statsQuery, user.ID)
-		if err != nil {
-			t.Fatalf("Failed to get user stats: %v", err)
-		}
+		require.NoError(t, err)
 
-		expectedAttack := uint(16)
-		expectedDefense := uint(9)
-		expectedHp := uint(45)
-
-		if userStats.Attack != expectedAttack {
-			t.Errorf("Expected attack %d, got %d", expectedAttack, userStats.Attack)
-		}
-		if userStats.Defense != expectedDefense {
-			t.Errorf("Expected defense %d, got %d", expectedDefense, userStats.Defense)
-		}
-		if userStats.Hp != expectedHp {
-			t.Errorf("Expected hp %d, got %d", expectedHp, userStats.Hp)
-		}
+		assert.Equal(t, uint(16), userStats.Attack)
+		assert.Equal(t, uint(9), userStats.Defense)
+		assert.Equal(t, uint(45), userStats.Hp)
 
 		var inventoryCount int
-		inventoryCountQuery := `SELECT COUNT(*) FROM user_equipment_items WHERE user_id = $1 AND equipment_item_id = $2`
+		inventoryCountQuery := `SELECT COUNT(*) FROM inventory WHERE user_id = $1 AND equipment_item_id = $2`
 		err = db.Get(&inventoryCount, inventoryCountQuery, user.ID, item.ID)
-		if err != nil {
-			t.Fatalf("Failed to check inventory: %v", err)
-		}
-		if inventoryCount != 1 {
-			t.Errorf("Expected old item to be in inventory, count: %d", inventoryCount)
-		}
+		require.NoError(t, err)
+		assert.Equal(t, 1, inventoryCount)
 	})
 }
-

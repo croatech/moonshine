@@ -1,9 +1,14 @@
 package domain
 
-import "github.com/google/uuid"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 type User struct {
 	Model
+	UpdatedAt             time.Time  `db:"updated_at"`
 	Attack                uint       `db:"attack"`
 	AvatarID              *uuid.UUID `db:"avatar_id"`
 	CurrentHp             uint       `db:"current_hp"`

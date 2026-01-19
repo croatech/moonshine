@@ -6,6 +6,7 @@ import Location from './pages/Location'
 import Profile from './pages/Profile'
 import EquipmentItems from './pages/EquipmentItems'
 import Bots from './pages/Bots'
+import Fight from './pages/Fight'
 import ProtectedRoute from './components/ProtectedRoute'
 
 function App() {
@@ -43,6 +44,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Bots />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/fight"
+          element={
+            <ProtectedRoute>
+              <Fight />
             </ProtectedRoute>
           }
         />

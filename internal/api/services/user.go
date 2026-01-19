@@ -32,10 +32,10 @@ func (s *UserService) GetCurrentUser(ctx context.Context, userID uuid.UUID) (*do
 	return user, nil
 }
 
-func (s *UserService) GetCurrentUserWithRelations(ctx context.Context, userID uuid.UUID) (*domain.User, *domain.Avatar, *domain.Location, error) {
+func (s *UserService) GetCurrentUserWithRelations(ctx context.Context, userID uuid.UUID) (*domain.User, *domain.Avatar, *domain.Location, bool, error) {
 	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
-		return nil, nil, nil, repository.ErrUserNotFound
+		return nil, nil, nil, false, repository.ErrUserNotFound
 	}
 
 	var avatar *domain.Avatar
@@ -48,7 +48,10 @@ func (s *UserService) GetCurrentUserWithRelations(ctx context.Context, userID uu
 		location, _ = s.locationRepo.FindByID(user.LocationID)
 	}
 
-	return user, avatar, location, nil
+	inFight, _ := s.userRepo.InFight(userID)
+	inFightPtr := &inFight
+
+	return user, avatar, location, inFightPtr, nil
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, avatarID *uuid.UUID) (*domain.User, error) {

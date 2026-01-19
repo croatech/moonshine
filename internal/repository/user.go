@@ -33,21 +33,18 @@ func NewUserRepository(db *sqlx.DB) *UserRepository {
 func (r *UserRepository) Create(user *domain.User) error {
 	query := `
 		INSERT INTO users (
-			id, username, email, password, name, avatar_id, location_id,
+			username, email, password, name, avatar_id, location_id,
 			attack, defense, current_hp, exp, free_stats, gold, hp, level
 		) VALUES (
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15
+			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14
 		)
+		RETURNING id, created_at, updated_at
 	`
 
-	if user.ID == uuid.Nil {
-		user.ID = uuid.New()
-	}
-
-	_, err := r.db.Exec(query,
-		user.ID, user.Username, user.Email, user.Password, user.Name, user.AvatarID, user.LocationID,
+	err := r.db.QueryRow(query,
+		user.Username, user.Email, user.Password, user.Name, user.AvatarID, user.LocationID,
 		user.Attack, user.Defense, user.CurrentHp, user.Exp, user.FreeStats, user.Gold, user.Hp, user.Level,
-	)
+	).Scan(&user.ID, &user.CreatedAt, &user.UpdatedAt)
 	if err != nil {
 		if isUniqueConstraintError(err) {
 			return ErrUserExists
@@ -155,4 +152,13 @@ func (r *UserRepository) UpdateLocationID(userID uuid.UUID, locationID uuid.UUID
 	query := `UPDATE users SET location_id = $1 WHERE id = $2`
 	_, err := r.db.Exec(query, locationID, userID)
 	return err
+}
+
+func (r *UserRepository) InFight(userID uuid.UUID) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM fights WHERE user_id = $1 AND status = $2)`
+
+	exists := false
+	err := r.db.Get(&exists, query, userID, domain.FightStatusInProgress)
+
+	return exists, err
 }

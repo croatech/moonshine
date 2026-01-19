@@ -35,6 +35,7 @@ type User struct {
 	Ring3EquipmentItemID  *string   `json:"ring3EquipmentItemId,omitempty"`
 	Ring4EquipmentItemID  *string   `json:"ring4EquipmentItemId,omitempty"`
 	LocationSlug          *string   `json:"locationSlug,omitempty"`
+	InFight               *bool     `json:"inFight,omitempty"`
 }
 
 type Avatar struct {
@@ -43,7 +44,7 @@ type Avatar struct {
 	Private bool   `json:"private"`
 }
 
-func UserFromDomain(user *domain.User, avatar *domain.Avatar, location *domain.Location) *User {
+func UserFromDomain(user *domain.User, avatar *domain.Avatar, location *domain.Location, inFight *bool) *User {
 	if user == nil {
 		return nil
 	}
@@ -61,6 +62,7 @@ func UserFromDomain(user *domain.User, avatar *domain.Avatar, location *domain.L
 		Exp:       int(user.Exp),
 		FreeStats: int(user.FreeStats),
 		CreatedAt: user.CreatedAt,
+		InFight:   inFight,
 	}
 
 	if avatar != nil {

@@ -77,17 +77,9 @@ Migrations are created in the correct order considering dependencies:
 5. tool_items
 6. locations
 7. bots
-8. resources
-9. users (depends on avatars, locations)
-10. events (depends on users)
-11. messages (depends on users)
-12. movements (depends on users)
-13. location_bots (depends on locations, bots)
-14. location_locations (depends on locations)
-15. location_resources (depends on locations, resources)
-16. fights (depends on users, bots)
-17. rounds (depends on fights)
-18. stuffs (depends on users)
-19. user_equipment_items (depends on users, equipment_items)
-20. user_tool_items (depends on users, tool_items)
-21. bot_equipment_items (depends on bots, equipment_items)
+8. users (depends on avatars, locations)
+9. location_bots (depends on locations, bots)
+10. location_locations (depends on locations)
+11. fights (depends on users, bots)
+12. rounds (depends on fights)
+13. inventory (depends on users, equipment_items)

@@ -12,7 +12,6 @@ export default function Bots() {
   const [bots, setBots] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [attacking, setAttacking] = useState(null)
 
   useEffect(() => {
     if (!location_slug) {
@@ -44,22 +43,11 @@ export default function Bots() {
     navigate('/signin')
   }
 
-  const handleAttack = async (botSlug) => {
+  const handleAttack = (botSlug) => {
     if (!botSlug) {
-      alert('Slug бота не определен')
       return
     }
-
-    setAttacking(botSlug)
-    try {
-      await botAPI.attack(botSlug)
-      alert('Атака выполнена!')
-    } catch (error) {
-      console.error('[Bots] Error attacking bot:', error)
-      alert(error.message || 'Ошибка при атаке')
-    } finally {
-      setAttacking(null)
-    }
+    navigate(`/fight?bot=${botSlug}`)
   }
 
   const normalizeImagePath = (img) => {
@@ -157,9 +145,8 @@ export default function Bots() {
                     <button 
                       className="bot-attack-button"
                       onClick={() => handleAttack(bot.slug)}
-                      disabled={attacking === bot.slug}
                     >
-                      {attacking === bot.slug ? 'Атака...' : 'Атаковать'}
+                      Атаковать
                     </button>
                   </div>
                 </div>

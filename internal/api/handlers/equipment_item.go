@@ -25,12 +25,12 @@ func NewEquipmentItemHandler(db *sqlx.DB) *EquipmentItemHandler {
 	equipmentItemRepo := repository.NewEquipmentItemRepository(db)
 	equipmentItemService := services.NewEquipmentItemService(equipmentItemRepo)
 
-	userEquipmentItemRepo := repository.NewUserEquipmentItemRepository(db)
+	inventoryRepo := repository.NewInventoryRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	equipmentItemBuyService := services.NewEquipmentItemBuyService(db, equipmentItemRepo, userEquipmentItemRepo, userRepo)
-	equipmentItemSellService := services.NewEquipmentItemSellService(db, equipmentItemRepo, userEquipmentItemRepo, userRepo)
-	equipmentItemTakeOnService := services.NewEquipmentItemTakeOnService(db, equipmentItemRepo, userEquipmentItemRepo, userRepo)
-	equipmentItemTakeOffService := services.NewEquipmentItemTakeOffService(db, equipmentItemRepo, userEquipmentItemRepo, userRepo)
+	equipmentItemBuyService := services.NewEquipmentItemBuyService(db, equipmentItemRepo, inventoryRepo, userRepo)
+	equipmentItemSellService := services.NewEquipmentItemSellService(db, equipmentItemRepo, inventoryRepo, userRepo)
+	equipmentItemTakeOnService := services.NewEquipmentItemTakeOnService(db, equipmentItemRepo, inventoryRepo, userRepo)
+	equipmentItemTakeOffService := services.NewEquipmentItemTakeOffService(db, equipmentItemRepo, inventoryRepo, userRepo)
 
 	return &EquipmentItemHandler{
 		db:                          db,

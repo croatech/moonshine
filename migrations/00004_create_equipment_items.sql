@@ -3,9 +3,9 @@
 CREATE TABLE equipment_items (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
     name VARCHAR(255) NOT NULL,
+    slug VARCHAR(255),
     attack INTEGER NOT NULL DEFAULT 0,
     defense INTEGER NOT NULL DEFAULT 0,
     hp INTEGER NOT NULL DEFAULT 0,
@@ -16,6 +16,9 @@ CREATE TABLE equipment_items (
     image VARCHAR(255),
     CONSTRAINT fk_equipment_items_category FOREIGN KEY (equipment_category_id) REFERENCES equipment_categories(id) ON DELETE SET NULL
 );
+
+CREATE INDEX idx_equipment_items_slug ON equipment_items(slug) WHERE deleted_at IS NULL;
+CREATE UNIQUE INDEX idx_equipment_items_slug_unique ON equipment_items(slug) WHERE deleted_at IS NULL AND slug IS NOT NULL;
 -- +goose StatementEnd
 
 -- +goose Down

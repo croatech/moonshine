@@ -15,23 +15,23 @@ var (
 )
 
 type EquipmentItemSellService struct {
-	db                    *sqlx.DB
-	equipmentItemRepo     *repository.EquipmentItemRepository
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository
-	userRepo              *repository.UserRepository
+	db                *sqlx.DB
+	equipmentItemRepo *repository.EquipmentItemRepository
+	inventoryRepo     *repository.InventoryRepository
+	userRepo          *repository.UserRepository
 }
 
 func NewEquipmentItemSellService(
 	db *sqlx.DB,
 	equipmentItemRepo *repository.EquipmentItemRepository,
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository,
+	inventoryRepo *repository.InventoryRepository,
 	userRepo *repository.UserRepository,
 ) *EquipmentItemSellService {
 	return &EquipmentItemSellService{
-		db:                    db,
-		equipmentItemRepo:     equipmentItemRepo,
-		userEquipmentItemRepo: userEquipmentItemRepo,
-		userRepo:              userRepo,
+		db:                db,
+		equipmentItemRepo: equipmentItemRepo,
+		inventoryRepo:     inventoryRepo,
+		userRepo:          userRepo,
 	}
 }
 
@@ -48,7 +48,7 @@ func (s *EquipmentItemSellService) SellEquipmentItem(ctx context.Context, userID
 	}
 
 	var count int
-	checkOwnershipQuery := `SELECT COUNT(*) FROM user_equipment_items WHERE user_id = $1 AND equipment_item_id = $2 AND deleted_at IS NULL`
+	checkOwnershipQuery := `SELECT COUNT(*) FROM inventory WHERE user_id = $1 AND equipment_item_id = $2 AND deleted_at IS NULL`
 	err = tx.Get(&count, checkOwnershipQuery, userID, item.ID)
 	if err != nil {
 		return err
@@ -70,7 +70,7 @@ func (s *EquipmentItemSellService) SellEquipmentItem(ctx context.Context, userID
 		return err
 	}
 
-	deleteItemQuery := `DELETE FROM user_equipment_items WHERE user_id = $1 AND equipment_item_id = $2 AND deleted_at IS NULL`
+	deleteItemQuery := `DELETE FROM inventory WHERE user_id = $1 AND equipment_item_id = $2 AND deleted_at IS NULL`
 	_, err = tx.Exec(deleteItemQuery, userID, item.ID)
 	if err != nil {
 		return err

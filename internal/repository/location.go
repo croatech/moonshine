@@ -26,18 +26,15 @@ func NewLocationRepository(db *sqlx.DB) *LocationRepository {
 
 func (r *LocationRepository) Create(location *domain.Location) error {
 	query := `
-		INSERT INTO locations (id, name, slug, cell, inactive, image, image_bg)
-		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		INSERT INTO locations (name, slug, cell, inactive, image, image_bg)
+		VALUES ($1, $2, $3, $4, $5, $6)
+		RETURNING id, created_at
 	`
 
-	if location.ID == uuid.Nil {
-		location.ID = uuid.New()
-	}
-
-	_, err := r.db.Exec(query,
-		location.ID, location.Name, location.Slug, location.Cell, location.Inactive,
+	err := r.db.QueryRow(query,
+		location.Name, location.Slug, location.Cell, location.Inactive,
 		location.Image, location.ImageBg,
-	)
+	).Scan(&location.ID, &location.CreatedAt)
 	if err != nil {
 		if isUniqueConstraintError(err) {
 			return ErrLocationExists
@@ -189,4 +186,13 @@ func (r *LocationRepository) DefaultOutdoorLocation() (*domain.Location, error) 
 	}
 
 	return location, nil
+}
+
+func (r *LocationRepository) HasBot(locationID uuid.UUID, botID uuid.UUID) (bool, error) {
+	query := `SELECT EXISTS(SELECT 1 FROM location_bots WHERE location_id = $1 AND bot_id = $2)`
+
+	exists := false
+	err := r.db.Get(&exists, query, locationID, botID)
+
+	return exists, err
 }

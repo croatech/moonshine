@@ -83,3 +83,20 @@ func (r *EquipmentItemRepository) FindBySlug(slug string) (*domain.EquipmentItem
 	return item, nil
 }
 
+func (r *EquipmentItemRepository) Create(item *domain.EquipmentItem) error {
+	query := `
+		INSERT INTO equipment_items (name, slug, attack, defense, hp, required_level, price, equipment_category_id, image)
+		VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+		RETURNING id
+	`
+
+	err := r.db.QueryRow(query,
+		item.Name, item.Slug, item.Attack, item.Defense, item.Hp,
+		item.RequiredLevel, item.Price, item.EquipmentCategoryID, item.Image,
+	).Scan(&item.ID)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

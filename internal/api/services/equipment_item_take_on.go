@@ -19,23 +19,23 @@ var (
 )
 
 type EquipmentItemTakeOnService struct {
-	db                    *sqlx.DB
-	equipmentItemRepo     *repository.EquipmentItemRepository
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository
-	userRepo              *repository.UserRepository
+	db                *sqlx.DB
+	equipmentItemRepo *repository.EquipmentItemRepository
+	inventoryRepo     *repository.InventoryRepository
+	userRepo          *repository.UserRepository
 }
 
 func NewEquipmentItemTakeOnService(
 	db *sqlx.DB,
 	equipmentItemRepo *repository.EquipmentItemRepository,
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository,
+	inventoryRepo *repository.InventoryRepository,
 	userRepo *repository.UserRepository,
 ) *EquipmentItemTakeOnService {
 	return &EquipmentItemTakeOnService{
-		db:                    db,
-		equipmentItemRepo:     equipmentItemRepo,
-		userEquipmentItemRepo: userEquipmentItemRepo,
-		userRepo:              userRepo,
+		db:                db,
+		equipmentItemRepo: equipmentItemRepo,
+		inventoryRepo:     inventoryRepo,
+		userRepo:          userRepo,
 	}
 }
 
@@ -78,7 +78,7 @@ func (s *EquipmentItemTakeOnService) TakeOnEquipmentItem(ctx context.Context, us
 
 	checkQuery := `
 		SELECT COUNT(*) 
-		FROM user_equipment_items 
+		FROM inventory 
 		WHERE user_id = $1 AND equipment_item_id = $2 AND deleted_at IS NULL
 	`
 	var count int
@@ -139,9 +139,9 @@ func (s *EquipmentItemTakeOnService) TakeOnEquipmentItem(ctx context.Context, us
 	}
 
 	deleteFromInventoryQuery := `
-		DELETE FROM user_equipment_items 
+		DELETE FROM inventory 
 		WHERE id = (
-			SELECT id FROM user_equipment_items 
+			SELECT id FROM inventory 
 			WHERE user_id = $1 AND equipment_item_id = $2 AND deleted_at IS NULL 
 			LIMIT 1
 		)
@@ -152,11 +152,12 @@ func (s *EquipmentItemTakeOnService) TakeOnEquipmentItem(ctx context.Context, us
 	}
 
 	if oldItemID != nil {
-		returnToInventoryQuery := `
-			INSERT INTO user_equipment_items (id, user_id, equipment_item_id, created_at)
-			VALUES ($1, $2, $3, NOW())
-		`
-		_, err = tx.Exec(returnToInventoryQuery, uuid.New(), userID, *oldItemID)
+		inventory := &domain.Inventory{
+			UserID:          userID,
+			EquipmentItemID: *oldItemID,
+		}
+		inventoryRepo := repository.NewInventoryRepository(tx)
+		err = inventoryRepo.Create(inventory)
 		if err != nil {
 			return err
 		}

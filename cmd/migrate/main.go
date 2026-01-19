@@ -5,11 +5,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 
-	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"github.com/joho/godotenv"
+	"github.com/lib/pq"
 	"github.com/pressly/goose/v3"
+
+	"moonshine/internal/config"
 )
 
 func main() {
@@ -17,55 +19,124 @@ func main() {
 		log.Println(".env not loaded, relying on environment")
 	}
 
-	var (
-		flags   = flag.NewFlagSet("goose", flag.ExitOnError)
-		dir     = flags.String("dir", "migrations", "directory with migration files")
-		command = flags.String("command", "up", "goose command: up, down, status, create")
+	command := flag.String("command", "up", "Migration command: up, down, down-to, status, create")
+	name := flag.String("name", "", "Migration name (required for create)")
+	targetVersion := flag.Int64("version", 0, "Target version for down-to command")
+	flag.Parse()
+
+	cfg := config.Load()
+
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.Name,
+		cfg.Database.SSLMode,
 	)
-
-	flags.Parse(os.Args[1:])
-	args := flags.Args()
-
-	host := getEnv("DATABASE_HOST", "localhost")
-	port := getEnv("DATABASE_PORT", "5433")
-	user := getEnv("DATABASE_USER", "postgres")
-	password := getEnv("DATABASE_PASSWORD", "postgres")
-	dbname := getEnv("DATABASE_NAME", "moonshine")
-	sslmode := getEnv("DATABASE_SSL_MODE", "disable")
-
-	dsn := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
-		host, port, user, password, dbname, sslmode)
 
 	db, err := sql.Open("postgres", dsn)
 	if err != nil {
-		log.Fatalf("failed to open database: %v", err)
+		log.Fatalf("Failed to open database connection: %v", err)
+	}
+	
+	if err := db.Ping(); err != nil {
+		if *command == "up" && isDatabaseDoesNotExistError(err) {
+			if err := createDatabase(cfg); err != nil {
+				log.Fatalf("Failed to create database: %v", err)
+			}
+			db, err = sql.Open("postgres", dsn)
+			if err != nil {
+				log.Fatalf("Failed to open database connection: %v", err)
+			}
+			if err := db.Ping(); err != nil {
+				log.Fatalf("Failed to connect to database: %v", err)
+			}
+		} else {
+			log.Fatalf("Failed to connect to database: %v", err)
+		}
 	}
 	defer db.Close()
 
-	if err := db.Ping(); err != nil {
-		log.Fatalf("failed to ping database: %v", err)
+	if err := goose.SetDialect("postgres"); err != nil {
+		log.Fatalf("Failed to set dialect: %v", err)
 	}
 
-	if *command == "create" {
-		if len(args) == 0 {
-			log.Fatal("migration name is required for create command")
-		}
-		name := args[0]
-		if err := goose.Create(db, *dir, name, "sql"); err != nil {
-			log.Fatalf("failed to create migration: %v", err)
-		}
-		fmt.Printf("Created migration: %s\n", name)
-		return
-	}
+	migrationsDir := "migrations"
 
-	if err := goose.Run(*command, db, *dir, args...); err != nil {
-		log.Fatalf("goose run: %v", err)
+	switch *command {
+	case "up":
+		if err := goose.Up(db, migrationsDir); err != nil {
+			log.Fatalf("Failed to run migrations: %v", err)
+		}
+		log.Println("Migrations applied successfully")
+	case "down":
+		if err := goose.Down(db, migrationsDir); err != nil {
+			log.Fatalf("Failed to rollback migrations: %v", err)
+		}
+		log.Println("Migrations rolled back successfully")
+	case "down-to":
+		if err := goose.DownTo(db, migrationsDir, *targetVersion); err != nil {
+			log.Fatalf("Failed to rollback migrations to version %d: %v", *targetVersion, err)
+		}
+		log.Printf("Migrations rolled back to version %d successfully", *targetVersion)
+	case "status":
+		if err := goose.Status(db, migrationsDir); err != nil {
+			log.Fatalf("Failed to get migration status: %v", err)
+		}
+	case "create":
+		if *name == "" {
+			log.Fatal("Migration name is required for create command")
+		}
+		if err := goose.Create(db, migrationsDir, *name, "sql"); err != nil {
+			log.Fatalf("Failed to create migration: %v", err)
+		}
+		log.Printf("Created migration: %s", *name)
+	default:
+		log.Fatalf("Unknown command: %s", *command)
 	}
 }
 
-func getEnv(key, fallback string) string {
-	if value := os.Getenv(key); value != "" {
-		return value
+func isDatabaseDoesNotExistError(err error) bool {
+	if err == nil {
+		return false
 	}
-	return fallback
+	pqErr, ok := err.(*pq.Error)
+	return ok && pqErr.Code == "3D000"
+}
+
+func createDatabase(cfg *config.Config) error {
+	dsn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=postgres sslmode=%s",
+		cfg.Database.Host,
+		cfg.Database.Port,
+		cfg.Database.User,
+		cfg.Database.Password,
+		cfg.Database.SSLMode,
+	)
+
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		return fmt.Errorf("failed to open database connection: %w", err)
+	}
+	
+	if err := db.Ping(); err != nil {
+		db.Close()
+		return fmt.Errorf("failed to connect to postgres database: %w", err)
+	}
+	defer db.Close()
+
+	query := fmt.Sprintf("CREATE DATABASE %s", cfg.Database.Name)
+	_, err = db.Exec(query)
+	if err != nil {
+		pqErr, ok := err.(*pq.Error)
+		if ok && pqErr.Code == "42P04" {
+			return nil
+		}
+		return fmt.Errorf("failed to create database: %w", err)
+	}
+
+	log.Printf("Database '%s' created successfully", cfg.Database.Name)
+	return nil
 }

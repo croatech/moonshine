@@ -3,7 +3,6 @@
 CREATE TABLE location_bots (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     deleted_at TIMESTAMP,
     location_id UUID NOT NULL,
     bot_id UUID NOT NULL,
@@ -16,4 +15,3 @@ CREATE TABLE location_bots (
 -- +goose StatementBegin
 DROP TABLE IF EXISTS location_bots;
 -- +goose StatementEnd
-

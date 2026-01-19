@@ -24,17 +24,14 @@ func NewBotRepository(db *sqlx.DB) *BotRepository {
 
 func (r *BotRepository) Create(bot *domain.Bot) error {
 	query := `
-		INSERT INTO bots (id, name, slug, attack, defense, hp, level, avatar)
-		VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+		INSERT INTO bots (name, slug, attack, defense, hp, level, avatar)
+		VALUES ($1, $2, $3, $4, $5, $6, $7)
+		RETURNING id, created_at
 	`
 
-	if bot.ID == uuid.Nil {
-		bot.ID = uuid.New()
-	}
-
-	_, err := r.db.Exec(query,
-		bot.ID, bot.Name, bot.Slug, bot.Attack, bot.Defense, bot.Hp, bot.Level, bot.Avatar,
-	)
+	err := r.db.QueryRow(query,
+		bot.Name, bot.Slug, bot.Attack, bot.Defense, bot.Hp, bot.Level, bot.Avatar,
+	).Scan(&bot.ID, &bot.CreatedAt)
 	if err != nil {
 		return err
 	}
@@ -67,6 +64,25 @@ func (r *BotRepository) FindBySlug(slug string) (*domain.Bot, error) {
 
 	bot := &domain.Bot{}
 	err := r.db.Get(bot, query, slug)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, ErrBotNotFound
+		}
+		return nil, err
+	}
+
+	return bot, nil
+}
+
+func (r *BotRepository) FindByID(id uuid.UUID) (*domain.Bot, error) {
+	query := `
+		SELECT id, created_at, deleted_at, name, slug, attack, defense, hp, level, avatar
+		FROM bots
+		WHERE id = $1 AND deleted_at IS NULL
+	`
+
+	bot := &domain.Bot{}
+	err := r.db.Get(bot, query, id)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, ErrBotNotFound

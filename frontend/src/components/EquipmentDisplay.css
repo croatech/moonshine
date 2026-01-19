@@ -1,0 +1,8 @@
+.equipment-display-wrapper {
+  display: flex;
+  gap: 20px;
+}
+
+.equipment-slot.readonly {
+  cursor: default !important;
+}

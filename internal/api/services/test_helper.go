@@ -1,6 +1,7 @@
 package services
 
 import (
+	"log"
 	"os"
 	"testing"
 
@@ -12,19 +13,31 @@ import (
 var testDB *repository.Database
 
 func TestMain(m *testing.M) {
+	log.Println("[TestMain services] Starting test setup")
+	
 	err := godotenv.Load("../../../.env.test")
 	if err != nil {
+		log.Printf("[TestMain services] Warning: .env.test not loaded: %v", err)
+	} else {
+		log.Println("[TestMain services] .env.test loaded successfully")
 	}
 
+	log.Println("[TestMain services] Attempting to connect to test database...")
 	db, err := repository.New()
 	if err != nil {
-		os.Exit(0)
+		log.Printf("[TestMain services] Failed to connect to database: %v", err)
+		testDB = nil
+		code := m.Run()
+		os.Exit(code)
 	}
 	testDB = db
+	log.Println("[TestMain services] Test database connected successfully")
 
 	code := m.Run()
 
-	testDB.Close()
+	if testDB != nil {
+		testDB.Close()
+	}
 	os.Exit(code)
 }
 

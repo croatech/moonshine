@@ -55,8 +55,7 @@ func truncateTables(db *sqlx.DB) error {
 	log.Println("Truncating all seed tables...")
 
 	tables := []string{
-		"user_equipment_items",
-		"bot_equipment_items",
+		"inventory",
 		"location_locations",
 		"equipment_items",
 		"equipment_categories",
@@ -486,23 +485,7 @@ func seedBots(db *sqlx.DB) error {
 
 	var existingBotID uuid.UUID
 	err := db.QueryRow("SELECT id FROM bots WHERE slug = $1 AND deleted_at IS NULL", "rat").Scan(&existingBotID)
-	if err == nil {
-		log.Println("Bot 'rat' already exists, skipping")
-		cell29Location, err := locationRepo.FindBySlug("29cell")
-		if err != nil {
-			return fmt.Errorf("failed to find 29cell location: %w", err)
-		}
-
-		var existingLinkID uuid.UUID
-		err = db.QueryRow(
-			"SELECT id FROM location_bots WHERE location_id = $1 AND bot_id = $2 AND deleted_at IS NULL",
-			cell29Location.ID, existingBotID,
-		).Scan(&existingLinkID)
-		if err == nil {
-			log.Println("Bot 'rat' already linked to 29cell, skipping")
-			return nil
-		}
-	} else {
+	if err != nil {
 		ratBot := &domain.Bot{
 			Name:    "Крыса",
 			Slug:    "rat",
@@ -519,6 +502,8 @@ func seedBots(db *sqlx.DB) error {
 
 		log.Printf("Created bot: Крыса (ID: %s)", ratBot.ID.String())
 		existingBotID = ratBot.ID
+	} else {
+		log.Println("Bot 'rat' already exists")
 	}
 
 	cell29Location, err := locationRepo.FindBySlug("29cell")
@@ -539,6 +524,8 @@ func seedBots(db *sqlx.DB) error {
 			return fmt.Errorf("failed to link rat bot to 29cell: %w", err)
 		}
 		log.Printf("Linked bot 'Крыса' to location 29cell")
+	} else {
+		log.Println("Bot 'rat' already linked to 29cell")
 	}
 
 	log.Println("Bots seeding completed!")

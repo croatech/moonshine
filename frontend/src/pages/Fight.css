@@ -1,0 +1,45 @@
+.fight-profiles-container {
+  display: flex;
+  gap: 40px;
+  width: 100%;
+  justify-content: space-between;
+}
+
+.fight-profile-section {
+  flex: 1;
+  min-width: 0;
+}
+
+.fight-profile-title {
+  text-align: center;
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px solid #e0e0e0;
+}
+
+.fight-profile-title h2 {
+  margin: 0 0 8px 0;
+  color: #5a4730;
+  font-size: 24px;
+  font-weight: bold;
+}
+
+.fight-profile-level {
+  color: #8b6f47;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.fight-error {
+  color: #dc3545;
+  font-size: 18px;
+  text-align: center;
+  padding: 20px;
+}
+
+@media (max-width: 1024px) {
+  .fight-profiles-container {
+    flex-direction: column;
+    gap: 30px;
+  }
+}

@@ -17,23 +17,23 @@ var (
 )
 
 type EquipmentItemBuyService struct {
-	db                    *sqlx.DB
-	equipmentItemRepo     *repository.EquipmentItemRepository
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository
-	userRepo              *repository.UserRepository
+	db                *sqlx.DB
+	equipmentItemRepo *repository.EquipmentItemRepository
+	inventoryRepo     *repository.InventoryRepository
+	userRepo          *repository.UserRepository
 }
 
 func NewEquipmentItemBuyService(
 	db *sqlx.DB,
 	equipmentItemRepo *repository.EquipmentItemRepository,
-	userEquipmentItemRepo *repository.UserEquipmentItemRepository,
+	inventoryRepo *repository.InventoryRepository,
 	userRepo *repository.UserRepository,
 ) *EquipmentItemBuyService {
 	return &EquipmentItemBuyService{
-		db:                    db,
-		equipmentItemRepo:     equipmentItemRepo,
-		userEquipmentItemRepo: userEquipmentItemRepo,
-		userRepo:              userRepo,
+		db:                db,
+		equipmentItemRepo: equipmentItemRepo,
+		inventoryRepo:     inventoryRepo,
+		userRepo:          userRepo,
 	}
 }
 
@@ -58,13 +58,13 @@ func (s *EquipmentItemBuyService) BuyEquipmentItem(ctx context.Context, userID u
 		return ErrInsufficientGold
 	}
 
-	userEquipmentItem := &domain.UserEquipmentItem{
+	inventory := &domain.Inventory{
 		UserID:          userID,
 		EquipmentItemID: item.ID,
 	}
 
-	userEquipmentItemRepo := repository.NewUserEquipmentItemRepository(tx)
-	if err := userEquipmentItemRepo.Create(userEquipmentItem); err != nil {
+	inventoryRepo := repository.NewInventoryRepository(tx)
+	if err := inventoryRepo.Create(inventory); err != nil {
 		return err
 	}
 

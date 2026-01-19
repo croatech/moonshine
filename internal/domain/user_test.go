@@ -1,6 +1,10 @@
 package domain
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/stretchr/testify/assert"
+)
 
 func TestUser_ReachedNewLevel(t *testing.T) {
 	tests := []struct {
@@ -69,19 +73,7 @@ func TestUser_ReachedNewLevel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			result := tt.user.ReachedNewLevel()
-			if result != tt.expected {
-				t.Errorf("ReachedNewLevel() = %v, want %v", result, tt.expected)
-			}
+			assert.Equal(t, tt.expected, result)
 		})
 	}
 }
-
-
-
-
-
-
-
-
-
-
