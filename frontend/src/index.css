@@ -10,7 +10,11 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: white;
+  background: linear-gradient(rgba(245, 230, 211, 0.3), rgba(245, 230, 211, 0.3)), url('/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   min-height: 100vh;
   margin: 0;
   padding: 0;

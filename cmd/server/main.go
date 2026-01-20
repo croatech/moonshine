@@ -12,11 +12,35 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
+	"moonshine/cmd/server/docs"
 	"moonshine/internal/api"
 	"moonshine/internal/config"
 	"moonshine/internal/repository"
 	"moonshine/internal/worker"
+
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
+
+// @title Moonshine API
+// @version 1.0
+// @description Game API for Moonshine
+// @termsOfService http://swagger.io/terms/
+
+// @contact.name API Support
+// @contact.url http://www.swagger.io/support
+// @contact.email support@swagger.io
+
+// @license.name Apache 2.0
+// @license.url http://www.apache.org/licenses/LICENSE-2.0.html
+
+// @host localhost:8080
+// @BasePath /
+// @schemes http https
+
+// @securityDefinitions.apikey Bearer
+// @in header
+// @name Authorization
+// @description JWT token. Example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 func main() {
 	if err := godotenv.Load(); err != nil {
@@ -30,12 +54,21 @@ func main() {
 	}
 	defer db.Close()
 
+	docs.SwaggerInfo.Host = cfg.HTTPAddr
+	if os.Getenv("ENV") == "production" {
+		docs.SwaggerInfo.Schemes = []string{"https"}
+	} else {
+		docs.SwaggerInfo.Schemes = []string{"http"}
+	}
+
 	e := echo.New()
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
 	api.SetupRoutes(e, db.DB(), cfg.IsProduction())
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt)
 	defer stop()

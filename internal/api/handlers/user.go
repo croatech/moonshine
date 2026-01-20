@@ -17,6 +17,7 @@ type UserHandler struct {
 	db               *sqlx.DB
 	userService      *services.UserService
 	inventoryService *services.InventoryService
+	userRepo         *repository.UserRepository
 }
 
 func NewUserHandler(db *sqlx.DB) *UserHandler {
@@ -32,9 +33,22 @@ func NewUserHandler(db *sqlx.DB) *UserHandler {
 		db:               db,
 		userService:      userService,
 		inventoryService: inventoryService,
+		userRepo:         userRepo,
 	}
 }
 
+
+// GetCurrentUser godoc
+// @Summary Get current user
+// @Description Get authenticated user information
+// @Tags user
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} dto.User
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/user/me [get]
 func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
@@ -52,10 +66,24 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location, inFight))
 }
 
+// GetUserInventory godoc
+// @Summary Get user inventory
+// @Description Get list of items in user's inventory
+// @Tags user
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {array} dto.EquipmentItem
+// @Failure 401 {object} map[string]string
+// @Router /api/users/me/inventory [get]
 func (h *UserHandler) GetUserInventory(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	items, err := h.inventoryService.GetUserInventory(c.Request().Context(), userID)
@@ -66,10 +94,24 @@ func (h *UserHandler) GetUserInventory(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.EquipmentItemsFromDomain(items))
 }
 
+// GetUserEquippedItems godoc
+// @Summary Get equipped items
+// @Description Get list of currently equipped items
+// @Tags user
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Success 200 {object} map[string]dto.EquipmentItem
+// @Failure 401 {object} map[string]string
+// @Router /api/users/me/equipped [get]
 func (h *UserHandler) GetUserEquippedItems(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	userRepo := repository.NewUserRepository(h.db)
@@ -78,88 +120,64 @@ func (h *UserHandler) GetUserEquippedItems(c echo.Context) error {
 		return ErrNotFound(c, "user not found")
 	}
 
-	itemIDs := make(map[string]*string)
-	if user.ChestEquipmentItemID != nil {
-		id := user.ChestEquipmentItemID.String()
-		itemIDs["chest"] = &id
+	var equipmentItemIDs = make([]uuid.UUID, 0, 14)
+	equipmentItemFields := []*uuid.UUID{
+		user.ChestEquipmentItemID,
+		user.BeltEquipmentItemID,
+		user.HeadEquipmentItemID,
+		user.NeckEquipmentItemID,
+		user.WeaponEquipmentItemID,
+		user.ShieldEquipmentItemID,
+		user.LegsEquipmentItemID,
+		user.FeetEquipmentItemID,
+		user.ArmsEquipmentItemID,
+		user.HandsEquipmentItemID,
+		user.Ring1EquipmentItemID,
+		user.Ring2EquipmentItemID,
+		user.Ring3EquipmentItemID,
+		user.Ring4EquipmentItemID,
 	}
-	if user.BeltEquipmentItemID != nil {
-		id := user.BeltEquipmentItemID.String()
-		itemIDs["belt"] = &id
-	}
-	if user.HeadEquipmentItemID != nil {
-		id := user.HeadEquipmentItemID.String()
-		itemIDs["head"] = &id
-	}
-	if user.NeckEquipmentItemID != nil {
-		id := user.NeckEquipmentItemID.String()
-		itemIDs["neck"] = &id
-	}
-	if user.WeaponEquipmentItemID != nil {
-		id := user.WeaponEquipmentItemID.String()
-		itemIDs["weapon"] = &id
-	}
-	if user.ShieldEquipmentItemID != nil {
-		id := user.ShieldEquipmentItemID.String()
-		itemIDs["shield"] = &id
-	}
-	if user.LegsEquipmentItemID != nil {
-		id := user.LegsEquipmentItemID.String()
-		itemIDs["legs"] = &id
-	}
-	if user.FeetEquipmentItemID != nil {
-		id := user.FeetEquipmentItemID.String()
-		itemIDs["feet"] = &id
-	}
-	if user.ArmsEquipmentItemID != nil {
-		id := user.ArmsEquipmentItemID.String()
-		itemIDs["arms"] = &id
-	}
-	if user.HandsEquipmentItemID != nil {
-		id := user.HandsEquipmentItemID.String()
-		itemIDs["hands"] = &id
-	}
-	if user.Ring1EquipmentItemID != nil {
-		id := user.Ring1EquipmentItemID.String()
-		itemIDs["ring1"] = &id
-	}
-	if user.Ring2EquipmentItemID != nil {
-		id := user.Ring2EquipmentItemID.String()
-		itemIDs["ring2"] = &id
-	}
-	if user.Ring3EquipmentItemID != nil {
-		id := user.Ring3EquipmentItemID.String()
-		itemIDs["ring3"] = &id
-	}
-	if user.Ring4EquipmentItemID != nil {
-		id := user.Ring4EquipmentItemID.String()
-		itemIDs["ring4"] = &id
-	}
-
-	equipmentItemRepo := repository.NewEquipmentItemRepository(h.db)
-	equippedItems := make(map[string]*dto.EquipmentItem)
-
-	for slot, itemIDPtr := range itemIDs {
-		if itemIDPtr != nil {
-			itemID, err := uuid.Parse(*itemIDPtr)
-			if err != nil {
-				continue
-			}
-			item, err := equipmentItemRepo.FindByID(itemID)
-			if err != nil {
-				continue
-			}
-			equippedItems[slot] = dto.EquipmentItemFromDomain(item)
+	for _, id := range equipmentItemFields {
+		if id != nil {
+			equipmentItemIDs = append(equipmentItemIDs, *id)
 		}
 	}
 
-	return c.JSON(http.StatusOK, equippedItems)
+	equipmentItemRepo := repository.NewEquipmentItemRepository(h.db)
+	equippedItemsList, err := equipmentItemRepo.FindByIDs(equipmentItemIDs)
+	if err != nil {
+		return ErrInternalServerError(c)
+	}
+
+	equipmentItems := map[string]*dto.EquipmentItem{}
+	for _, item := range equippedItemsList {
+		equipmentItems[item.EquipmentType] = dto.EquipmentItemFromDomain(item)
+	}
+
+	return c.JSON(http.StatusOK, equipmentItems)
 }
 
+// UpdateCurrentUser godoc
+// @Summary Update current user
+// @Description Update authenticated user information
+// @Tags user
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body dto.UpdateUserRequest true "Update user request"
+// @Success 200 {object} dto.User
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/user/me [put]
 func (h *UserHandler) UpdateCurrentUser(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	var req dto.UpdateUserRequest

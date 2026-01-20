@@ -3,12 +3,14 @@
   right: 20px;
   top: 50%;
   transform: translateY(-50%);
-  background: white;
-  border: 2px solid #5a4730;
+  background: linear-gradient(145deg, rgba(255, 249, 240, 0.95), rgba(245, 230, 211, 0.95));
+  border: 3px solid #8b6f47;
   border-radius: 8px;
   padding: 20px;
   min-width: 200px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .location-bots-title {

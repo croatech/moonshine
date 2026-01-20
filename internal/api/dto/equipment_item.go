@@ -17,6 +17,7 @@ type EquipmentItem struct {
 	Price         int       `json:"price"`
 	Artifact      bool      `json:"artifact"`
 	Image         string    `json:"image"`
+	EquipmentType string    `json:"equipment_type"`
 	CreatedAt     time.Time `json:"createdAt"`
 }
 
@@ -37,6 +38,7 @@ func EquipmentItemFromDomain(item *domain.EquipmentItem) *EquipmentItem {
 		Artifact:      item.Artifact,
 		Image:         item.Image,
 		CreatedAt:     item.CreatedAt,
+		EquipmentType: item.EquipmentType,
 	}
 }
 

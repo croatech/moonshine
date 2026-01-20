@@ -184,6 +184,9 @@ export default function EquipmentItems() {
                   )}
                   <div className="equipment-item-info">
                     <h3>{item.name}</h3>
+                    {item.equipment_type && (
+                      <div className="equipment-item-type">Тип: {item.equipment_type}</div>
+                    )}
                     <div className="equipment-item-stats">
                       <div>Уровень: {item.requiredLevel}</div>
                       {item.attack > 0 && <div>Атака: {item.attack}</div>}

@@ -140,7 +140,10 @@ export default function Profile() {
   }
 
   const handleTakeOn = async (item) => {
+    console.log('[Profile] handleTakeOn called with item:', item)
+    
     if (!item.slug) {
+      console.error('[Profile] Item slug is missing')
       showNotification('Slug предмета не определен', 'error')
       return
     }
@@ -151,12 +154,15 @@ export default function Profile() {
     }
 
     if (updateInProgressRef.current) {
+      console.log('[Profile] Update already in progress, skipping')
       return
     }
 
     try {
       updateInProgressRef.current = true
-      await equipmentAPI.takeOn(item.slug)
+      console.log('[Profile] Calling equipmentAPI.takeOn with slug:', item.slug)
+      const result = await equipmentAPI.takeOn(item.slug)
+      console.log('[Profile] takeOn result:', result)
       
       const [items, equipped] = await Promise.all([
         userAPI.getInventory(),
@@ -177,6 +183,8 @@ export default function Profile() {
         errorMessage = 'Предмет не найден'
       } else if (error.message.includes('invalid equipment type')) {
         errorMessage = 'Неверный тип экипировки'
+      } else if (error.message.includes('internal server error') || error.message.includes('user is in fight')) {
+        errorMessage = 'Вы находитесь в бою. Сначала завершите бой.'
       } else {
         errorMessage = error.message
       }
@@ -215,6 +223,8 @@ export default function Profile() {
         errorMessage = 'В этом слоте нет предмета'
       } else if (error.message.includes('invalid slot')) {
         errorMessage = 'Неверный слот'
+      } else if (error.message.includes('internal server error') || error.message.includes('user is in fight')) {
+        errorMessage = 'Вы находитесь в бою. Сначала завершите бой.'
       } else {
         errorMessage = error.message
       }
@@ -488,6 +498,9 @@ export default function Profile() {
                         )}
                         <div className="equipment-item-info">
                           <h3>{item.name}</h3>
+                          {item.equipment_type && (
+                            <div className="equipment-item-type">Тип: {item.equipment_type}</div>
+                          )}
                           <div className="equipment-item-stats">
                             <div>Уровень: {item.requiredLevel}</div>
                             {item.attack > 0 && <div>Атака: {item.attack}</div>}

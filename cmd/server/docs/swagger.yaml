@@ -1,4 +1,862 @@
+basePath: /
+definitions:
+  dto.Avatar:
+    properties:
+      id:
+        type: string
+      image:
+        type: string
+      private:
+        type: boolean
+    type: object
+  dto.Bot:
+    properties:
+      attack:
+        type: integer
+      avatar:
+        type: string
+      createdAt:
+        type: string
+      defense:
+        type: integer
+      hp:
+        type: integer
+      id:
+        type: string
+      level:
+        type: integer
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+  dto.EquipmentItem:
+    properties:
+      artifact:
+        type: boolean
+      attack:
+        type: integer
+      createdAt:
+        type: string
+      defense:
+        type: integer
+      hp:
+        type: integer
+      id:
+        type: string
+      image:
+        type: string
+      name:
+        type: string
+      price:
+        type: integer
+      requiredLevel:
+        type: integer
+      slug:
+        type: string
+    type: object
+  dto.UpdateUserRequest:
+    properties:
+      avatarId:
+        type: string
+    type: object
+  dto.User:
+    properties:
+      armsEquipmentItemId:
+        type: string
+      attack:
+        type: integer
+      avatar:
+        $ref: '#/definitions/dto.Avatar'
+      beltEquipmentItemId:
+        type: string
+      chestEquipmentItemId:
+        type: string
+      createdAt:
+        type: string
+      currentHp:
+        type: integer
+      defense:
+        type: integer
+      email:
+        type: string
+      exp:
+        type: integer
+      feetEquipmentItemId:
+        type: string
+      freeStats:
+        type: integer
+      gold:
+        type: integer
+      handsEquipmentItemId:
+        type: string
+      headEquipmentItemId:
+        type: string
+      hp:
+        type: integer
+      id:
+        type: string
+      inFight:
+        type: boolean
+      legsEquipmentItemId:
+        type: string
+      level:
+        type: integer
+      locationSlug:
+        type: string
+      neckEquipmentItemId:
+        type: string
+      ring1EquipmentItemId:
+        type: string
+      ring2EquipmentItemId:
+        type: string
+      ring3EquipmentItemId:
+        type: string
+      ring4EquipmentItemId:
+        type: string
+      shieldEquipmentItemId:
+        type: string
+      username:
+        type: string
+      weaponEquipmentItemId:
+        type: string
+    type: object
+  handlers.AuthResponse:
+    properties:
+      token:
+        type: string
+      user:
+        $ref: '#/definitions/dto.User'
+    type: object
+  handlers.BotResponse:
+    properties:
+      bots:
+        items:
+          $ref: '#/definitions/dto.Bot'
+        type: array
+    type: object
+  handlers.LocationCellsResponse:
+    properties:
+      cells:
+        items:
+          $ref: '#/definitions/handlers.locationCell'
+        type: array
+    type: object
+  handlers.MoveToCellResponse:
+    properties:
+      message:
+        type: string
+      path_length:
+        type: integer
+    type: object
+  handlers.SignInRequest:
+    properties:
+      password:
+        example: password
+        type: string
+      username:
+        example: admin
+        type: string
+    required:
+    - password
+    - username
+    type: object
+  handlers.SignUpRequest:
+    properties:
+      email:
+        type: string
+      password:
+        minLength: 6
+        type: string
+      username:
+        maxLength: 50
+        minLength: 3
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+  handlers.locationCell:
+    properties:
+      id:
+        type: string
+      image:
+        type: string
+      inactive:
+        type: boolean
+      name:
+        type: string
+      slug:
+        type: string
+    type: object
+host: localhost:8080
 info:
-  contact: {}
-paths: {}
+  contact:
+    email: support@swagger.io
+    name: API Support
+    url: http://www.swagger.io/support
+  description: Game API for Moonshine
+  license:
+    name: Apache 2.0
+    url: http://www.apache.org/licenses/LICENSE-2.0.html
+  termsOfService: http://swagger.io/terms/
+  title: Moonshine API
+  version: "1.0"
+paths:
+  /api/auth/signin:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and get JWT token
+      parameters:
+      - description: Sign in request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SignInRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Sign in
+      tags:
+      - auth
+  /api/auth/signup:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user account
+      parameters:
+      - description: Sign up request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.SignUpRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "409":
+          description: Conflict
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - auth
+  /api/avatars:
+    get:
+      consumes:
+      - application/json
+      description: Get list of all available avatars
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.Avatar'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get all avatars
+      tags:
+      - avatars
+  /api/bots/{location_slug}:
+    get:
+      consumes:
+      - application/json
+      description: Get list of bots in a specific location
+      parameters:
+      - description: Location slug
+        in: path
+        name: location_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.BotResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get bots by location
+      tags:
+      - bots
+  /api/bots/{slug}/attack:
+    post:
+      consumes:
+      - application/json
+      description: Initiate a fight with a bot
+      parameters:
+      - description: Bot slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Attack a bot
+      tags:
+      - bots
+  /api/equipment_items:
+    get:
+      consumes:
+      - application/json
+      description: Get list of equipment items by category
+      parameters:
+      - description: Equipment category
+        in: query
+        name: category
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EquipmentItem'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get equipment items
+      tags:
+      - equipment
+  /api/equipment_items/{slug}/buy:
+    post:
+      consumes:
+      - application/json
+      description: Purchase an equipment item
+      parameters:
+      - description: Item slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Buy equipment item
+      tags:
+      - equipment
+  /api/equipment_items/{slug}/sell:
+    post:
+      consumes:
+      - application/json
+      description: Sell an equipment item from inventory
+      parameters:
+      - description: Item slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Sell equipment item
+      tags:
+      - equipment
+  /api/equipment_items/{slug}/take_on:
+    post:
+      consumes:
+      - application/json
+      description: Equip an equipment item from inventory
+      parameters:
+      - description: Item slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Equip an item
+      tags:
+      - equipment
+  /api/equipment_items/take_off/{slot}:
+    post:
+      consumes:
+      - application/json
+      description: Remove an equipment item from equipped slot
+      parameters:
+      - description: Equipment slot
+        in: path
+        name: slot
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Unequip an item
+      tags:
+      - equipment
+  /api/fights/current:
+    get:
+      consumes:
+      - application/json
+      description: Get information about current active fight
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get current fight
+      tags:
+      - fights
+  /api/locations/{slug}/cells:
+    get:
+      consumes:
+      - application/json
+      description: Get list of cells in a location
+      parameters:
+      - description: Location slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.LocationCellsResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get location cells
+      tags:
+      - locations
+  /api/locations/{slug}/cells/{cell_slug}/move:
+    post:
+      consumes:
+      - application/json
+      description: Start movement to a cell within location
+      parameters:
+      - description: Location slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      - description: Cell slug
+        in: path
+        name: cell_slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MoveToCellResponse'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Move to cell
+      tags:
+      - locations
+  /api/locations/{slug}/move:
+    post:
+      consumes:
+      - application/json
+      description: Move user to a different location
+      parameters:
+      - description: Location slug
+        in: path
+        name: slug
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Move to location
+      tags:
+      - locations
+  /api/user/me:
+    get:
+      consumes:
+      - application/json
+      description: Get authenticated user information
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.User'
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get current user
+      tags:
+      - user
+    put:
+      consumes:
+      - application/json
+      description: Update authenticated user information
+      parameters:
+      - description: Update user request
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/dto.UpdateUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/dto.User'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Update current user
+      tags:
+      - user
+  /api/users/me/equipped:
+    get:
+      consumes:
+      - application/json
+      description: Get list of currently equipped items
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              $ref: '#/definitions/dto.EquipmentItem'
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get equipped items
+      tags:
+      - user
+  /api/users/me/inventory:
+    get:
+      consumes:
+      - application/json
+      description: Get list of items in user's inventory
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/dto.EquipmentItem'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - Bearer: []
+      summary: Get user inventory
+      tags:
+      - user
+  /health:
+    get:
+      consumes:
+      - application/json
+      description: Check if the server is running
+      produces:
+      - text/plain
+      responses:
+        "200":
+          description: ok
+          schema:
+            type: string
+      summary: Health check
+      tags:
+      - health
+schemes:
+- http
+- https
+securityDefinitions:
+  Bearer:
+    description: 'JWT token. Example: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...'
+    in: header
+    name: Authorization
+    type: apiKey
 swagger: "2.0"

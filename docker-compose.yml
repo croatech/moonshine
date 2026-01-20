@@ -17,6 +17,21 @@ services:
     networks:
       - backend
 
+  swagger-ui:
+    image: swaggerapi/swagger-ui:v5.17.14
+    container_name: moonshine-swagger-ui
+    ports:
+      - "8081:8080"
+    environment:
+      - SWAGGER_JSON=/tmp/swagger.json
+    volumes:
+      - ./cmd/server/docs/swagger.json:/tmp/swagger.json:ro
+    depends_on:
+      - postgres
+    networks:
+      - backend
+    restart: unless-stopped
+
 volumes:
   pgdata:
 

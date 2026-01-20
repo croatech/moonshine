@@ -4,14 +4,22 @@
   justify-content: center;
   align-items: flex-start;
   padding: 20px;
-  background-color: #1a1a1a;
+  background: linear-gradient(rgba(245, 230, 211, 0.3), rgba(245, 230, 211, 0.3)), url('/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
 }
 
 .bots-main-block {
   width: 100%;
   max-width: 1200px;
-  background-color: #2a2a2a;
+  background: linear-gradient(145deg, rgba(255, 249, 240, 0.95), rgba(245, 230, 211, 0.95));
   border-radius: 8px;
+  border: 3px solid #8b6f47;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
   padding: 20px;
 }
 
@@ -32,18 +40,30 @@
 .bots-back-button,
 .bots-logout-button {
   padding: 8px 16px;
-  background-color: #3a3a3a;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
+  background: linear-gradient(145deg, #8b6f47, #6b5537);
+  border: 2px solid #5a4730;
+  color: #f5e6d3;
+  border-radius: 6px;
   cursor: pointer;
   font-size: 14px;
-  transition: background-color 0.2s;
+  font-weight: 600;
+  font-family: 'Cinzel', serif;
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
 }
 
 .bots-back-button:hover,
 .bots-logout-button:hover {
-  background-color: #4a4a4a;
+  background: linear-gradient(145deg, #9b7f57, #7b6547);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+  transform: translateY(-2px);
+  color: #fff;
 }
 
 .bots-logout-button {
@@ -56,12 +76,12 @@
 }
 
 .bots-content {
-  color: #fff;
+  color: #5a4730;
 }
 
 .bots-content h2 {
   margin-bottom: 20px;
-  color: #fff;
+  color: #5a4730;
 }
 
 .bots-list {
@@ -71,26 +91,28 @@
 }
 
 .bot-card {
-  background-color: #3a3a3a;
+  background: linear-gradient(145deg, rgba(255, 249, 240, 0.9), rgba(245, 230, 211, 0.9));
   border-radius: 8px;
   padding: 15px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 15px;
-  border: 2px solid #4a4a4a;
+  border: 2px solid #8b6f47;
   transition: border-color 0.2s;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .bot-card:hover {
-  border-color: #5a5a5a;
+  border-color: #6b5537;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .bot-image {
   width: 100px;
   height: 100px;
   object-fit: contain;
-  background-color: #2a2a2a;
+  background-color: rgba(255, 255, 255, 0.5);
   border-radius: 4px;
   padding: 10px;
 }
@@ -102,7 +124,7 @@
 
 .bot-info h3 {
   margin: 0 0 10px 0;
-  color: #fff;
+  color: #5a4730;
   font-size: 18px;
 }
 
@@ -111,7 +133,7 @@
   flex-direction: column;
   gap: 5px;
   margin-bottom: 15px;
-  color: #ccc;
+  color: #5a4730;
   font-size: 14px;
 }
 

@@ -16,6 +16,7 @@ import (
 type BotHandler struct {
 	botService *services.BotService
 	avatarRepo *repository.AvatarRepository
+	userRepo   *repository.UserRepository
 }
 
 type BotResponse struct {
@@ -26,17 +27,40 @@ func NewBotHandler(db *sqlx.DB) *BotHandler {
 	botService := services.NewBotService(db)
 
 	avatarRepo := repository.NewAvatarRepository(db)
+	userRepo := repository.NewUserRepository(db)
 
 	return &BotHandler{
 		botService: botService,
 		avatarRepo: avatarRepo,
+		userRepo:   userRepo,
 	}
 }
 
+// GetBots godoc
+// @Summary Get bots by location
+// @Description Get list of bots in a specific location
+// @Tags bots
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param location_slug path string true "Location slug"
+// @Success 200 {object} BotResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/bots/{location_slug} [get]
 func (h *BotHandler) GetBots(c echo.Context) error {
 	locationSlug := c.Param("location_slug")
 	if locationSlug == "" {
 		return ErrBadRequest(c, "location slug is required")
+	}
+
+	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	bots, err := h.botService.GetBotsByLocationSlug(locationSlug)
@@ -49,6 +73,19 @@ func (h *BotHandler) GetBots(c echo.Context) error {
 	})
 }
 
+// Attack godoc
+// @Summary Attack a bot
+// @Description Initiate a fight with a bot
+// @Tags bots
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slug path string true "Bot slug"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/bots/{slug}/attack [post]
 func (h *BotHandler) Attack(c echo.Context) error {
 	botSlug := c.Param("slug")
 	if botSlug == "" {
@@ -77,7 +114,7 @@ func (h *BotHandler) Attack(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, map[string]interface{}{
-		"user": dto.UserFromDomain(result.User, avatar, nil, nil),
+		"user": dto.UserFromDomain(result.User, avatar, nil, false),
 		"bot":  dto.BotFromDomain(result.Bot),
 	})
 }

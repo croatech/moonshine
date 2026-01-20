@@ -49,9 +49,8 @@ func (s *UserService) GetCurrentUserWithRelations(ctx context.Context, userID uu
 	}
 
 	inFight, _ := s.userRepo.InFight(userID)
-	inFightPtr := &inFight
 
-	return user, avatar, location, inFightPtr, nil
+	return user, avatar, location, inFight, nil
 }
 
 func (s *UserService) UpdateUser(ctx context.Context, userID uuid.UUID, avatarID *uuid.UUID) (*domain.User, error) {

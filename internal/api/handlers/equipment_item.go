@@ -19,6 +19,7 @@ type EquipmentItemHandler struct {
 	equipmentItemSellService    *services.EquipmentItemSellService
 	equipmentItemTakeOnService  *services.EquipmentItemTakeOnService
 	equipmentItemTakeOffService *services.EquipmentItemTakeOffService
+	userRepo                    *repository.UserRepository
 }
 
 func NewEquipmentItemHandler(db *sqlx.DB) *EquipmentItemHandler {
@@ -39,13 +40,35 @@ func NewEquipmentItemHandler(db *sqlx.DB) *EquipmentItemHandler {
 		equipmentItemSellService:    equipmentItemSellService,
 		equipmentItemTakeOnService:  equipmentItemTakeOnService,
 		equipmentItemTakeOffService: equipmentItemTakeOffService,
+		userRepo:                    userRepo,
 	}
 }
 
+// GetEquipmentItems godoc
+// @Summary Get equipment items
+// @Description Get list of equipment items by category
+// @Tags equipment
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param category query string true "Equipment category"
+// @Success 200 {array} dto.EquipmentItem
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/equipment_items [get]
 func (h *EquipmentItemHandler) GetEquipmentItems(c echo.Context) error {
 	category := c.QueryParam("category")
 	if category == "" {
 		return ErrBadRequest(c, "category parameter is required")
+	}
+
+	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	items, err := h.equipmentItemService.GetByCategorySlug(c.Request().Context(), category)
@@ -56,6 +79,19 @@ func (h *EquipmentItemHandler) GetEquipmentItems(c echo.Context) error {
 	return c.JSON(http.StatusOK, dto.EquipmentItemsFromDomain(items))
 }
 
+// BuyEquipmentItem godoc
+// @Summary Buy equipment item
+// @Description Purchase an equipment item
+// @Tags equipment
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slug path string true "Item slug"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/equipment_items/{slug}/buy [post]
 func (h *EquipmentItemHandler) BuyEquipmentItem(c echo.Context) error {
 	itemSlug := c.Param("slug")
 	if itemSlug == "" {
@@ -65,6 +101,10 @@ func (h *EquipmentItemHandler) BuyEquipmentItem(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	err = h.equipmentItemBuyService.BuyEquipmentItem(c.Request().Context(), userID, itemSlug)
@@ -84,6 +124,18 @@ func (h *EquipmentItemHandler) BuyEquipmentItem(c echo.Context) error {
 	return SuccessResponse(c, "item purchased successfully")
 }
 
+// TakeOnEquipmentItem godoc
+// @Summary Equip an item
+// @Description Equip an equipment item from inventory
+// @Tags equipment
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slug path string true "Item slug"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/equipment_items/{slug}/take_on [post]
 func (h *EquipmentItemHandler) TakeOnEquipmentItem(c echo.Context) error {
 	itemSlug := c.Param("slug")
 	if itemSlug == "" {
@@ -93,6 +145,14 @@ func (h *EquipmentItemHandler) TakeOnEquipmentItem(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	inFight, fightErr := h.userRepo.InFight(userID)
+	if fightErr != nil {
+		return ErrInternalServerError(c)
+	}
+	if inFight {
+		return ErrBadRequest(c, "user is in fight")
 	}
 
 	equipmentItemRepo := repository.NewEquipmentItemRepository(h.db)
@@ -122,6 +182,18 @@ func (h *EquipmentItemHandler) TakeOnEquipmentItem(c echo.Context) error {
 	return SuccessResponse(c, "item equipped successfully")
 }
 
+// TakeOffEquipmentItem godoc
+// @Summary Unequip an item
+// @Description Remove an equipment item from equipped slot
+// @Tags equipment
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slot path string true "Equipment slot"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/equipment_items/take_off/{slot} [post]
 func (h *EquipmentItemHandler) TakeOffEquipmentItem(c echo.Context) error {
 	slotName := c.Param("slot")
 	if slotName == "" {
@@ -131,6 +203,14 @@ func (h *EquipmentItemHandler) TakeOffEquipmentItem(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	inFight, fightErr := h.userRepo.InFight(userID)
+	if fightErr != nil {
+		return ErrInternalServerError(c)
+	}
+	if inFight {
+		return ErrBadRequest(c, "user is in fight")
 	}
 
 	err = h.equipmentItemTakeOffService.TakeOffEquipmentItem(c.Request().Context(), userID, slotName)
@@ -150,6 +230,18 @@ func (h *EquipmentItemHandler) TakeOffEquipmentItem(c echo.Context) error {
 	return SuccessResponse(c, "item removed successfully")
 }
 
+// SellEquipmentItem godoc
+// @Summary Sell equipment item
+// @Description Sell an equipment item from inventory
+// @Tags equipment
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slug path string true "Item slug"
+// @Success 200 {object} map[string]string
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/equipment_items/{slug}/sell [post]
 func (h *EquipmentItemHandler) SellEquipmentItem(c echo.Context) error {
 	itemSlug := c.Param("slug")
 	if itemSlug == "" {
@@ -159,6 +251,14 @@ func (h *EquipmentItemHandler) SellEquipmentItem(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	inFight, fightErr := h.userRepo.InFight(userID)
+	if fightErr != nil {
+		return ErrInternalServerError(c)
+	}
+	if inFight {
+		return ErrBadRequest(c, "user is in fight")
 	}
 
 	err = h.equipmentItemSellService.SellEquipmentItem(c.Request().Context(), userID, itemSlug)

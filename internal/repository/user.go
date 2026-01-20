@@ -125,9 +125,16 @@ func (r *UserRepository) RegenerateAllUsersHealth(percent float64) (int64, error
 			current_hp + GREATEST(5, ROUND(hp * $1 / 100.0)), 
 			hp
 		)
-		WHERE deleted_at IS NULL AND current_hp < hp
+		WHERE users.deleted_at IS NULL 
+		    AND current_hp < hp
+		    AND NOT EXISTS (
+		        SELECT 1 FROM fights 
+		        WHERE fights.user_id = users.id 
+		        AND fights.status = $2
+		        AND fights.deleted_at IS NULL
+		    )
 	`
-	result, err := r.db.Exec(query, percent)
+	result, err := r.db.Exec(query, percent, domain.FightStatusInProgress)
 	if err != nil {
 		return 0, err
 	}
@@ -155,7 +162,7 @@ func (r *UserRepository) UpdateLocationID(userID uuid.UUID, locationID uuid.UUID
 }
 
 func (r *UserRepository) InFight(userID uuid.UUID) (bool, error) {
-	query := `SELECT EXISTS(SELECT 1 FROM fights WHERE user_id = $1 AND status = $2)`
+	query := `SELECT EXISTS(SELECT 1 FROM fights WHERE user_id = $1 AND status = $2 AND deleted_at IS NULL)`
 
 	exists := false
 	err := r.db.Get(&exists, query, userID, domain.FightStatusInProgress)

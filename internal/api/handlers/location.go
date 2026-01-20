@@ -57,6 +57,19 @@ func NewLocationHandler(db *sqlx.DB) *LocationHandler {
 	}
 }
 
+// MoveToLocation godoc
+// @Summary Move to location
+// @Description Move user to a different location
+// @Tags locations
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slug path string true "Location slug"
+// @Success 200
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/locations/{slug}/move [post]
 func (h *LocationHandler) MoveToLocation(c echo.Context) error {
 	locationSlug := c.Param("slug")
 	if locationSlug == "" {
@@ -66,6 +79,10 @@ func (h *LocationHandler) MoveToLocation(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	err = h.locationService.MoveToLocation(c.Request().Context(), userID, locationSlug)
@@ -83,6 +100,20 @@ func (h *LocationHandler) MoveToLocation(c echo.Context) error {
 	return c.JSON(http.StatusOK, nil)
 }
 
+// MoveToCell godoc
+// @Summary Move to cell
+// @Description Start movement to a cell within location
+// @Tags locations
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slug path string true "Location slug"
+// @Param cell_slug path string true "Cell slug"
+// @Success 200 {object} MoveToCellResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/locations/{slug}/cells/{cell_slug}/move [post]
 func (h *LocationHandler) MoveToCell(c echo.Context) error {
 	cellSlug := c.Param("cell_slug")
 	if cellSlug == "" {
@@ -92,6 +123,10 @@ func (h *LocationHandler) MoveToCell(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	user, err := h.userRepo.FindByID(userID)
@@ -130,10 +165,32 @@ func (h *LocationHandler) MoveToCell(c echo.Context) error {
 	})
 }
 
+// GetLocationCells godoc
+// @Summary Get location cells
+// @Description Get list of cells in a location
+// @Tags locations
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param slug path string true "Location slug"
+// @Success 200 {object} LocationCellsResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/locations/{slug}/cells [get]
 func (h *LocationHandler) GetLocationCells(c echo.Context) error {
 	locationSlug := c.Param("slug")
 	if locationSlug == "" {
 		return ErrBadRequest(c, "location slug is required")
+	}
+
+	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		return ErrUnauthorized(c)
+	}
+
+	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
+		return err
 	}
 
 	locationRepo := repository.NewLocationRepository(h.db)

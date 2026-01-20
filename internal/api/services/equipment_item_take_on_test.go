@@ -140,7 +140,7 @@ func TestEquipmentItemTakeOnService_TakeOnEquipmentItem(t *testing.T) {
 		err := equipmentItemRepo.Create(newItem)
 		require.NoError(t, err)
 
-		err = service.TakeOnEquipmentItem(ctx, user.ID, newItemID)
+		err = service.TakeOnEquipmentItem(ctx, user.ID, newItem.ID)
 		assert.ErrorIs(t, err, ErrItemNotInInventory)
 	})
 

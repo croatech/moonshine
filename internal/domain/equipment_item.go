@@ -14,4 +14,5 @@ type EquipmentItem struct {
 	Artifact            bool      `db:"artifact"`
 	EquipmentCategoryID uuid.UUID `db:"equipment_category_id"`
 	Image               string    `db:"image"`
+	EquipmentType       string    `db:"equipment_type"`
 }

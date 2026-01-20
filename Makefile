@@ -1,4 +1,4 @@
-.PHONY: migrate-up migrate-down migrate-status migrate-create migrate-reset graphql dev server debug readme seed seed-avatars convert-avatars test test-db-setup setup
+.PHONY: migrate-up migrate-down migrate-status migrate-create migrate-reset graphql dev server debug readme seed seed-avatars convert-avatars test test-db-setup setup swagger
 
 migrate-up:
 	go run cmd/migrate/main.go -command up
@@ -92,6 +92,16 @@ test: test-db-setup
 		print ""; \
 		if (total_fail > 0) exit 1 \
 	}'
+
+swagger:
+	@if command -v swag > /dev/null; then \
+		swag init -g cmd/server/main.go -o cmd/server/docs; \
+	elif [ -f ~/go/bin/swag ]; then \
+		~/go/bin/swag init -g cmd/server/main.go -o cmd/server/docs; \
+	else \
+		echo "swag not found. Install it with: go install github.com/swaggo/swag/cmd/swag@latest"; \
+		exit 1; \
+	fi
 
 convert-avatars:
 	@if command -v convert > /dev/null || command -v magick > /dev/null; then \

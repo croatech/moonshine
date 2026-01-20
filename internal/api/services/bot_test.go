@@ -141,15 +141,32 @@ func TestBotService_Attack(t *testing.T) {
 		_, user, bot, err := setupAttackTestData(db)
 		require.NoError(t, err)
 
-		err = service.Attack(ctx, bot.Slug, user.ID)
-		assert.NoError(t, err)
+		result, err := service.Attack(ctx, bot.Slug, user.ID)
+		require.NoError(t, err)
+		require.NotNil(t, result)
+		assert.Equal(t, user.ID, result.User.ID)
+		assert.Equal(t, bot.ID, result.Bot.ID)
+
+		fightRepo := repository.NewFightRepository(db)
+		fight, err := fightRepo.FindActiveByUserID(user.ID)
+		require.NoError(t, err)
+		require.NotNil(t, fight)
+		assert.Equal(t, user.ID, fight.UserID)
+		assert.Equal(t, bot.ID, fight.BotID)
+		assert.Equal(t, domain.FightStatusInProgress, fight.Status)
+
+		var roundCount int
+		roundQuery := `SELECT COUNT(*) FROM rounds WHERE fight_id = $1 AND deleted_at IS NULL`
+		err = db.Get(&roundCount, roundQuery, fight.ID)
+		require.NoError(t, err)
+		assert.Equal(t, 1, roundCount, "should create exactly one round")
 	})
 
 	t.Run("empty bot slug returns error", func(t *testing.T) {
 		_, user, _, err := setupAttackTestData(db)
 		require.NoError(t, err)
 
-		err = service.Attack(ctx, "", user.ID)
+		_, err = service.Attack(ctx, "", user.ID)
 		assert.Error(t, err)
 	})
 
@@ -157,7 +174,7 @@ func TestBotService_Attack(t *testing.T) {
 		_, user, _, err := setupAttackTestData(db)
 		require.NoError(t, err)
 
-		err = service.Attack(ctx, "non-existent-bot", user.ID)
+		_, err = service.Attack(ctx, "non-existent-bot", user.ID)
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, repository.ErrBotNotFound)
 	})
@@ -166,7 +183,7 @@ func TestBotService_Attack(t *testing.T) {
 		_, _, bot, err := setupAttackTestData(db)
 		require.NoError(t, err)
 
-		err = service.Attack(ctx, bot.Slug, uuid.New())
+		_, err = service.Attack(ctx, bot.Slug, uuid.New())
 		assert.Error(t, err)
 		assert.ErrorIs(t, err, repository.ErrUserNotFound)
 	})

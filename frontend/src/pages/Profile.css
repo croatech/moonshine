@@ -1,5 +1,9 @@
 .profile-container {
-  background: white;
+  background: linear-gradient(rgba(245, 230, 211, 0.3), rgba(245, 230, 211, 0.3)), url('/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
   min-height: 100vh;
   padding: 20px;
   display: flex;
@@ -65,8 +69,12 @@
 .profile-main-block {
   width: 100%;
   max-width: 1200px;
-  background: white;
+  background: linear-gradient(145deg, rgba(255, 249, 240, 0.95), rgba(245, 230, 211, 0.95));
   border-radius: 8px;
+  border: 3px solid #8b6f47;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
 }
 
 .profile-header {
@@ -420,9 +428,6 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-}
-
 .profile-stats-simple {
   padding: 12px 15px;
   font-size: 14px;
@@ -520,7 +525,7 @@
 }
 
 .equipment-slot.has-item:hover {
-  background-color: white;
+  background-color: rgba(255, 255, 255, 0.8);
 }
 
 .equipment-slot img {

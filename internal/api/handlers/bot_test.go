@@ -74,7 +74,8 @@ func TestBotHandler_GetBots(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, c.Response().Status)
 
 		var response map[string]string
-		json.Unmarshal(c.Response().Body.Bytes(), &response)
+		err = json.Unmarshal(c.Response().Body.Bytes(), &response)
+		require.NoError(t, err)
 		assert.Contains(t, response["error"], "location slug is required")
 	})
 
@@ -112,8 +113,9 @@ func TestBotHandler_GetBots(t *testing.T) {
 		err = botRepo.Create(bot)
 		require.NoError(t, err)
 
-		linkQuery := `INSERT INTO location_bots (location_id, bot_id) VALUES ($1, $2) RETURNING id`
-		_, err = db.Exec(linkQuery, location.ID, bot.ID)
+		linkID := uuid.New()
+		linkQuery := `INSERT INTO location_bots (id, location_id, bot_id) VALUES ($1, $2, $3)`
+		_, err = db.Exec(linkQuery, linkID, location.ID, bot.ID)
 		require.NoError(t, err)
 
 		c.SetPath("/api/locations/:location_slug/bots")
@@ -181,8 +183,9 @@ func TestBotHandler_Attack(t *testing.T) {
 			return nil, nil, nil, err
 		}
 
-		linkQuery := `INSERT INTO location_bots (location_id, bot_id) VALUES ($1, $2) RETURNING id`
-		_, err = db.Exec(linkQuery, location.ID, bot.ID)
+		linkID := uuid.New()
+		linkQuery := `INSERT INTO location_bots (id, location_id, bot_id) VALUES ($1, $2, $3)`
+		_, err = db.Exec(linkQuery, linkID, location.ID, bot.ID)
 		if err != nil {
 			return nil, nil, nil, err
 		}
@@ -201,9 +204,7 @@ func TestBotHandler_Attack(t *testing.T) {
 		c.SetParamValues("")
 
 		userID := uuid.New()
-		type contextKey string
-		userIDKey := contextKey("userID")
-		ctx := context.WithValue(req.Context(), userIDKey, userID)
+		ctx := context.WithValue(req.Context(), middleware.UserIDKey, userID)
 		c.SetRequest(req.WithContext(ctx))
 
 		err := handler.Attack(c)
@@ -211,7 +212,8 @@ func TestBotHandler_Attack(t *testing.T) {
 		assert.Equal(t, http.StatusBadRequest, c.Response().Status)
 
 		var response map[string]string
-		json.Unmarshal(c.Response().Body.Bytes(), &response)
+		err = json.Unmarshal(c.Response().Body.Bytes(), &response)
+		require.NoError(t, err)
 		assert.Contains(t, response["error"], "bot slug is required")
 	})
 
@@ -241,9 +243,7 @@ func TestBotHandler_Attack(t *testing.T) {
 		c.SetParamValues("non-existent-bot")
 
 		userID := uuid.New()
-		type contextKey string
-		userIDKey := contextKey("userID")
-		ctx := context.WithValue(req.Context(), userIDKey, userID)
+		ctx := context.WithValue(req.Context(), middleware.UserIDKey, userID)
 		c.SetRequest(req.WithContext(ctx))
 
 		err := handler.Attack(c)
@@ -264,18 +264,18 @@ func TestBotHandler_Attack(t *testing.T) {
 		c.SetParamNames("slug")
 		c.SetParamValues(bot.Slug)
 
-		type contextKey string
-		userIDKey := contextKey("userID")
-		ctx := context.WithValue(req.Context(), userIDKey, user.ID)
+		ctx := context.WithValue(req.Context(), middleware.UserIDKey, user.ID)
 		c.SetRequest(req.WithContext(ctx))
 
 		err = handler.Attack(c)
 		require.NoError(t, err)
 		assert.Equal(t, http.StatusOK, c.Response().Status)
 
-		var response map[string]string
-		json.Unmarshal(c.Response().Body.Bytes(), &response)
-		assert.Equal(t, "ok", response["message"])
+		var response map[string]interface{}
+		err = json.Unmarshal(c.Response().Body.Bytes(), &response)
+		require.NoError(t, err)
+		assert.NotNil(t, response["user"])
+		assert.NotNil(t, response["bot"])
 	})
 }
 

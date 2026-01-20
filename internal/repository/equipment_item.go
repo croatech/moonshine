@@ -3,9 +3,11 @@ package repository
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/lib/pq"
 
 	"moonshine/internal/domain"
 )
@@ -61,6 +63,26 @@ func (r *EquipmentItemRepository) FindByID(id uuid.UUID) (*domain.EquipmentItem,
 	}
 
 	return item, nil
+}
+
+func (r *EquipmentItemRepository) FindByIDs(ids []uuid.UUID) ([]*domain.EquipmentItem, error) {
+	query := `
+		SELECT ei.id, ei.created_at, ei.deleted_at, ei.name, ei.slug, ei.attack, ei.defense, ei.hp,
+			required_level, ei.price, ei.artifact, ei.equipment_category_id, ei.image, ec.type as equipment_type
+		FROM equipment_items ei
+		INNER JOIN equipment_categories ec 
+		    ON ei.equipment_category_id = ec.id
+		WHERE ei.id = ANY($1) 
+		  AND ei.deleted_at IS NULL
+	`
+
+	items := []*domain.EquipmentItem{}
+	if err := r.db.Select(&items, query, pq.Array(ids)); err != nil {
+		fmt.Println(err)
+		return nil, err
+	}
+
+	return items, nil
 }
 
 func (r *EquipmentItemRepository) FindBySlug(slug string) (*domain.EquipmentItem, error) {

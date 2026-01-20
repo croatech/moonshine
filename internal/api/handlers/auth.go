@@ -39,8 +39,8 @@ type SignUpRequest struct {
 }
 
 type SignInRequest struct {
-	Username string `json:"username" validate:"required"`
-	Password string `json:"password" validate:"required"`
+	Username string `json:"username" validate:"required" example:"admin"`
+	Password string `json:"password" validate:"required" example:"password"`
 }
 
 type AuthResponse struct {
@@ -48,6 +48,17 @@ type AuthResponse struct {
 	User  *dto.User `json:"user"`
 }
 
+// SignUp godoc
+// @Summary Register a new user
+// @Description Create a new user account
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body SignUpRequest true "Sign up request"
+// @Success 200 {object} AuthResponse
+// @Failure 400 {object} map[string]string
+// @Failure 409 {object} map[string]string
+// @Router /api/auth/signup [post]
 func (h *AuthHandler) SignUp(c echo.Context) error {
 	var req SignUpRequest
 	if err := c.Bind(&req); err != nil {
@@ -87,10 +98,21 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, avatar, location, nil),
+		User:  dto.UserFromDomain(user, avatar, location, false),
 	})
 }
 
+// SignIn godoc
+// @Summary Sign in
+// @Description Authenticate user and get JWT token
+// @Tags auth
+// @Accept json
+// @Produce json
+// @Param request body SignInRequest true "Sign in request" example({"username":"admin","password":"password"})
+// @Success 200 {object} AuthResponse
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Router /api/auth/signin [post]
 func (h *AuthHandler) SignIn(c echo.Context) error {
 	var req SignInRequest
 	if err := c.Bind(&req); err != nil {
@@ -129,6 +151,6 @@ func (h *AuthHandler) SignIn(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, avatar, location, nil),
+		User:  dto.UserFromDomain(user, avatar, location, false),
 	})
 }

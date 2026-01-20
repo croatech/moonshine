@@ -3,8 +3,22 @@ package handlers
 import (
 	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
+
+	"moonshine/internal/repository"
 )
+
+func checkNotInFight(c echo.Context, userRepo *repository.UserRepository, userID uuid.UUID) error {
+	inFight, err := userRepo.InFight(userID)
+	if err != nil {
+		return ErrInternalServerError(c)
+	}
+	if inFight {
+		return ErrBadRequest(c, "user is in fight")
+	}
+	return nil
+}
 
 func ErrUnauthorized(c echo.Context) error {
 	return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})
