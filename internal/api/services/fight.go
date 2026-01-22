@@ -33,21 +33,23 @@ type GetCurrentFightResult struct {
 }
 
 var ErrNoActiveFight = errors.New("no active fight")
+var ErrUserNotFound = errors.New("user not found")
+var ErrBotNotFound = errors.New("bot not found")
 
 func (s *FightService) GetCurrentFight(ctx context.Context, userID uuid.UUID) (*GetCurrentFightResult, error) {
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return nil, ErrUserNotFound
+	}
+
 	fight, err := s.fightRepo.FindActiveByUserID(userID)
 	if err != nil {
 		return nil, ErrNoActiveFight
 	}
 
-	user, err := s.userRepo.FindByID(userID)
-	if err != nil {
-		return nil, err
-	}
-
 	bot, err := s.botRepo.FindByID(fight.BotID)
 	if err != nil {
-		return nil, err
+		return nil, ErrBotNotFound
 	}
 
 	return &GetCurrentFightResult{

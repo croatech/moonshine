@@ -25,7 +25,11 @@ export default function PlayerHeader({ fullWidth = false }) {
           {currentHp}/{maxHp}
         </span>
       </div>
-      <Link to="/profile" className="profile-link-button" title="Профиль персонажа">
+      <Link 
+        to="/profile" 
+        className="profile-link-button" 
+        title="Профиль персонажа"
+      >
         <svg 
           width="20" 
           height="20" 
@@ -42,4 +46,3 @@ export default function PlayerHeader({ fullWidth = false }) {
     </div>
   )
 }
-

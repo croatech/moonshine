@@ -19,7 +19,7 @@ type User struct {
 	Exp                   int       `json:"exp"`
 	FreeStats             int       `json:"freeStats"`
 	CreatedAt             time.Time `json:"createdAt"`
-	Avatar                *Avatar   `json:"avatar,omitempty"`
+	Avatar                string    `json:"avatar"`
 	ChestEquipmentItemID  *string   `json:"chestEquipmentItemId,omitempty"`
 	BeltEquipmentItemID   *string   `json:"beltEquipmentItemId,omitempty"`
 	HeadEquipmentItemID   *string   `json:"headEquipmentItemId,omitempty"`
@@ -44,7 +44,7 @@ type Avatar struct {
 	Private bool   `json:"private"`
 }
 
-func UserFromDomain(user *domain.User, avatar *domain.Avatar, location *domain.Location, inFight bool) *User {
+func UserFromDomain(user *domain.User, location *domain.Location, inFight bool) *User {
 	if user == nil {
 		return nil
 	}
@@ -63,14 +63,7 @@ func UserFromDomain(user *domain.User, avatar *domain.Avatar, location *domain.L
 		FreeStats: int(user.FreeStats),
 		CreatedAt: user.CreatedAt,
 		InFight:   inFight,
-	}
-
-	if avatar != nil {
-		result.Avatar = &Avatar{
-			ID:      avatar.ID.String(),
-			Image:   avatar.Image,
-			Private: avatar.Private,
-		}
+		Avatar:    user.Avatar,
 	}
 
 	if user.ChestEquipmentItemID != nil {

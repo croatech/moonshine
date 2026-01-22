@@ -9,13 +9,11 @@ import (
 
 	"moonshine/internal/api/dto"
 	"moonshine/internal/api/services"
-	"moonshine/internal/domain"
 	"moonshine/internal/repository"
 )
 
 type BotHandler struct {
 	botService *services.BotService
-	avatarRepo *repository.AvatarRepository
 	userRepo   *repository.UserRepository
 }
 
@@ -25,13 +23,10 @@ type BotResponse struct {
 
 func NewBotHandler(db *sqlx.DB) *BotHandler {
 	botService := services.NewBotService(db)
-
-	avatarRepo := repository.NewAvatarRepository(db)
 	userRepo := repository.NewUserRepository(db)
 
 	return &BotHandler{
 		botService: botService,
-		avatarRepo: avatarRepo,
 		userRepo:   userRepo,
 	}
 }
@@ -97,7 +92,7 @@ func (h *BotHandler) Attack(c echo.Context) error {
 		return ErrUnauthorized(c)
 	}
 
-	result, err := h.botService.Attack(c.Request().Context(), botSlug, userID)
+	_, err = h.botService.Attack(c.Request().Context(), botSlug, userID)
 	if err != nil {
 		if err == repository.ErrBotNotFound {
 			return ErrNotFound(c, "bot not found")
@@ -108,13 +103,5 @@ func (h *BotHandler) Attack(c echo.Context) error {
 		return ErrBadRequest(c, err.Error())
 	}
 
-	var avatar *domain.Avatar
-	if result.User.AvatarID != nil {
-		avatar, _ = h.avatarRepo.FindByID(*result.User.AvatarID)
-	}
-
-	return c.JSON(http.StatusOK, map[string]interface{}{
-		"user": dto.UserFromDomain(result.User, avatar, nil, false),
-		"bot":  dto.BotFromDomain(result.Bot),
-	})
+	return SuccessResponse(c, "attack initiated")
 }

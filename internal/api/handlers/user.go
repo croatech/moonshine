@@ -37,7 +37,6 @@ func NewUserHandler(db *sqlx.DB) *UserHandler {
 	}
 }
 
-
 // GetCurrentUser godoc
 // @Summary Get current user
 // @Description Get authenticated user information
@@ -55,7 +54,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 		return ErrUnauthorized(c)
 	}
 
-	user, avatar, location, inFight, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
+	user, location, inFight, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
 	if err != nil {
 		if err == repository.ErrUserNotFound {
 			return ErrNotFound(c, "user not found")
@@ -63,7 +62,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location, inFight))
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, location, inFight))
 }
 
 // GetUserInventory godoc
@@ -80,10 +79,6 @@ func (h *UserHandler) GetUserInventory(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
-	}
-
-	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
-		return err
 	}
 
 	items, err := h.inventoryService.GetUserInventory(c.Request().Context(), userID)
@@ -108,10 +103,6 @@ func (h *UserHandler) GetUserEquippedItems(c echo.Context) error {
 	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
 	if err != nil {
 		return ErrUnauthorized(c)
-	}
-
-	if err := checkNotInFight(c, h.userRepo, userID); err != nil {
-		return err
 	}
 
 	userRepo := repository.NewUserRepository(h.db)
@@ -205,10 +196,10 @@ func (h *UserHandler) UpdateCurrentUser(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	user, avatar, location, inFight, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
+	user, location, inFight, err := h.userService.GetCurrentUserWithRelations(c.Request().Context(), userID)
 	if err != nil {
 		return ErrInternalServerError(c)
 	}
 
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user, avatar, location, inFight))
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, location, inFight))
 }

@@ -54,8 +54,15 @@ func (s *LocationService) MoveToLocation(ctx context.Context, userID uuid.UUID, 
 	}
 	defer tx.Rollback()
 
-	user, _ := s.userRepo.FindByID(userID)
-	currentLocation, _ := s.locationRepo.FindByID(user.LocationID)
+	user, err := s.userRepo.FindByID(userID)
+	if err != nil {
+		return repository.ErrUserNotFound
+	}
+
+	currentLocation, err := s.locationRepo.FindByID(user.LocationID)
+	if err != nil {
+		return repository.ErrLocationNotFound
+	}
 
 	var targetLocation *domain.Location
 	if targetLocationSlug == domain.WaywardPinesSlug && currentLocation.Slug == domain.MoonshineSlug {

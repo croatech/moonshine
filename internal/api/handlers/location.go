@@ -92,6 +92,8 @@ func (h *LocationHandler) MoveToLocation(c echo.Context) error {
 			return ErrBadRequest(c, "locations not connected")
 		case repository.ErrLocationNotFound:
 			return ErrNotFound(c, "location not found")
+		case repository.ErrUserNotFound:
+			return ErrNotFound(c, "user not found")
 		default:
 			return ErrInternalServerError(c)
 		}

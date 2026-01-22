@@ -15,7 +15,6 @@ import (
 
 type AuthHandler struct {
 	authService   *services.AuthService
-	avatarRepo    *repository.AvatarRepository
 	locationRepo  *repository.LocationRepository
 }
 
@@ -27,7 +26,6 @@ func NewAuthHandler(db *sqlx.DB) *AuthHandler {
 
 	return &AuthHandler{
 		authService:  authService,
-		avatarRepo:   avatarRepo,
 		locationRepo: locationRepo,
 	}
 }
@@ -86,11 +84,6 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	var avatar *domain.Avatar
-	if user.AvatarID != nil {
-		avatar, _ = h.avatarRepo.FindByID(*user.AvatarID)
-	}
-
 	var location *domain.Location
 	if user.LocationID != uuid.Nil {
 		location, _ = h.locationRepo.FindByID(user.LocationID)
@@ -98,7 +91,7 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, avatar, location, false),
+		User:  dto.UserFromDomain(user, location, false),
 	})
 }
 
@@ -139,11 +132,6 @@ func (h *AuthHandler) SignIn(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	var avatar *domain.Avatar
-	if user.AvatarID != nil {
-		avatar, _ = h.avatarRepo.FindByID(*user.AvatarID)
-	}
-
 	var location *domain.Location
 	if user.LocationID != uuid.Nil {
 		location, _ = h.locationRepo.FindByID(user.LocationID)
@@ -151,6 +139,6 @@ func (h *AuthHandler) SignIn(c echo.Context) error {
 
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, avatar, location, false),
+		User:  dto.UserFromDomain(user, location, false),
 	})
 }

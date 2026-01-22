@@ -43,11 +43,17 @@ export default function Bots() {
     navigate('/signin')
   }
 
-  const handleAttack = (botSlug) => {
+  const handleAttack = async (botSlug) => {
     if (!botSlug) {
       return
     }
-    navigate(`/fight?bot=${botSlug}`)
+    try {
+      await botAPI.attack(botSlug)
+      navigate('/fight')
+    } catch (err) {
+      console.error('[Bots] Error attacking bot:', err)
+      alert(err.message || 'Ошибка при атаке бота')
+    }
   }
 
   const normalizeImagePath = (img) => {

@@ -7,10 +7,6 @@ const CACHE_DURATION = 30000
 const cache = {
   user: null,
   timestamp: 0,
-  inventory: null,
-  inventoryTimestamp: 0,
-  equipped: null,
-  equippedTimestamp: 0,
 }
 
 export function AuthProvider({ children }) {
@@ -39,9 +35,12 @@ export function AuthProvider({ children }) {
         })
         .catch((err) => {
           console.error('[AuthContext] Error fetching current user:', err)
-          setToken(null)
-          setUser(null)
-          localStorage.removeItem('token')
+          const errorMsg = err.message || ''
+          if (errorMsg.toLowerCase().includes('unauthorized')) {
+            setToken(null)
+            setUser(null)
+            localStorage.removeItem('token')
+          }
           setLoading(false)
         })
     } else {
@@ -65,9 +64,9 @@ export function AuthProvider({ children }) {
 
     const currentHp = user.current_hp || user.currentHp || 0
     const maxHp = user.hp || 0
-    const isHpLessThan100 = currentHp < maxHp
+    const inFight = user.inFight === true || user.InFight === true
 
-    if (!isHpLessThan100) {
+    if (currentHp >= maxHp || inFight) {
       return
     }
 
@@ -93,7 +92,7 @@ export function AuthProvider({ children }) {
     return () => {
       clearInterval(intervalId)
     }
-  }, [user, token])
+  }, [user?.current_hp, user?.currentHp, user?.hp, user?.inFight, user?.InFight, token])
 
   const login = useCallback((newToken, userData = null) => {
     setToken(newToken)
@@ -126,10 +125,6 @@ export function AuthProvider({ children }) {
     localStorage.clear()
     cache.user = null
     cache.timestamp = 0
-    cache.inventory = null
-    cache.inventoryTimestamp = 0
-    cache.equipped = null
-    cache.equippedTimestamp = 0
   }, [])
 
   const refetchUser = useCallback(() => {

@@ -16,18 +16,15 @@ import (
 
 type FightHandler struct {
 	fightService *services.FightService
-	avatarRepo   *repository.AvatarRepository
 	locationRepo *repository.LocationRepository
 }
 
 func NewFightHandler(db *sqlx.DB) *FightHandler {
 	fightService := services.NewFightService(db)
-	avatarRepo := repository.NewAvatarRepository(db)
 	locationRepo := repository.NewLocationRepository(db)
 
 	return &FightHandler{
 		fightService: fightService,
-		avatarRepo:   avatarRepo,
 		locationRepo: locationRepo,
 	}
 }
@@ -59,12 +56,13 @@ func (h *FightHandler) GetCurrentFight(c echo.Context) error {
 		if err == services.ErrNoActiveFight {
 			return ErrNotFound(c, "no active fight")
 		}
+		if err == services.ErrUserNotFound {
+			return ErrNotFound(c, "user not found")
+		}
+		if err == services.ErrBotNotFound {
+			return ErrNotFound(c, "bot not found")
+		}
 		return ErrInternalServerError(c)
-	}
-
-	var avatar *domain.Avatar
-	if result.User.AvatarID != nil {
-		avatar, _ = h.avatarRepo.FindByID(*result.User.AvatarID)
 	}
 
 	var location *domain.Location
@@ -73,7 +71,7 @@ func (h *FightHandler) GetCurrentFight(c echo.Context) error {
 	}
 
 	return c.JSON(http.StatusOK, &GetCurrentFightResponse{
-		User: *dto.UserFromDomain(result.User, avatar, location, true),
+		User: *dto.UserFromDomain(result.User, location, true),
 		Bot:  *dto.BotFromDomain(result.Bot),
 	})
 }

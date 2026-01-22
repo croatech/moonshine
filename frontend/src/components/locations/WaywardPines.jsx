@@ -25,11 +25,17 @@ export default function WaywardPines() {
       })
   }, [user?.locationSlug])
 
-  const handleAttack = (botSlug) => {
+  const handleAttack = async (botSlug) => {
     if (!botSlug) {
       return
     }
-    navigate(`/fight?bot=${botSlug}`)
+    try {
+      await botAPI.attack(botSlug)
+      navigate('/fight')
+    } catch (err) {
+      console.error('[WaywardPines] Error attacking bot:', err)
+      alert(err.message || 'Ошибка при атаке бота')
+    }
   }
 
   return (
@@ -58,7 +64,7 @@ export default function WaywardPines() {
                 <div key={bot.id} className="bot-item">
                   <span>[{bot.level}] {bot.name} </span>
                   <a
-                    href={`/fight?bot=${bot.slug}`}
+                    href="#"
                     onClick={(e) => {
                       e.preventDefault()
                       handleAttack(bot.slug)

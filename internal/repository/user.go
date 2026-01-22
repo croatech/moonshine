@@ -56,16 +56,17 @@ func (r *UserRepository) Create(user *domain.User) error {
 
 func (r *UserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT id, created_at, deleted_at, username, email, password, name, 
-			avatar_id, location_id, attack, defense, current_hp, exp, fishing_skill, fishing_slot,
-			free_stats, gold, hp, level, lumberjacking_skill, lumberjacking_slot,
-			chest_equipment_item_id, belt_equipment_item_id, head_equipment_item_id,
-			neck_equipment_item_id, weapon_equipment_item_id, shield_equipment_item_id,
-			legs_equipment_item_id, feet_equipment_item_id, arms_equipment_item_id,
-			hands_equipment_item_id, ring1_equipment_item_id, ring2_equipment_item_id,
-			ring3_equipment_item_id, ring4_equipment_item_id
+		SELECT users.id, users.created_at, users.deleted_at, users.username, users.email, users.password, users.name, 
+			users.avatar_id, users.location_id, users.attack, users.defense, users.current_hp, users.exp, users.fishing_skill, users.fishing_slot,
+			users.free_stats, users.gold, users.hp, users.level, users.lumberjacking_skill, users.lumberjacking_slot,
+			users.chest_equipment_item_id, users.belt_equipment_item_id, users.head_equipment_item_id,
+			users.neck_equipment_item_id, users.weapon_equipment_item_id, users.shield_equipment_item_id,
+			users.legs_equipment_item_id, users.feet_equipment_item_id, users.arms_equipment_item_id,
+			users.hands_equipment_item_id, users.ring1_equipment_item_id, users.ring2_equipment_item_id,
+			users.ring3_equipment_item_id, users.ring4_equipment_item_id, avatars.image as avatar
 		FROM users
-		WHERE id = $1 AND deleted_at IS NULL
+		LEFT JOIN avatars ON avatars.id = users.avatar_id
+		WHERE users.id = $1 AND users.deleted_at IS NULL
 	`
 
 	user := &domain.User{}
@@ -82,16 +83,17 @@ func (r *UserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 
 func (r *UserRepository) FindByUsername(username string) (*domain.User, error) {
 	query := `
-		SELECT id, created_at, deleted_at, username, email, password, name, 
-			avatar_id, location_id, attack, defense, current_hp, exp, fishing_skill, fishing_slot,
-			free_stats, gold, hp, level, lumberjacking_skill, lumberjacking_slot,
-			chest_equipment_item_id, belt_equipment_item_id, head_equipment_item_id,
-			neck_equipment_item_id, weapon_equipment_item_id, shield_equipment_item_id,
-			legs_equipment_item_id, feet_equipment_item_id, arms_equipment_item_id,
-			hands_equipment_item_id, ring1_equipment_item_id, ring2_equipment_item_id,
-			ring3_equipment_item_id, ring4_equipment_item_id
+		SELECT users.id, users.created_at, users.deleted_at, users.username, users.email, users.password, users.name, 
+			users.avatar_id, users.location_id, users.attack, users.defense, users.current_hp, users.exp, users.fishing_skill, users.fishing_slot,
+			users.free_stats, users.gold, users.hp, users.level, users.lumberjacking_skill, users.lumberjacking_slot,
+			users.chest_equipment_item_id, users.belt_equipment_item_id, users.head_equipment_item_id,
+			users.neck_equipment_item_id, users.weapon_equipment_item_id, users.shield_equipment_item_id,
+			users.legs_equipment_item_id, users.feet_equipment_item_id, users.arms_equipment_item_id,
+			users.hands_equipment_item_id, users.ring1_equipment_item_id, users.ring2_equipment_item_id,
+			users.ring3_equipment_item_id, users.ring4_equipment_item_id, avatars.image as avatar
 		FROM users
-		WHERE username = $1 AND deleted_at IS NULL
+		LEFT JOIN avatars ON avatars.id = users.avatar_id
+		WHERE users.username = $1 AND users.deleted_at IS NULL
 	`
 
 	user := &domain.User{}

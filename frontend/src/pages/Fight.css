@@ -1,45 +1,188 @@
-.fight-profiles-container {
+.fight-container {
+  background: linear-gradient(rgba(245, 230, 211, 0.3), rgba(245, 230, 211, 0.3)), url('/bg.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  min-height: 100vh;
+  padding: 20px;
   display: flex;
-  gap: 40px;
+  justify-content: center;
+  align-items: flex-start;
+}
+
+.fight-main-block {
   width: 100%;
+  max-width: 1400px;
+  background: linear-gradient(145deg, rgba(255, 249, 240, 0.95), rgba(245, 230, 211, 0.95));
+  border-radius: 8px;
+  border: 3px solid #8b6f47;
+  box-shadow: 
+    0 10px 40px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+}
+
+.fight-header {
+  height: 100px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 30px;
+  border-bottom: 2px solid #e0e0e0;
+  gap: 20px;
+}
+
+.fight-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.fight-logout-button {
+  background: linear-gradient(145deg, #8b6f47, #6b5537);
+  border: 2px solid #5a4730;
+  border-radius: 6px;
+  padding: 8px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #f5e6d3;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 
+    0 2px 4px rgba(0, 0, 0, 0.2),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+}
+
+.fight-logout-button:hover {
+  background: linear-gradient(145deg, #6b5537, #8b6f47);
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.3),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
+}
+
+.fight-content {
+  display: flex;
+  flex-direction: row;
+  padding: 40px;
+  gap: 40px;
+  align-items: flex-start;
   justify-content: space-between;
 }
 
-.fight-profile-section {
-  flex: 1;
-  min-width: 0;
+.fight-player-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
 }
 
-.fight-profile-title {
-  text-align: center;
-  margin-bottom: 20px;
-  padding-bottom: 15px;
-  border-bottom: 2px solid #e0e0e0;
+.fight-player-title,
+.fight-bot-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
 }
 
-.fight-profile-title h2 {
-  margin: 0 0 8px 0;
-  color: #5a4730;
+.fight-player-title h2,
+.fight-bot-title h2 {
   font-size: 24px;
   font-weight: bold;
+  color: #5a4730;
+  margin: 0;
+  font-family: 'Cinzel', serif;
 }
 
-.fight-profile-level {
+.fight-player-level,
+.fight-bot-level {
+  font-size: 18px;
+  font-weight: 600;
   color: #8b6f47;
+  font-family: 'Cinzel', serif;
+}
+
+.fight-arena-section {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.fight-vs-text {
+  font-size: 48px;
+  font-weight: bold;
+  color: #8b6f47;
+  font-family: 'Cinzel', serif;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+.fight-bot-section {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.fight-bot-avatar {
+  background: linear-gradient(145deg, #fff9f0, #f5e6d3);
+  border: 3px solid #8b6f47;
+  border-radius: 8px;
+  padding: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.fight-bot-avatar img {
+  width: auto;
+  height: auto;
+  max-width: 150px;
+  max-height: 150px;
+  image-rendering: pixelated;
+}
+
+.fight-bot-stats {
+  background: linear-gradient(145deg, #fff9f0, #f5e6d3);
+  border: 2px solid #8b6f47;
+  border-radius: 8px;
+  padding: 15px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 
+    0 4px 8px rgba(0, 0, 0, 0.15),
+    inset 0 1px 0 rgba(255, 255, 255, 0.3);
+}
+
+.fight-bot-stat {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   font-size: 14px;
   font-weight: 600;
+  color: #5a4730;
+  font-family: 'Cinzel', serif;
 }
 
-.fight-error {
-  color: #dc3545;
+.fight-stat-icon {
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  image-rendering: pixelated;
+  vertical-align: middle;
+}
+
+.fight-error-text {
   font-size: 18px;
+  color: #dc3545;
+  font-family: 'Cinzel', serif;
   text-align: center;
-  padding: 20px;
-}
-
-@media (max-width: 1024px) {
-  .fight-profiles-container {
-    flex-direction: column;
-    gap: 30px;
-  }
+  padding: 40px;
 }

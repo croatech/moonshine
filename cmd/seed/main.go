@@ -169,7 +169,7 @@ func seedUsers(db *sqlx.DB) {
 		Level:      1,
 		Gold:       100,
 		Exp:        0,
-		FreeStats:  15,
+		FreeStats:  5,
 		LocationID: moonshineLocation.ID,
 	}
 

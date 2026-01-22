@@ -34,9 +34,7 @@ export default function EquipmentDisplay({ user, equippedItems, readonly = false
     )
   }
 
-  const avatarImage = typeof user?.avatar === 'string' 
-    ? user.avatar 
-    : user?.avatar?.image
+  const avatarImage = user?.avatar
   const avatarSrc = avatarImage ? normalizeImagePath(avatarImage) : getEquipmentSlotImage('head')
 
   return (

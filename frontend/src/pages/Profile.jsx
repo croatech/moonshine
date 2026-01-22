@@ -28,7 +28,6 @@ export default function Profile() {
     }
   }, [authUser])
 
-  // Auto-hide notification after 3 seconds
   useEffect(() => {
     if (notification) {
       const timer = setTimeout(() => {
@@ -61,7 +60,7 @@ export default function Profile() {
     const loadData = async () => {
       setLoading(true)
       try {
-        const userData = await fetchUserData()
+        await fetchUserData()
         if (!mounted) return
         
         userAPI.getEquippedItems()
@@ -79,6 +78,7 @@ export default function Profile() {
       } catch (err) {
         if (mounted) {
           console.error('[Profile] Error loading profile:', err)
+          setError('Ошибка загрузки профиля')
         }
       } finally {
         if (mounted) {
@@ -92,8 +92,7 @@ export default function Profile() {
     return () => {
       mounted = false
     }
-  }, [])
-
+  }, [fetchUserData])
 
   useEffect(() => {
     if (activeTab === 'inventory') {
@@ -140,10 +139,7 @@ export default function Profile() {
   }
 
   const handleTakeOn = async (item) => {
-    console.log('[Profile] handleTakeOn called with item:', item)
-    
     if (!item.slug) {
-      console.error('[Profile] Item slug is missing')
       showNotification('Slug предмета не определен', 'error')
       return
     }
@@ -154,15 +150,12 @@ export default function Profile() {
     }
 
     if (updateInProgressRef.current) {
-      console.log('[Profile] Update already in progress, skipping')
       return
     }
 
     try {
       updateInProgressRef.current = true
-      console.log('[Profile] Calling equipmentAPI.takeOn with slug:', item.slug)
-      const result = await equipmentAPI.takeOn(item.slug)
-      console.log('[Profile] takeOn result:', result)
+      await equipmentAPI.takeOn(item.slug)
       
       const [items, equipped] = await Promise.all([
         userAPI.getInventory(),
@@ -183,8 +176,6 @@ export default function Profile() {
         errorMessage = 'Предмет не найден'
       } else if (error.message.includes('invalid equipment type')) {
         errorMessage = 'Неверный тип экипировки'
-      } else if (error.message.includes('internal server error') || error.message.includes('user is in fight')) {
-        errorMessage = 'Вы находитесь в бою. Сначала завершите бой.'
       } else {
         errorMessage = error.message
       }
@@ -223,8 +214,6 @@ export default function Profile() {
         errorMessage = 'В этом слоте нет предмета'
       } else if (error.message.includes('invalid slot')) {
         errorMessage = 'Неверный слот'
-      } else if (error.message.includes('internal server error') || error.message.includes('user is in fight')) {
-        errorMessage = 'Вы находитесь в бою. Сначала завершите бой.'
       } else {
         errorMessage = error.message
       }
@@ -278,7 +267,6 @@ export default function Profile() {
     }
   }
 
-  // Normalize image path helper
   const normalizeImagePath = (img) => {
     if (!img) return null
     let p = img
@@ -288,7 +276,6 @@ export default function Profile() {
     return `/assets/images/${p}`
   }
 
-  // Normalize image path for equipment items (same as in EquipmentItems.jsx)
   const normalizeEquipmentImagePath = (img) => {
     if (!img) return null
     let p = img
@@ -298,28 +285,22 @@ export default function Profile() {
     return `/assets/images/${p}`
   }
 
-  // Get equipment slot image or placeholder
   const getEquipmentSlotImage = (slotName) => {
-    // Check if there's an equipped item for this slot
     const equippedItem = equippedItems[slotName] || equippedItems[slotName.toLowerCase()]
     
     if (equippedItem && equippedItem.image) {
       return normalizeEquipmentImagePath(equippedItem.image)
     }
     
-    // Return placeholder from grid
-    // For rings (ring1, ring2, etc), use "ring" placeholder
     const placeholderName = slotName.startsWith('ring') ? 'ring' : slotName
     return `/assets/images/equipment_items/grid/${placeholderName}.png`
   }
 
-  // Check if slot has an item equipped
   const hasEquippedItem = (slotName) => {
     const equippedItem = equippedItems[slotName] || equippedItems[slotName.toLowerCase()]
     return equippedItem && equippedItem.image
   }
 
-  // Render equipment slot with click handler
   const renderEquipmentSlot = (slotName, alt) => {
     const hasItem = hasEquippedItem(slotName)
     
@@ -335,13 +316,11 @@ export default function Profile() {
     )
   }
 
-  // Get avatar image
-  const avatarImage = user.avatar?.image
-  const avatarSrc = normalizeImagePath(avatarImage) || getEquipmentSlotImage('head') // fallback
+  const avatarImage = user.avatar
+  const avatarSrc = normalizeImagePath(avatarImage) || getEquipmentSlotImage('head')
 
   return (
     <div className="profile-container">
-      {/* Notification toast */}
       {notification && (
         <div className={`notification-toast notification-${notification.type}`}>
           {notification.message}
@@ -383,11 +362,8 @@ export default function Profile() {
           </div>
         </div>
         <div className="profile-content">
-          {/* Equipment grid and stats wrapper */}
           <div className="profile-equipment-wrapper">
-              {/* Equipment grid - всегда показываем */}
               <div className="equipment-grid">
-            {/* Left column: head, neck, weapon, legs, feet */}
             <div className="equipment-column-left">
               {renderEquipmentSlot('head', 'head')}
               {renderEquipmentSlot('neck', 'neck')}
@@ -396,7 +372,6 @@ export default function Profile() {
               {renderEquipmentSlot('feet', 'feet')}
             </div>
 
-            {/* Center: Avatar with rings below */}
             <div className="equipment-column-center">
               <div className="equipment-avatar">
                 {avatarSrc ? (
@@ -420,7 +395,6 @@ export default function Profile() {
               </div>
             </div>
 
-            {/* Right: bag and throw horizontally, then arms, hands, shield, chest, belt, box vertically */}
             <div className="equipment-column-right">
               <div className="equipment-row-top">
                 {renderEquipmentSlot('bag', 'bag')}
@@ -437,7 +411,6 @@ export default function Profile() {
             </div>
           </div>
 
-              {/* Stats - вертикально */}
               <div className="profile-stats-simple">
                 <div className="stat-row">
                   <span>{user.gold || 0} зол.</span>
@@ -460,7 +433,6 @@ export default function Profile() {
               </div>
             </div>
 
-          {/* Right sidebar with tabs */}
         <div className="profile-sidebar">
           <div className="profile-tabs">
             <button
@@ -477,7 +449,6 @@ export default function Profile() {
             </button>
           </div>
 
-          {/* Inventory tab content */}
           {activeTab === 'inventory' && (
             <div className="profile-inventory-content">
               {inventoryLoading ? (
@@ -519,7 +490,7 @@ export default function Profile() {
                               className="equipment-item-sell-button"
                               onClick={() => handleSell(item)}
                             >
-                              Продать ({item.price}💰)
+                              Продать ({item.price})
                             </button>
                           </div>
                         </div>
@@ -531,7 +502,6 @@ export default function Profile() {
             </div>
           )}
 
-          {/* Settings tab content */}
           {activeTab === 'settings' && (
             <div className="profile-settings-content">
               <h2>Выбор аватара</h2>
@@ -543,7 +513,7 @@ export default function Profile() {
                     <p>Аватары не найдены</p>
                   ) : (
                     avatars.map((avatar) => {
-                      const isSelected = user.avatar?.id === avatar.id
+                      const isSelected = user.avatar === avatar.image
                       return (
                         <div
                           key={avatar.id}

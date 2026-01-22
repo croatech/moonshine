@@ -1,6 +1,5 @@
 const API_BASE_URL = 'http://localhost:8080/api'
 
-// Helper function to get auth headers
 function getAuthHeaders() {
   const token = localStorage.getItem('token')
   return {
@@ -9,44 +8,47 @@ function getAuthHeaders() {
   }
 }
 
-// Auth API
+async function parseResponse(response) {
+  const text = await response.text()
+  const trimmed = text.trim()
+  if (!trimmed) return null
+  try {
+    return JSON.parse(trimmed)
+  } catch (e) {
+    return null
+  }
+}
+
 export const authAPI = {
   signUp: async (username, email, password) => {
     const response = await fetch(`${API_BASE_URL}/auth/signup`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, email, password }),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Sign up failed')
+      throw new Error(data?.error || 'Sign up failed')
     }
-
-    return response.json()
+    return data
   },
 
   signIn: async (username, password) => {
     const response = await fetch(`${API_BASE_URL}/auth/signin`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Sign in failed')
+      throw new Error(data?.error || 'Sign in failed')
     }
-
-    return response.json()
+    return data
   },
 }
 
-// User API
 export const userAPI = {
   getCurrentUser: async () => {
     const response = await fetch(`${API_BASE_URL}/user/me`, {
@@ -54,12 +56,15 @@ export const userAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to get current user')
+      if (response.status === 401) {
+        localStorage.removeItem('token')
+        throw new Error('Unauthorized')
+      }
+      throw new Error(data?.error || 'Failed to get current user')
     }
-
-    return response.json()
+    return data
   },
 
   getInventory: async () => {
@@ -68,16 +73,15 @@ export const userAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('token')
         throw new Error('Unauthorized')
       }
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to fetch inventory')
+      throw new Error(data?.error || 'Failed to fetch inventory')
     }
-
-    return response.json()
+    return data || []
   },
 
   getEquippedItems: async () => {
@@ -86,16 +90,15 @@ export const userAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('token')
         throw new Error('Unauthorized')
       }
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to fetch equipped items')
+      throw new Error(data?.error || 'Failed to fetch equipped items')
     }
-
-    return response.json()
+    return data || {}
   },
 
   updateProfile: async (data) => {
@@ -105,20 +108,18 @@ export const userAPI = {
       body: JSON.stringify(data),
     })
 
+    const result = await parseResponse(response)
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('token')
         throw new Error('Unauthorized')
       }
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to update profile')
+      throw new Error(result?.error || 'Failed to update profile')
     }
-
-    return response.json()
+    return result
   },
 }
 
-// Equipment API
 export const equipmentAPI = {
   getByCategory: async (category) => {
     const response = await fetch(`${API_BASE_URL}/equipment_items?category=${encodeURIComponent(category)}`, {
@@ -126,16 +127,15 @@ export const equipmentAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('token')
         throw new Error('Unauthorized')
       }
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to fetch equipment items')
+      throw new Error(data?.error || 'Failed to fetch equipment items')
     }
-
-    return response.json()
+    return data || []
   },
 
   buy: async (itemSlug) => {
@@ -144,12 +144,11 @@ export const equipmentAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to buy item')
+      throw new Error(data?.error || 'Failed to buy item')
     }
-
-    return response.json()
+    return data
   },
 
   sell: async (itemSlug) => {
@@ -158,12 +157,11 @@ export const equipmentAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to sell item')
+      throw new Error(data?.error || 'Failed to sell item')
     }
-
-    return response.json()
+    return data
   },
 
   takeOn: async (itemSlug) => {
@@ -172,12 +170,11 @@ export const equipmentAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to equip item')
+      throw new Error(data?.error || 'Failed to equip item')
     }
-
-    return response.json()
+    return data
   },
 
   takeOff: async (slotName) => {
@@ -186,16 +183,14 @@ export const equipmentAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to remove item')
+      throw new Error(data?.error || 'Failed to remove item')
     }
-
-    return response.json()
+    return data
   },
 }
 
-// Avatar API
 export const avatarAPI = {
   getAll: async () => {
     const response = await fetch(`${API_BASE_URL}/avatars`, {
@@ -203,20 +198,18 @@ export const avatarAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
       if (response.status === 401) {
         localStorage.removeItem('token')
         throw new Error('Unauthorized')
       }
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to fetch avatars')
+      throw new Error(data?.error || 'Failed to fetch avatars')
     }
-
-    return response.json()
+    return data || []
   },
 }
 
-// Location API
 export const locationAPI = {
   move: async (locationSlug) => {
     const response = await fetch(`${API_BASE_URL}/locations/${locationSlug}/move`, {
@@ -224,12 +217,11 @@ export const locationAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to move to location')
+      throw new Error(data?.error || 'Failed to move to location')
     }
-
-    return response.json()
+    return data
   },
 
   moveToCell: async (locationSlug, cellSlug) => {
@@ -238,12 +230,11 @@ export const locationAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to move to cell')
+      throw new Error(data?.error || 'Failed to move to cell')
     }
-
-    return response.json()
+    return data
   },
   
   getCells: async (locationSlug) => {
@@ -251,16 +242,14 @@ export const locationAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to get location cells')
+      throw new Error(data?.error || 'Failed to get location cells')
     }
-
-    return response.json()
+    return data
   },
 }
 
-// Bot API
 export const botAPI = {
   getBots: async (locationSlug) => {
     const response = await fetch(`${API_BASE_URL}/bots/${locationSlug}`, {
@@ -268,13 +257,11 @@ export const botAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to fetch bots')
+      throw new Error(data?.error || 'Failed to fetch bots')
     }
-
-    const data = await response.json()
-    return data.bots || []
+    return data?.bots || []
   },
 
   attack: async (botSlug) => {
@@ -283,11 +270,10 @@ export const botAPI = {
       headers: getAuthHeaders(),
     })
 
+    const data = await parseResponse(response)
     if (!response.ok) {
-      const error = await response.json()
-      throw new Error(error.error || 'Failed to attack bot')
+      throw new Error(data?.error || 'Failed to attack bot')
     }
-
-    return response.json()
+    return data
   },
 }
