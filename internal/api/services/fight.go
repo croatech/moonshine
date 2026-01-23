@@ -35,6 +35,15 @@ type GetCurrentFightResult struct {
 var ErrNoActiveFight = errors.New("no active fight")
 var ErrUserNotFound = errors.New("user not found")
 var ErrBotNotFound = errors.New("bot not found")
+var ErrInvalidBodyPart = errors.New("invalid body part")
+
+var ValidBodyParts = map[string]bool{
+	"head":  true,
+	"neck":  true,
+	"chest": true,
+	"belt":  true,
+	"legs":  true,
+}
 
 func (s *FightService) GetCurrentFight(ctx context.Context, userID uuid.UUID) (*GetCurrentFightResult, error) {
 	user, err := s.userRepo.FindByID(userID)
@@ -56,4 +65,15 @@ func (s *FightService) GetCurrentFight(ctx context.Context, userID uuid.UUID) (*
 		User: user,
 		Bot:  bot,
 	}, nil
+}
+
+func (s *FightService) Hit(ctx context.Context, userID uuid.UUID, attack, defense string) error {
+	if !ValidBodyParts[attack] {
+		return ErrInvalidBodyPart
+	}
+	if !ValidBodyParts[defense] {
+		return ErrInvalidBodyPart
+	}
+
+	return nil
 }

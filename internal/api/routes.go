@@ -123,6 +123,7 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 
 	fightHandler := handlers.NewFightHandler(db)
 	apiGroup.GET("/fights/current", fightHandler.GetCurrentFight)
+	apiGroup.POST("/fights/current/hit", fightHandler.Hit)
 }
 
 // healthCheck godoc

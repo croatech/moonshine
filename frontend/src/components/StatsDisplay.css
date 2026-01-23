@@ -1,0 +1,46 @@
+.equipment-stats-compact {
+  display: flex;
+  flex-direction: row;
+  gap: 12px;
+  padding: 8px 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #5a4730;
+  font-family: 'Cinzel', serif;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  width: 100%;
+  max-width: fit-content;
+  margin: 0 auto;
+}
+
+.stats-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.stats-right-column {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.stat-row-compact {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-start;
+}
+
+.stat-icon-compact {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+  image-rendering: pixelated;
+  vertical-align: middle;
+  flex-shrink: 0;
+}

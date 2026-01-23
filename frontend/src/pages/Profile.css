@@ -168,6 +168,14 @@
   position: relative;
 }
 
+.profile-equipment-wrapper.profile-layout {
+  flex-direction: row;
+}
+
+.profile-equipment-wrapper.profile-layout .equipment-display-wrapper {
+  flex-direction: row;
+}
+
 .profile-sidebar {
   display: flex;
   flex-direction: column;
@@ -370,6 +378,12 @@
   padding: 0;
   max-height: 500px;
   overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.avatars-list::-webkit-scrollbar {
+  display: none;
 }
 
 .avatar-item {

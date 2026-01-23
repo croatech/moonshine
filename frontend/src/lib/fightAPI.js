@@ -35,4 +35,18 @@ export const fightAPI = {
     }
     return data
   },
+
+  hit: async (attack, defense) => {
+    const response = await fetch(`${API_BASE_URL}/fights/current/hit`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ attack, defense }),
+    })
+
+    const data = await parseResponse(response)
+    if (!response.ok) {
+      throw new Error(data?.error || 'Failed to hit')
+    }
+    return data
+  },
 }

@@ -75,3 +75,52 @@ func (h *FightHandler) GetCurrentFight(c echo.Context) error {
 		Bot:  *dto.BotFromDomain(result.Bot),
 	})
 }
+
+type HitRequest struct {
+	Attack   string `json:"attack" validate:"required"`
+	Defense  string `json:"defense" validate:"required"`
+}
+
+// Hit godoc
+// @Summary Hit in fight
+// @Description Perform a hit in current fight
+// @Tags fights
+// @Accept json
+// @Produce json
+// @Security Bearer
+// @Param request body HitRequest true "Hit request"
+// @Success 200 {object} map[string]interface{}
+// @Failure 400 {object} map[string]string
+// @Failure 401 {object} map[string]string
+// @Failure 404 {object} map[string]string
+// @Router /api/fights/current/hit [post]
+func (h *FightHandler) Hit(c echo.Context) error {
+	userID, err := middleware.GetUserIDFromContext(c.Request().Context())
+	if err != nil {
+		return ErrUnauthorized(c)
+	}
+
+	var req HitRequest
+	if err := c.Bind(&req); err != nil {
+		return ErrBadRequest(c, "invalid request")
+	}
+
+	if err := c.Validate(&req); err != nil {
+		return ErrBadRequest(c, err.Error())
+	}
+
+	err = h.fightService.Hit(c.Request().Context(), userID, req.Attack, req.Defense)
+	if err != nil {
+		if err == services.ErrNoActiveFight {
+			return ErrNotFound(c, "no active fight")
+		}
+		if err == services.ErrInvalidBodyPart {
+			return ErrBadRequest(c, "invalid body part")
+		}
+		return ErrInternalServerError(c)
+	}
+
+	return c.JSON(http.StatusOK, map[string]interface{}{
+		"success": true,
+	})
+}

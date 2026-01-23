@@ -9,21 +9,17 @@ import (
 type User struct {
 	Model
 	UpdatedAt             time.Time  `db:"updated_at"`
-	Attack                uint       `db:"attack"`
+	Attack                uint16     `db:"attack"`
 	AvatarID              *uuid.UUID `db:"avatar_id"`
-	CurrentHp             uint       `db:"current_hp"`
-	Defense               uint       `db:"defense"`
+	CurrentHp             uint16     `db:"current_hp"`
+	Defense               uint16     `db:"defense"`
 	Email                 string     `db:"email"`
 	Exp                   uint       `db:"exp"`
-	FishingSkill          uint       `db:"fishing_skill"`
-	FishingSlot           uint       `db:"fishing_slot"`
-	FreeStats             uint       `db:"free_stats"`
+	FreeStats             uint8      `db:"free_stats"`
 	Gold                  uint       `db:"gold"`
-	Hp                    uint       `db:"hp"`
-	Level                 uint       `db:"level"`
+	Hp                    uint16     `db:"hp"`
+	Level                 uint8      `db:"level"`
 	LocationID            uuid.UUID  `db:"location_id"`
-	LumberjackingSkill    uint       `db:"lumberjacking_skill"`
-	LumberjackingSlot     uint       `db:"lumberjacking_slot"`
 	Name                  string     `db:"name"`
 	Password              string     `db:"password"`
 	Username              string     `db:"username"`
@@ -58,21 +54,21 @@ var levelMatrix = map[uint]uint{
 }
 
 func (user *User) ReachedNewLevel() bool {
-	requiredExp, exists := levelMatrix[user.Level]
+	requiredExp, exists := levelMatrix[uint(user.Level)]
 	if !exists {
 		return false
 	}
 	return user.Exp >= requiredExp
 }
 
-func (user *User) RegenerateHealth(percent float64) uint {
+func (user *User) RegenerateHealth(percent float64) uint16 {
 	if user.CurrentHp >= user.Hp {
 		return user.Hp
 	}
 
-	regeneration := uint(float64(user.Hp) * percent / 100.0)
+	regeneration := uint16(float64(user.Hp) * percent / 100.0)
 
-	minRegeneration := uint(5)
+	minRegeneration := uint16(5)
 	if regeneration < minRegeneration {
 		regeneration = minRegeneration
 	}

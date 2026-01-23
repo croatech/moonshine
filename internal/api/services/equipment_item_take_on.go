@@ -102,7 +102,7 @@ func (s *EquipmentItemTakeOnService) TakeOnEquipmentItem(ctx context.Context, us
 		return err
 	}
 
-	if user.Level < item.RequiredLevel {
+	if uint(user.Level) < item.RequiredLevel {
 		return ErrInsufficientLevel
 	}
 

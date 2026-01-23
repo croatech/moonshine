@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import PlayerHeader from '../components/PlayerHeader'
+import StatsDisplay from '../components/StatsDisplay'
 import { useAuth } from '../context/AuthContext'
 import { avatarAPI, equipmentAPI, userAPI } from '../lib/api'
 import './EquipmentItems.css'
@@ -362,7 +363,7 @@ export default function Profile() {
           </div>
         </div>
         <div className="profile-content">
-          <div className="profile-equipment-wrapper">
+          <div className="profile-equipment-wrapper profile-layout">
               <div className="equipment-grid">
             <div className="equipment-column-left">
               {renderEquipmentSlot('head', 'head')}
@@ -393,6 +394,15 @@ export default function Profile() {
                 {renderEquipmentSlot('ring3', 'ring3')}
                 {renderEquipmentSlot('ring4', 'ring4')}
               </div>
+              
+              <StatsDisplay
+                attack={user.attack}
+                defense={user.defense}
+                hp={user.hp}
+                currentHp={user.currentHp ?? user.current_hp}
+                gold={user.gold}
+                showGold={true}
+              />
             </div>
 
             <div className="equipment-column-right">
@@ -410,27 +420,6 @@ export default function Profile() {
               </div>
             </div>
           </div>
-
-              <div className="profile-stats-simple">
-                <div className="stat-row">
-                  <span>{user.gold || 0} зол.</span>
-                </div>
-                <div className="stat-row">
-                  <img src="/assets/images/attack.png" alt="Attack" className="stat-icon-simple" />
-                  <span>{user.attack || 0}</span>
-                </div>
-                <div className="stat-row">
-                  <img src="/assets/images/defense.png" alt="Defense" className="stat-icon-simple" />
-                  <span>{user.defense || 0}</span>
-                </div>
-                <div className="stat-row">
-                  <img src="/assets/images/hp.png" alt="HP" className="stat-icon-simple" />
-                  <span>{(user.currentHp ?? user.current_hp ?? 0)}/{user.hp || 0}</span>
-                </div>
-                <div className="stat-row">
-                  <span>Свободных статов: {user.freeStats || 0}</span>
-                </div>
-              </div>
             </div>
 
         <div className="profile-sidebar">

@@ -493,7 +493,7 @@ func seedBots(db *sqlx.DB) error {
 			Defense: 10,
 			Hp:      20,
 			Level:   1,
-			Avatar:  "images/bots/rat",
+			Avatar:  "images/bots/rat.jpg",
 		}
 
 		if err := botRepo.Create(ratBot); err != nil {

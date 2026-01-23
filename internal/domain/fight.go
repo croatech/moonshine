@@ -14,7 +14,6 @@ type Fight struct {
 	UserID        uuid.UUID  `db:"user_id"`
 	BotID         uuid.UUID  `db:"bot_id"`
 	Status        FightStatus `db:"status"`
-	UserWon       bool       `db:"user_won"`
 	DroppedGold   uint       `db:"dropped_gold"`
 	DroppedItemID *uuid.UUID `db:"dropped_item_id"`
 }

@@ -1,17 +1,32 @@
 import './EquipmentDisplay.css'
+import StatsDisplay from './StatsDisplay'
 
 export default function EquipmentDisplay({ user, equippedItems, readonly = false }) {
   const normalizeImagePath = (img) => {
     if (!img) return null
-    let p = img
+    let p = img.trim()
     if (p.startsWith('/')) p = p.slice(1)
     p = p.replace(/^frontend\/assets\/images\//, '')
-    if (p.startsWith('assets/images/')) p = p.replace(/^assets\/images\//, '')
-    if (!p.startsWith('images/')) p = `images/${p}`
-    return `/assets/${p}`
+    p = p.replace(/^assets\/images\//, '')
+    if (p.startsWith('images/')) {
+      p = p.replace(/^images\//, '')
+    }
+    if (p.includes('bots/') || p.includes('rat') || p.includes('bear') || p.includes('spider') || p.includes('skeleton') || p.includes('zombie') || p.includes('boar')) {
+      if (!p.includes('bots/')) {
+        p = `bots/${p}`
+      }
+      if (!p.includes('.')) {
+        p = `${p}.jpg`
+      }
+    }
+    return `/assets/images/${p}`
   }
 
   const getEquipmentSlotImage = (slotName) => {
+    const equippedItem = equippedItems?.[slotName] || equippedItems?.[slotName.toLowerCase()]
+    if (equippedItem && equippedItem.image) {
+      return normalizeImagePath(equippedItem.image)
+    }
     const placeholderName = slotName.startsWith('ring') ? 'ring' : slotName
     return `/assets/images/equipment_items/grid/${placeholderName}.png`
   }
@@ -69,6 +84,15 @@ export default function EquipmentDisplay({ user, equippedItems, readonly = false
             {renderEquipmentSlot('ring3', 'ring3')}
             {renderEquipmentSlot('ring4', 'ring4')}
           </div>
+          
+          <StatsDisplay
+            attack={user?.attack}
+            defense={user?.defense}
+            hp={user?.hp}
+            currentHp={user?.currentHp ?? user?.current_hp}
+            gold={user?.gold}
+            showGold={!readonly}
+          />
         </div>
 
         <div className="equipment-column-right">
@@ -85,31 +109,6 @@ export default function EquipmentDisplay({ user, equippedItems, readonly = false
             {renderEquipmentSlot('box', 'box')}
           </div>
         </div>
-      </div>
-
-      <div className="profile-stats-simple">
-        {user?.gold !== undefined && (
-          <div className="stat-row">
-            <span>{user.gold || 0} зол.</span>
-          </div>
-        )}
-        <div className="stat-row">
-          <img src="/assets/images/attack.png" alt="Attack" className="stat-icon-simple" />
-          <span>{user?.attack || 0}</span>
-        </div>
-        <div className="stat-row">
-          <img src="/assets/images/defense.png" alt="Defense" className="stat-icon-simple" />
-          <span>{user?.defense || 0}</span>
-        </div>
-        <div className="stat-row">
-          <img src="/assets/images/hp.png" alt="HP" className="stat-icon-simple" />
-          <span>{(user?.currentHp ?? user?.current_hp ?? 0)}/{user?.hp || 0}</span>
-        </div>
-        {user?.freeStats !== undefined && (
-          <div className="stat-row">
-            <span>Свободных статов: {user.freeStats || 0}</span>
-          </div>
-        )}
       </div>
     </div>
   )

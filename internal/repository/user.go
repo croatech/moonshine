@@ -56,9 +56,9 @@ func (r *UserRepository) Create(user *domain.User) error {
 
 func (r *UserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	query := `
-		SELECT users.id, users.created_at, users.deleted_at, users.username, users.email, users.password, users.name, 
-			users.avatar_id, users.location_id, users.attack, users.defense, users.current_hp, users.exp, users.fishing_skill, users.fishing_slot,
-			users.free_stats, users.gold, users.hp, users.level, users.lumberjacking_skill, users.lumberjacking_slot,
+		SELECT users.id, users.created_at, users.updated_at, users.deleted_at, users.username, users.email, users.password, users.name, 
+			users.avatar_id, users.location_id, users.attack, users.defense, users.current_hp, users.exp,
+			users.free_stats, users.gold, users.hp, users.level,
 			users.chest_equipment_item_id, users.belt_equipment_item_id, users.head_equipment_item_id,
 			users.neck_equipment_item_id, users.weapon_equipment_item_id, users.shield_equipment_item_id,
 			users.legs_equipment_item_id, users.feet_equipment_item_id, users.arms_equipment_item_id,
@@ -83,9 +83,9 @@ func (r *UserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 
 func (r *UserRepository) FindByUsername(username string) (*domain.User, error) {
 	query := `
-		SELECT users.id, users.created_at, users.deleted_at, users.username, users.email, users.password, users.name, 
-			users.avatar_id, users.location_id, users.attack, users.defense, users.current_hp, users.exp, users.fishing_skill, users.fishing_slot,
-			users.free_stats, users.gold, users.hp, users.level, users.lumberjacking_skill, users.lumberjacking_slot,
+		SELECT users.id, users.created_at, users.updated_at, users.deleted_at, users.username, users.email, users.password, users.name, 
+			users.avatar_id, users.location_id, users.attack, users.defense, users.current_hp, users.exp,
+			users.free_stats, users.gold, users.hp, users.level,
 			users.chest_equipment_item_id, users.belt_equipment_item_id, users.head_equipment_item_id,
 			users.neck_equipment_item_id, users.weapon_equipment_item_id, users.shield_equipment_item_id,
 			users.legs_equipment_item_id, users.feet_equipment_item_id, users.arms_equipment_item_id,

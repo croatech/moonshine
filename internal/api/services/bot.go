@@ -59,39 +59,23 @@ func (s *BotService) Attack(ctx context.Context, botSlug string, userID uuid.UUI
 		return nil, errors.New("bot slug is required")
 	}
 
-	bot, err := s.botRepo.FindBySlug(botSlug)
+	user, err := s.userRepo.FindByID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	user, err := s.userRepo.FindByID(userID)
+	inFight, err := s.userRepo.InFight(userID)
+	if err != nil || inFight {
+		return nil, err
+	}
+
+	bot, err := s.botRepo.FindBySlug(botSlug)
 	if err != nil {
 		return nil, err
 	}
 
 	if exists, err := s.locationRepo.HasBot(user.LocationID, bot.ID); err != nil || !exists {
 		return nil, errors.New("bot is not in the same location as user")
-	}
-
-	inFight, err := s.userRepo.InFight(userID)
-	if err != nil {
-		return nil, err
-	}
-	if inFight {
-		fight, err := s.fightRepo.FindActiveByUserID(userID)
-		if err != nil {
-			return nil, err
-		}
-
-		currentBot, err := s.botRepo.FindByID(fight.BotID)
-		if err != nil {
-			return nil, err
-		}
-
-		return &AttackResult{
-			User: user,
-			Bot:  currentBot,
-		}, nil
 	}
 
 	fightID, err := s.fightRepo.Create(&domain.Fight{
@@ -102,7 +86,7 @@ func (s *BotService) Attack(ctx context.Context, botSlug string, userID uuid.UUI
 		return nil, err
 	}
 
-	err = s.roundRepo.Create(fightID)
+	err = s.roundRepo.Create(fightID, user.CurrentHp, bot.Hp)
 	if err != nil {
 		return nil, err
 	}

@@ -13,6 +13,7 @@ type Bot struct {
 	Attack    int       `json:"attack"`
 	Defense   int       `json:"defense"`
 	Hp        int       `json:"hp"`
+	CurrentHp int       `json:"currentHp"`
 	Level     int       `json:"level"`
 	Avatar    string    `json:"avatar"`
 	CreatedAt time.Time `json:"createdAt"`
@@ -30,6 +31,7 @@ func BotFromDomain(bot *domain.Bot) *Bot {
 		Attack:    int(bot.Attack),
 		Defense:   int(bot.Defense),
 		Hp:        int(bot.Hp),
+		CurrentHp: int(bot.Hp),
 		Level:     int(bot.Level),
 		Avatar:    bot.Avatar,
 		CreatedAt: bot.CreatedAt,

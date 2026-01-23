@@ -62,31 +62,41 @@ func setupBotHandlerTest(t *testing.T) (*BotHandler, *sqlx.DB, echo.Context) {
 }
 
 func TestBotHandler_GetBots(t *testing.T) {
-	handler, db, c := setupBotHandlerTest(t)
+	handler, db, _ := setupBotHandlerTest(t)
 
 	t.Run("empty location slug returns bad request", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
 		c.SetPath("/api/locations/:location_slug/bots")
 		c.SetParamNames("location_slug")
 		c.SetParamValues("")
 
 		err := handler.GetBots(c)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusBadRequest, c.Response().Status)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 		var response map[string]string
-		err = json.Unmarshal(c.Response().Body.Bytes(), &response)
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Contains(t, response["error"], "location slug is required")
 	})
 
 	t.Run("non-existent location returns internal server error", func(t *testing.T) {
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
 		c.SetPath("/api/locations/:location_slug/bots")
 		c.SetParamNames("location_slug")
 		c.SetParamValues("non-existent")
 
 		err := handler.GetBots(c)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, c.Response().Status)
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 
 	t.Run("successfully get bots by location slug", func(t *testing.T) {
@@ -118,16 +128,21 @@ func TestBotHandler_GetBots(t *testing.T) {
 		_, err = db.Exec(linkQuery, linkID, location.ID, bot.ID)
 		require.NoError(t, err)
 
+		e := echo.New()
+		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
 		c.SetPath("/api/locations/:location_slug/bots")
 		c.SetParamNames("location_slug")
 		c.SetParamValues(location.Slug)
 
 		err = handler.GetBots(c)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, c.Response().Status)
+		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var response BotResponse
-		err = json.Unmarshal(c.Response().Body.Bytes(), &response)
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.NotEmpty(t, response.Bots)
 		assert.Equal(t, bot.Slug, response.Bots[0].Slug)
@@ -136,7 +151,7 @@ func TestBotHandler_GetBots(t *testing.T) {
 }
 
 func TestBotHandler_Attack(t *testing.T) {
-	handler, db, c := setupBotHandlerTest(t)
+	handler, db, _ := setupBotHandlerTest(t)
 
 	setupAttackTestData := func() (*domain.Location, *domain.User, *domain.Bot, error) {
 		location := &domain.Location{
@@ -195,7 +210,7 @@ func TestBotHandler_Attack(t *testing.T) {
 
 	t.Run("empty bot slug returns bad request", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -209,17 +224,17 @@ func TestBotHandler_Attack(t *testing.T) {
 
 		err := handler.Attack(c)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusBadRequest, c.Response().Status)
+		assert.Equal(t, http.StatusBadRequest, rec.Code)
 
 		var response map[string]string
-		err = json.Unmarshal(c.Response().Body.Bytes(), &response)
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
 		assert.Contains(t, response["error"], "bot slug is required")
 	})
 
 	t.Run("unauthorized without userID in context returns unauthorized", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -229,12 +244,12 @@ func TestBotHandler_Attack(t *testing.T) {
 
 		err := handler.Attack(c)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusUnauthorized, c.Response().Status)
+		assert.Equal(t, http.StatusUnauthorized, rec.Code)
 	})
 
 	t.Run("non-existent bot returns internal server error", func(t *testing.T) {
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -248,7 +263,7 @@ func TestBotHandler_Attack(t *testing.T) {
 
 		err := handler.Attack(c)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusInternalServerError, c.Response().Status)
+		assert.Equal(t, http.StatusInternalServerError, rec.Code)
 	})
 
 	t.Run("successfully attack bot", func(t *testing.T) {
@@ -256,7 +271,7 @@ func TestBotHandler_Attack(t *testing.T) {
 		require.NoError(t, err)
 
 		e := echo.New()
-		req := httptest.NewRequest(http.MethodGet, "/", nil)
+		req := httptest.NewRequest(http.MethodPost, "/", nil)
 		rec := httptest.NewRecorder()
 		c := e.NewContext(req, rec)
 
@@ -269,13 +284,39 @@ func TestBotHandler_Attack(t *testing.T) {
 
 		err = handler.Attack(c)
 		require.NoError(t, err)
-		assert.Equal(t, http.StatusOK, c.Response().Status)
+		assert.Equal(t, http.StatusOK, rec.Code)
 
 		var response map[string]interface{}
-		err = json.Unmarshal(c.Response().Body.Bytes(), &response)
+		err = json.Unmarshal(rec.Body.Bytes(), &response)
 		require.NoError(t, err)
-		assert.NotNil(t, response["user"])
-		assert.NotNil(t, response["bot"])
+		assert.NotNil(t, response["message"])
+
+		fightRepo := repository.NewFightRepository(db)
+		fight, err := fightRepo.FindActiveByUserID(user.ID)
+		require.NoError(t, err)
+		require.NotNil(t, fight)
+		assert.Equal(t, user.ID, fight.UserID)
+		assert.Equal(t, bot.ID, fight.BotID)
+		assert.Equal(t, domain.FightStatusInProgress, fight.Status)
+
+		var round domain.Round
+		roundQuery := `
+			SELECT id, created_at, deleted_at, fight_id, player_damage, bot_damage, 
+				status, player_hp, bot_hp, player_attack_point, player_defense_point, 
+				bot_attack_point, bot_defense_point
+			FROM rounds 
+			WHERE fight_id = $1 AND deleted_at IS NULL 
+			ORDER BY created_at DESC 
+			LIMIT 1
+		`
+		err = db.Get(&round, roundQuery, fight.ID)
+		require.NoError(t, err)
+		assert.Equal(t, fight.ID, round.FightID)
+		assert.Equal(t, uint(0), round.PlayerDamage, "player damage should be 0")
+		assert.Equal(t, uint(0), round.BotDamage, "bot damage should be 0")
+		assert.Equal(t, user.CurrentHp, round.PlayerHp, "player HP should match user current HP")
+		assert.Equal(t, bot.Hp, round.BotHp, "bot HP should match bot max HP")
+		assert.Equal(t, domain.FightStatusInProgress, round.Status)
 	})
 }
 

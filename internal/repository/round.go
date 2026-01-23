@@ -14,12 +14,12 @@ func NewRoundRepository(db *sqlx.DB) *RoundRepository {
 	return &RoundRepository{db: db}
 }
 
-func (r *RoundRepository) Create(fightID uuid.UUID) error {
+func (r *RoundRepository) Create(fightID uuid.UUID, userHp uint16, botHp uint16) error {
 	query := `
-		INSERT INTO rounds (fight_id)
-		VALUES ($1)
+		INSERT INTO rounds (fight_id, player_hp, bot_hp, player_damage, bot_damage)
+		VALUES ($1, $2, $3, $4, $5)
 	`
 
-	_, err := r.db.Exec(query, fightID)
+	_, err := r.db.Exec(query, fightID, userHp, botHp, 0, 0)
 	return err
 }
