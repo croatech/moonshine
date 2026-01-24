@@ -39,7 +39,6 @@
 
 .bots-back-button,
 .bots-logout-button {
-  padding: 8px 16px;
   background: linear-gradient(145deg, #8b6f47, #6b5537);
   border: 2px solid #5a4730;
   color: #f5e6d3;
@@ -53,6 +52,15 @@
     0 2px 4px rgba(0, 0, 0, 0.2),
     inset 0 1px 0 rgba(255, 255, 255, 0.2),
     inset 0 -1px 0 rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.bots-back-button {
+  padding: 0 10px;
+  height: 40px;
 }
 
 .bots-back-button:hover,
@@ -64,6 +72,10 @@
     inset 0 -1px 0 rgba(0, 0, 0, 0.3);
   transform: translateY(-2px);
   color: #fff;
+}
+
+.bots-back-button {
+  height: 40px;
 }
 
 .bots-logout-button {

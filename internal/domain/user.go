@@ -9,16 +9,16 @@ import (
 type User struct {
 	Model
 	UpdatedAt             time.Time  `db:"updated_at"`
-	Attack                uint16     `db:"attack"`
+	Attack                uint       `db:"attack"`
 	AvatarID              *uuid.UUID `db:"avatar_id"`
-	CurrentHp             uint16     `db:"current_hp"`
-	Defense               uint16     `db:"defense"`
+	CurrentHp             uint       `db:"current_hp"`
+	Defense               uint       `db:"defense"`
 	Email                 string     `db:"email"`
 	Exp                   uint       `db:"exp"`
-	FreeStats             uint8      `db:"free_stats"`
+	FreeStats             uint       `db:"free_stats"`
 	Gold                  uint       `db:"gold"`
-	Hp                    uint16     `db:"hp"`
-	Level                 uint8      `db:"level"`
+	Hp                    uint       `db:"hp"`
+	Level                 uint       `db:"level"`
 	LocationID            uuid.UUID  `db:"location_id"`
 	Name                  string     `db:"name"`
 	Password              string     `db:"password"`
@@ -40,35 +40,46 @@ type User struct {
 	Avatar                string     `db:"avatar"`
 }
 
-var levelMatrix = map[uint]uint{
-	1:  100,
-	2:  200,
-	3:  400,
-	4:  800,
-	5:  1500,
-	6:  3000,
-	7:  5000,
-	8:  10000,
-	9:  15000,
-	10: 20000,
+var LevelMatrix = map[uint]uint{
+	1:  0,
+	2:  100,
+	3:  200,
+	4:  400,
+	5:  800,
+	6:  1500,
+	7:  3000,
+	8:  5000,
+	9:  10000,
+	10: 15000,
+	11: 20000,
+	12: 25000,
+	13: 30000,
+	14: 35000,
+	15: 40000,
+	16: 45000,
+	17: 50000,
+	18: 55000,
+	19: 60000,
+	20: 65000,
 }
 
 func (user *User) ReachedNewLevel() bool {
-	requiredExp, exists := levelMatrix[uint(user.Level)]
+	nextLevel := user.Level + 1
+	requiredExp, exists := LevelMatrix[nextLevel]
 	if !exists {
 		return false
 	}
 	return user.Exp >= requiredExp
 }
 
-func (user *User) RegenerateHealth(percent float64) uint16 {
+func (user *User) RegenerateHealth(percent float64) uint {
 	if user.CurrentHp >= user.Hp {
 		return user.Hp
 	}
 
-	regeneration := uint16(float64(user.Hp) * percent / 100.0)
+	regeneration := uint(float64(user.Hp) * percent / 100.0)
 
-	minRegeneration := uint16(5)
+	minRegeneration := uint(5)
 	if regeneration < minRegeneration {
 		regeneration = minRegeneration
 	}

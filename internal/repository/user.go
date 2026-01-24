@@ -163,6 +163,19 @@ func (r *UserRepository) UpdateLocationID(userID uuid.UUID, locationID uuid.UUID
 	return err
 }
 
+func (r *UserRepository) Update(userID uuid.UUID, addedGold, addedExp, newLevel, newCurrentHp uint) error {
+	query := `
+		UPDATE users 
+		SET gold = gold + $1, 
+		    exp = exp + $2, 
+		    level = $3,
+		    current_hp = $4
+		WHERE id = $5 AND deleted_at IS NULL
+	`
+	_, err := r.db.Exec(query, addedGold, addedExp, newLevel, newCurrentHp, userID)
+	return err
+}
+
 func (r *UserRepository) InFight(userID uuid.UUID) (bool, error) {
 	query := `SELECT EXISTS(SELECT 1 FROM fights WHERE user_id = $1 AND status = $2 AND deleted_at IS NULL)`
 

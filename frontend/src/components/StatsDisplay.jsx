@@ -1,4 +1,5 @@
 import './StatsDisplay.css'
+import GoldIcon from './GoldIcon'
 
 export default function StatsDisplay({ attack, defense, hp, currentHp, gold, showGold = false }) {
   return (
@@ -16,6 +17,7 @@ export default function StatsDisplay({ attack, defense, hp, currentHp, gold, sho
       <div className="stats-right-column">
         {showGold && gold !== undefined && (
           <div className="stat-row-compact stat-gold">
+            <GoldIcon className="stat-icon-compact" width={18} height={18} />
             <span>{gold || 0} зол.</span>
           </div>
         )}

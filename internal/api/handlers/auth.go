@@ -16,6 +16,7 @@ import (
 type AuthHandler struct {
 	authService   *services.AuthService
 	locationRepo  *repository.LocationRepository
+	userRepo      *repository.UserRepository
 }
 
 func NewAuthHandler(db *sqlx.DB) *AuthHandler {
@@ -27,6 +28,7 @@ func NewAuthHandler(db *sqlx.DB) *AuthHandler {
 	return &AuthHandler{
 		authService:  authService,
 		locationRepo: locationRepo,
+		userRepo:     userRepo,
 	}
 }
 
@@ -89,9 +91,11 @@ func (h *AuthHandler) SignUp(c echo.Context) error {
 		location, _ = h.locationRepo.FindByID(user.LocationID)
 	}
 
+	inFight, _ := h.userRepo.InFight(user.ID)
+
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, location, false),
+		User:  dto.UserFromDomain(user, location, inFight),
 	})
 }
 
@@ -137,8 +141,10 @@ func (h *AuthHandler) SignIn(c echo.Context) error {
 		location, _ = h.locationRepo.FindByID(user.LocationID)
 	}
 
+	inFight, _ := h.userRepo.InFight(user.ID)
+
 	return c.JSON(http.StatusOK, AuthResponse{
 		Token: token,
-		User:  dto.UserFromDomain(user, location, false),
+		User:  dto.UserFromDomain(user, location, inFight),
 	})
 }

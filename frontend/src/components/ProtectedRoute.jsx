@@ -5,11 +5,14 @@ export default function ProtectedRoute({ children }) {
   const { token, loading, user } = useAuth()
   const location = useLocation()
 
+  const storedToken = localStorage.getItem('token')
+  const hasToken = token || storedToken
+
   if (loading) {
     return <div>Загрузка...</div>
   }
 
-  if (!token) {
+  if (!hasToken) {
     return <Navigate to="/signin" replace />
   }
 

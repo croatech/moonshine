@@ -10,7 +10,21 @@ const (
 	BodyPartChest BodyPart = "CHEST"
 	BodyPartBelt  BodyPart = "BELT"
 	BodyPartLegs  BodyPart = "LEGS"
-	BodyPartHands BodyPart = "HANDS"
+)
+
+var BodyParts = []BodyPart{
+	BodyPartHead,
+	BodyPartNeck,
+	BodyPartChest,
+	BodyPartBelt,
+	BodyPartLegs,
+}
+
+type RoundStatus string
+
+const (
+	RoundStatusInProgress RoundStatus = "IN_PROGRESS"
+	RoundStatusFinished   RoundStatus = "FINISHED"
 )
 
 type Round struct {
@@ -18,7 +32,7 @@ type Round struct {
 	FightID            uuid.UUID   `db:"fight_id"`
 	PlayerDamage       uint        `db:"player_damage"`
 	BotDamage          uint        `db:"bot_damage"`
-	Status             FightStatus `db:"status"`
+	Status             RoundStatus `db:"status"`
 	PlayerHp           uint        `db:"player_hp"`
 	BotHp              uint        `db:"bot_hp"`
 	PlayerAttackPoint  *BodyPart   `db:"player_attack_point"`

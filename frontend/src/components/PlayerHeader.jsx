@@ -2,16 +2,46 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
 import './PlayerHeader.css'
 
+const LevelMatrix = {
+  1: 0,
+  2: 100,
+  3: 200,
+  4: 400,
+  5: 800,
+  6: 1500,
+  7: 3000,
+  8: 5000,
+  9: 10000,
+  10: 15000,
+  11: 20000,
+  12: 25000,
+  13: 30000,
+  14: 35000,
+  15: 40000,
+  16: 45000,
+  17: 50000,
+  18: 55000,
+  19: 60000,
+  20: 65000,
+}
+
 export default function PlayerHeader({ fullWidth = false }) {
   const { user } = useAuth()
   const currentHp = user?.currentHp ?? user?.current_hp ?? 0
   const maxHp = user?.hp || 20
+  const userLevel = user?.level || 1
+  const userExp = user?.exp || 0
+
+  const nextLevelExp = LevelMatrix[userLevel + 1] || LevelMatrix[20]
+  const expPercentage = nextLevelExp > 0 
+    ? Math.round((userExp / nextLevelExp) * 100) 
+    : 100
 
   return (
     <div className={`player-header-info ${fullWidth ? 'player-header-info-full' : ''}`}>
       <div className="player-name-level">
         <span className="player-name">{user?.username || 'Игрок'}</span>
-        <span className="player-level">[<span className="player-level-number">{user?.level || 1}</span>]</span>
+        <span className="player-level">[<span className="player-level-number">{userLevel}</span>]</span>
       </div>
       <div className="player-hp-bar">
         <div 
@@ -25,14 +55,26 @@ export default function PlayerHeader({ fullWidth = false }) {
           {currentHp}/{maxHp}
         </span>
       </div>
+      <div className="player-exp-bar">
+        <div 
+          className="player-exp-fill" 
+          style={{ 
+            width: `${Math.min(expPercentage, 100)}%`,
+            backgroundColor: '#ffc107'
+          }}
+        ></div>
+        <span className="player-exp-text">
+          {userExp}/{nextLevelExp}
+        </span>
+      </div>
       <Link 
         to="/profile" 
         className="profile-link-button" 
         title="Профиль персонажа"
       >
         <svg 
-          width="20" 
-          height="20" 
+          width="24" 
+          height="24" 
           viewBox="0 0 24 24" 
           fill="none" 
           xmlns="http://www.w3.org/2000/svg"

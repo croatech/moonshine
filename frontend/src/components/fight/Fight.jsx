@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useAuth } from '../../context/AuthContext'
 import { percentProgressBar } from '../../utils/calculate'
 import config from '../../config'
+import GoldIcon from '../GoldIcon'
 
 export default function Fight() {
   const { user } = useAuth()
@@ -126,7 +127,7 @@ export default function Fight() {
           {fight.dropped_gold != null && (
             <div className="center drop">
               <b>Dropped gold:</b>
-              <img src="/assets/images/gold.png" alt="gold" />
+              <GoldIcon width={18} height={18} />
               {fight.dropped_gold}
             </div>
           )}

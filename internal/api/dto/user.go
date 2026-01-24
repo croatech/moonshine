@@ -3,6 +3,8 @@ package dto
 import (
 	"time"
 
+	"github.com/google/uuid"
+
 	"moonshine/internal/domain"
 )
 
@@ -66,61 +68,31 @@ func UserFromDomain(user *domain.User, location *domain.Location, inFight bool) 
 		Avatar:    user.Avatar,
 	}
 
-	if user.ChestEquipmentItemID != nil {
-		id := user.ChestEquipmentItemID.String()
-		result.ChestEquipmentItemID = &id
+	equipmentItemFields := []struct {
+		source *uuid.UUID
+		target **string
+	}{
+		{user.ChestEquipmentItemID, &result.ChestEquipmentItemID},
+		{user.BeltEquipmentItemID, &result.BeltEquipmentItemID},
+		{user.HeadEquipmentItemID, &result.HeadEquipmentItemID},
+		{user.NeckEquipmentItemID, &result.NeckEquipmentItemID},
+		{user.WeaponEquipmentItemID, &result.WeaponEquipmentItemID},
+		{user.ShieldEquipmentItemID, &result.ShieldEquipmentItemID},
+		{user.LegsEquipmentItemID, &result.LegsEquipmentItemID},
+		{user.FeetEquipmentItemID, &result.FeetEquipmentItemID},
+		{user.ArmsEquipmentItemID, &result.ArmsEquipmentItemID},
+		{user.HandsEquipmentItemID, &result.HandsEquipmentItemID},
+		{user.Ring1EquipmentItemID, &result.Ring1EquipmentItemID},
+		{user.Ring2EquipmentItemID, &result.Ring2EquipmentItemID},
+		{user.Ring3EquipmentItemID, &result.Ring3EquipmentItemID},
+		{user.Ring4EquipmentItemID, &result.Ring4EquipmentItemID},
 	}
-	if user.BeltEquipmentItemID != nil {
-		id := user.BeltEquipmentItemID.String()
-		result.BeltEquipmentItemID = &id
-	}
-	if user.HeadEquipmentItemID != nil {
-		id := user.HeadEquipmentItemID.String()
-		result.HeadEquipmentItemID = &id
-	}
-	if user.NeckEquipmentItemID != nil {
-		id := user.NeckEquipmentItemID.String()
-		result.NeckEquipmentItemID = &id
-	}
-	if user.WeaponEquipmentItemID != nil {
-		id := user.WeaponEquipmentItemID.String()
-		result.WeaponEquipmentItemID = &id
-	}
-	if user.ShieldEquipmentItemID != nil {
-		id := user.ShieldEquipmentItemID.String()
-		result.ShieldEquipmentItemID = &id
-	}
-	if user.LegsEquipmentItemID != nil {
-		id := user.LegsEquipmentItemID.String()
-		result.LegsEquipmentItemID = &id
-	}
-	if user.FeetEquipmentItemID != nil {
-		id := user.FeetEquipmentItemID.String()
-		result.FeetEquipmentItemID = &id
-	}
-	if user.ArmsEquipmentItemID != nil {
-		id := user.ArmsEquipmentItemID.String()
-		result.ArmsEquipmentItemID = &id
-	}
-	if user.HandsEquipmentItemID != nil {
-		id := user.HandsEquipmentItemID.String()
-		result.HandsEquipmentItemID = &id
-	}
-	if user.Ring1EquipmentItemID != nil {
-		id := user.Ring1EquipmentItemID.String()
-		result.Ring1EquipmentItemID = &id
-	}
-	if user.Ring2EquipmentItemID != nil {
-		id := user.Ring2EquipmentItemID.String()
-		result.Ring2EquipmentItemID = &id
-	}
-	if user.Ring3EquipmentItemID != nil {
-		id := user.Ring3EquipmentItemID.String()
-		result.Ring3EquipmentItemID = &id
-	}
-	if user.Ring4EquipmentItemID != nil {
-		id := user.Ring4EquipmentItemID.String()
-		result.Ring4EquipmentItemID = &id
+
+	for _, field := range equipmentItemFields {
+		if field.source != nil {
+			id := field.source.String()
+			*field.target = &id
+		}
 	}
 
 	if location != nil && location.Slug != "" {

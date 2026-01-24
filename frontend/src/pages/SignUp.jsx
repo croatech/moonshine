@@ -22,8 +22,15 @@ export default function SignUp() {
 
     try {
       const result = await authAPI.signUp(formData.username, formData.email, formData.password)
+      localStorage.setItem('token', result.token)
       login(result.token, result.user)
-      navigate('/locations/moonshine')
+      
+      const inFight = result.user?.inFight === true || result.user?.InFight === true
+      if (inFight) {
+        navigate('/fight', { replace: true })
+      } else {
+        navigate('/locations/moonshine', { replace: true })
+      }
     } catch (err) {
       const errorMessage = err.message || ''
       const lowerMessage = errorMessage.toLowerCase()

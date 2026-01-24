@@ -80,9 +80,11 @@ a:hover {
   font-weight: bold;
 }
 
-.gold img {
+.gold img,
+.gold svg {
   width: 32px;
   height: 32px;
+  flex-shrink: 0;
 }
 
 /* Grid for player equipment */

@@ -1,20 +1,22 @@
 .PHONY: migrate-up migrate-down migrate-status migrate-create migrate-reset graphql dev server debug readme seed seed-avatars convert-avatars test test-db-setup setup swagger
 
+GO := $(shell which go 2>/dev/null || echo /opt/homebrew/bin/go)
+
 migrate-up:
-	go run cmd/migrate/main.go -command up
+	$(GO) run cmd/migrate/main.go -command up
 
 migrate-down:
-	go run cmd/migrate/main.go -command down
+	$(GO) run cmd/migrate/main.go -command down
 
 migrate-status:
-	go run cmd/migrate/main.go -command status
+	$(GO) run cmd/migrate/main.go -command status
 
 migrate-create:
 	@if [ -z "$(NAME)" ]; then \
 		echo "Usage: make migrate-create NAME=migration_name"; \
 		exit 1; \
 	fi
-	go run cmd/migrate/main.go -command create $(NAME)
+	$(GO) run cmd/migrate/main.go -command create $(NAME)
 
 migrate-reset:
 	@echo "Dropping and recreating database..."
@@ -55,7 +57,7 @@ readme:
 	fi
 
 seed:
-	go run cmd/seed/main.go
+	$(GO) run cmd/seed/main.go
 
 setup: migrate-reset migrate-up seed
 	@echo "Database setup completed!"
@@ -63,10 +65,10 @@ setup: migrate-reset migrate-up seed
 test-db-setup:
 	@echo "Setting up test database..."
 	@echo "Applying migrations to test database (database will be created automatically if needed)..."
-	@DATABASE_NAME=moonshine_test go run cmd/migrate/main.go -command up
+	@DATABASE_NAME=moonshine_test $(GO) run cmd/migrate/main.go -command up
 
 test: test-db-setup
-	@go test ./... -v 2>&1 | tee /tmp/test_output.txt | awk ' \
+	@$(GO) test ./... -v 2>&1 | tee /tmp/test_output.txt | awk ' \
 	BEGIN { main_pass=0; main_fail=0; sub_pass=0; sub_fail=0 } \
 	/^--- PASS/ { main_pass++ } \
 	/^--- FAIL/ { main_fail++ } \

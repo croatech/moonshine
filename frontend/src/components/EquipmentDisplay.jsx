@@ -91,7 +91,7 @@ export default function EquipmentDisplay({ user, equippedItems, readonly = false
             hp={user?.hp}
             currentHp={user?.currentHp ?? user?.current_hp}
             gold={user?.gold}
-            showGold={!readonly}
+            showGold={true}
           />
         </div>
 

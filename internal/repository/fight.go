@@ -34,7 +34,7 @@ func (r *FightRepository) Create(fight *domain.Fight) (uuid.UUID, error) {
 
 func (r *FightRepository) FindActiveByUserID(userID uuid.UUID) (*domain.Fight, error) {
 	query := `
-		SELECT id, created_at, deleted_at, user_id, bot_id, status, dropped_gold, dropped_item_id
+		SELECT id, created_at, deleted_at, user_id, bot_id, status, dropped_gold, exp, dropped_item_id
 		FROM fights
 		WHERE user_id = $1 AND status = $2 AND deleted_at IS NULL
 		ORDER BY created_at DESC
@@ -43,6 +43,25 @@ func (r *FightRepository) FindActiveByUserID(userID uuid.UUID) (*domain.Fight, e
 
 	fight := &domain.Fight{}
 	err := r.db.Get(fight, query, userID, domain.FightStatusInProgress)
+	if err != nil {
+		return nil, err
+	}
+
+	return fight, nil
+}
+
+func (r *FightRepository) Finish(id uuid.UUID, droppedGold, exp uint) (*domain.Fight, error) {
+	query := `
+		UPDATE fights
+		SET status = $1,
+		    dropped_gold = $2,
+		    exp = $3
+		WHERE id = $4
+		RETURNING id, created_at, deleted_at, user_id, bot_id, status, dropped_gold, exp, dropped_item_id
+	`
+
+	fight := &domain.Fight{}
+	err := r.db.Get(fight, query, string(domain.FightStatusFinished), droppedGold, exp, id)
 	if err != nil {
 		return nil, err
 	}

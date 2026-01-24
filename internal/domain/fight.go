@@ -11,9 +11,11 @@ const (
 
 type Fight struct {
 	Model
-	UserID        uuid.UUID  `db:"user_id"`
-	BotID         uuid.UUID  `db:"bot_id"`
+	UserID        uuid.UUID   `db:"user_id"`
+	BotID         uuid.UUID   `db:"bot_id"`
 	Status        FightStatus `db:"status"`
-	DroppedGold   uint       `db:"dropped_gold"`
-	DroppedItemID *uuid.UUID `db:"dropped_item_id"`
+	DroppedGold   uint        `db:"dropped_gold"`
+	Exp           uint        `db:"exp"`
+	DroppedItemID *uuid.UUID  `db:"dropped_item_id"`
+	Rounds        []*Round    `db:"-"`
 }
