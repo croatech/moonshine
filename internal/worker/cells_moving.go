@@ -5,9 +5,9 @@ import (
 	"sync"
 	"time"
 
-	"moonshine/internal/repository"
-
 	"github.com/google/uuid"
+
+	"moonshine/internal/repository"
 )
 
 type CellsMovingWorker struct {

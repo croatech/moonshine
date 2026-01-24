@@ -5,6 +5,10 @@ services:
       POSTGRES_DB: moonshine
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
+    command:
+      - "postgres"
+      - "-c"
+      - "wal_level=logical"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s
@@ -14,6 +18,25 @@ services:
       - pgdata:/var/lib/postgresql
     ports:
       - "5433:5432"
+    networks:
+      - backend
+
+  clickhouse:
+    image: clickhouse/clickhouse-server:24.8
+    environment:
+      CLICKHOUSE_DB: moonshine
+      CLICKHOUSE_USER: default
+      CLICKHOUSE_PASSWORD: password
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "8123:8123"
+      - "9000:9000"
+    volumes:
+      - clickhouse_data:/var/lib/clickhouse
+      - ./clickhouse-init.sql:/docker-entrypoint-initdb.d/init.sql
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - backend
 
@@ -34,6 +57,7 @@ services:
 
 volumes:
   pgdata:
+  clickhouse_data:
 
 networks:
   backend:
