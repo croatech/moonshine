@@ -4,6 +4,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -27,8 +28,10 @@ type LocationCellsResponse struct {
 }
 
 type MoveToCellResponse struct {
-	Message    string `json:"message"`
-	PathLength int    `json:"path_length"`
+	Message      string `json:"message"`
+	PathLength   int    `json:"path_length"`
+	TargetCell   string `json:"target_cell"`
+	TimePerCell  int    `json:"time_per_cell"`
 }
 
 type locationCell struct {
@@ -161,9 +164,19 @@ func (h *LocationHandler) MoveToCell(c echo.Context) error {
 		return ErrBadRequest(c, "")
 	}
 
+	targetLocation, err := h.locationRepo.FindBySlug(cellSlug)
+	targetName := cellSlug
+	if err == nil && targetLocation != nil {
+		targetName = targetLocation.Name
+	} else {
+		targetName = strings.TrimSuffix(cellSlug, "cell")
+	}
+
 	return c.JSON(http.StatusOK, &MoveToCellResponse{
-		Message:    "movement started",
-		PathLength: len(path),
+		Message:     "movement started",
+		PathLength:  len(path),
+		TargetCell:  targetName,
+		TimePerCell: 5,
 	})
 }
 

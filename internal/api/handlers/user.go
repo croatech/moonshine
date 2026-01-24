@@ -62,7 +62,7 @@ func (h *UserHandler) GetCurrentUser(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user, location, inFight))
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, location, nil, inFight))
 }
 
 // GetUserInventory godoc
@@ -201,5 +201,5 @@ func (h *UserHandler) UpdateCurrentUser(c echo.Context) error {
 		return ErrInternalServerError(c)
 	}
 
-	return c.JSON(http.StatusOK, dto.UserFromDomain(user, location, inFight))
+	return c.JSON(http.StatusOK, dto.UserFromDomain(user, location, nil, inFight))
 }

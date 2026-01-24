@@ -2,6 +2,7 @@ package worker
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/jmoiron/sqlx"
@@ -46,6 +47,7 @@ func (w *HpWorker) StartWorker(ctx context.Context) {
 func (w *HpWorker) regenerateHp() {
 	_, err := w.healthRegenerationService.RegenerateAllUsers(1.0)
 	if err != nil {
+		fmt.Printf("[HpWorker] Error regenerating: %v\n", err)
 		return
 	}
 
@@ -56,10 +58,11 @@ func (w *HpWorker) regenerateHp() {
 
 	updates, err := w.userRepo.GetHPForUsers(connectedUserIDs)
 	if err != nil {
+		fmt.Printf("[HpWorker] Error getting HP: %v\n", err)
 		return
 	}
 
 	for _, update := range updates {
-		w.hub.SendHPUpdate(update.UserID, update.CurrentHp, update.Hp)
+		_ = w.hub.SendHPUpdate(update.UserID, update.CurrentHp, update.Hp)
 	}
 }

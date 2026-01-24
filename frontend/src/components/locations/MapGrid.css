@@ -1,8 +1,20 @@
 .map-grid {
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
   padding: 20px;
+  gap: 16px;
+}
+
+.map-movement-indicator {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  color: #5a4730;
+}
+
+.map-movement-indicator strong {
+  color: #8b6f47;
 }
 
 .map-grid-container {

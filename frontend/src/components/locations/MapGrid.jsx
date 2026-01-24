@@ -9,6 +9,8 @@ export default function MapGrid({ locationSlug }) {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [moving, setMoving] = useState(false)
+  const [movementInfo, setMovementInfo] = useState(null)
+  const [remainingTime, setRemainingTime] = useState(0)
 
   useEffect(() => {
     const loadCells = async () => {
@@ -49,7 +51,18 @@ export default function MapGrid({ locationSlug }) {
 
     try {
       setMoving(true)
-      await locationAPI.moveToCell(locationSlug, cellSlug)
+      const response = await locationAPI.moveToCell(locationSlug, cellSlug)
+      
+      if (response && response.path_length > 0) {
+        const totalTime = response.path_length * (response.time_per_cell || 5)
+        const targetName = (response.target_cell || cellSlug).replace(/cell$/, '')
+        setRemainingTime(totalTime)
+        setMovementInfo({
+          targetCell: targetName,
+          totalTime
+        })
+      }
+      
       await refetchUser()
     } catch (err) {
       console.error('[MapGrid] Error moving to cell:', err)
@@ -58,6 +71,23 @@ export default function MapGrid({ locationSlug }) {
       setMoving(false)
     }
   }
+
+  useEffect(() => {
+    if (!movementInfo) return
+
+    const intervalId = setInterval(() => {
+      setRemainingTime((prev) => {
+        if (prev <= 1) {
+          setMovementInfo(null)
+          refetchUser()
+          return 0
+        }
+        return prev - 1
+      })
+    }, 1000)
+
+    return () => clearInterval(intervalId)
+  }, [movementInfo, refetchUser])
 
   if (loading) {
     return <div className="map-grid-loading">Загрузка карты...</div>
@@ -83,6 +113,11 @@ export default function MapGrid({ locationSlug }) {
 
   return (
     <div className="map-grid">
+      {movementInfo && (
+        <div className="map-movement-indicator">
+          Переход на клетку: <strong>{movementInfo.targetCell}</strong>, осталось: <strong>{remainingTime}с</strong>
+        </div>
+      )}
       <div className="map-grid-container">
         {Array.from({ length: totalCells }, (_, index) => {
           const cellNum = index + 1

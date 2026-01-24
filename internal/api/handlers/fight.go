@@ -81,7 +81,7 @@ func (h *FightHandler) GetCurrentFight(c echo.Context) error {
 		location, _ = h.locationRepo.FindByID(result.User.LocationID)
 	}
 
-	userDTO := dto.UserFromDomain(result.User, location, true)
+	userDTO := dto.UserFromDomain(result.User, location, nil, true)
 	botDTO := dto.BotFromDomain(result.Bot)
 	fightDTO := dto.FightFromDomain(result.Fight)
 
@@ -143,7 +143,7 @@ func (h *FightHandler) Hit(c echo.Context) error {
 		location, _ = h.locationRepo.FindByID(result.User.LocationID)
 	}
 
-	userDTO := dto.UserFromDomain(result.User, location, true)
+	userDTO := dto.UserFromDomain(result.User, location, nil, true)
 	botDTO := dto.BotFromDomain(result.Bot)
 	fightDTO := dto.FightFromDomain(result.Fight)
 

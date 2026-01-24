@@ -6,7 +6,7 @@ import LocationBots from './LocationBots'
 import './LocationView.css'
 
 export default function LocationView({ slug, children }) {
-  const { logout } = useAuth()
+  const { user, logout, refetchUser } = useAuth()
   const navigate = useNavigate()
 
   const handleLogout = () => {
@@ -21,7 +21,7 @@ export default function LocationView({ slug, children }) {
     
     try {
       await locationAPI.move(targetSlug)
-      // Navigate to the new location after successful API call
+      await refetchUser()
       navigate(`/locations/${targetSlug}`)
     } catch (error) {
       console.error('[LocationView] Error moving to location:', error)
@@ -52,9 +52,11 @@ export default function LocationView({ slug, children }) {
     { to: '/locations/moonshine', label: 'Главная площадь' },
   ]
 
-  const waywardPinesLinks = [
-    { to: '/locations/moonshine', label: 'Город' },
-  ]
+  const isOnCell29 = user?.locationSlug === '29cell'
+
+  const waywardPinesLinks = isOnCell29
+    ? [{ to: '/locations/moonshine', label: 'Город' }]
+    : []
 
   let links = shopLinks
   if (isCity) {

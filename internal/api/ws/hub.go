@@ -2,6 +2,7 @@ package ws
 
 import (
 	"encoding/json"
+	"fmt"
 	"sync"
 	"time"
 
@@ -45,6 +46,7 @@ func (h *Hub) Register(userID uuid.UUID, conn *websocket.Conn) {
 	}
 
 	h.connections[userID] = conn
+	fmt.Printf("[Hub] User %s connected. Total connections: %d\n", userID, len(h.connections))
 }
 
 func (h *Hub) Unregister(userID uuid.UUID) {
@@ -54,6 +56,7 @@ func (h *Hub) Unregister(userID uuid.UUID) {
 	if conn, exists := h.connections[userID]; exists {
 		conn.Close()
 		delete(h.connections, userID)
+		fmt.Printf("[Hub] User %s disconnected. Total connections: %d\n", userID, len(h.connections))
 	}
 }
 

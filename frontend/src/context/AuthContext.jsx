@@ -32,9 +32,8 @@ export function AuthProvider({ children }) {
     }
   }, [])
 
-  const shouldConnectWS = useMemo(() => {
-    return !!token && !!user
-  }, [token, user])
+  const hasUser = !!user
+  const shouldConnectWS = !!token && hasUser
 
   useWebSocket(token, handleWebSocketMessage, shouldConnectWS)
 

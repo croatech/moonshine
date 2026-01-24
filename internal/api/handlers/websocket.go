@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"time"
 
@@ -36,19 +37,23 @@ func NewWebSocketHandler(cfg *config.Config) *WebSocketHandler {
 func (h *WebSocketHandler) HandleConnection(c echo.Context) error {
 	tokenString := c.QueryParam("token")
 	if tokenString == "" {
+		fmt.Println("[WS] Missing token")
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "missing token"})
 	}
 
 	userID, err := h.validateToken(tokenString)
 	if err != nil {
+		fmt.Printf("[WS] Invalid token: %v\n", err)
 		return c.JSON(http.StatusUnauthorized, map[string]string{"error": "invalid token"})
 	}
 
 	conn, err := upgrader.Upgrade(c.Response(), c.Request(), nil)
 	if err != nil {
+		fmt.Printf("[WS] Upgrade error: %v\n", err)
 		return err
 	}
 
+	fmt.Printf("[WS] Connection upgraded for user %s\n", userID)
 	h.hub.Register(userID, conn)
 
 	go h.handleConnection(userID, conn)
