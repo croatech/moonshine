@@ -14,10 +14,6 @@ func NewHealthRegenerationService(userRepo *repository.UserRepository) *HealthRe
 	}
 }
 
-func (s *HealthRegenerationService) RegenerateAllUsers(percent float64) error {
-	_, err := s.userRepo.RegenerateAllUsersHealth(percent)
-	if err != nil {
-		return err
-	}
-	return nil
+func (s *HealthRegenerationService) RegenerateAllUsers(percent float64) ([]repository.HPUpdate, error) {
+	return s.userRepo.RegenerateAllUsersHealth(percent)
 }

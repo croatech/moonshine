@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react'
 import { userAPI } from '../lib/api'
+import { useWebSocket } from '../hooks/useWebSocket'
 
 const AuthContext = createContext()
 
@@ -13,6 +14,29 @@ export function AuthProvider({ children }) {
   const [token, setToken] = useState(() => localStorage.getItem('token'))
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(() => !!localStorage.getItem('token'))
+
+  const handleWebSocketMessage = useCallback((message) => {
+    if (message.type === 'hp_update' && message.data) {
+      setUser((prevUser) => {
+        if (!prevUser) return prevUser
+        const updated = {
+          ...prevUser,
+          currentHp: message.data.currentHp,
+          current_hp: message.data.currentHp,
+          hp: message.data.hp,
+        }
+        cache.user = updated
+        cache.timestamp = Date.now()
+        return updated
+      })
+    }
+  }, [])
+
+  const shouldConnectWS = useMemo(() => {
+    return !!token && !!user
+  }, [token, user])
+
+  useWebSocket(token, handleWebSocketMessage, shouldConnectWS)
 
   useEffect(() => {
     const storedToken = localStorage.getItem('token')
@@ -58,41 +82,6 @@ export function AuthProvider({ children }) {
       cache.timestamp = 0
     }
   }, [token])
-
-  useEffect(() => {
-    if (!user || !user.hp || !token) return
-
-    const currentHp = user.current_hp || user.currentHp || 0
-    const maxHp = user.hp || 0
-    const inFight = user.inFight === true || user.InFight === true
-
-    if (currentHp >= maxHp || inFight) {
-      return
-    }
-
-    const intervalId = setInterval(() => {
-      userAPI.getCurrentUser()
-        .then((userData) => {
-          const newCurrentHp = userData.current_hp || userData.currentHp || 0
-          const newMaxHp = userData.hp || 0
-          
-          cache.user = userData
-          cache.timestamp = Date.now()
-          setUser(userData)
-          
-          if (newCurrentHp >= newMaxHp) {
-            clearInterval(intervalId)
-          }
-        })
-        .catch((err) => {
-          console.error('[AuthContext] Error polling user data:', err)
-        })
-    }, 5000)
-
-    return () => {
-      clearInterval(intervalId)
-    }
-  }, [user?.current_hp, user?.currentHp, user?.hp, user?.inFight, user?.InFight, token])
 
   const login = useCallback((newToken, userData = null) => {
     setToken(newToken)

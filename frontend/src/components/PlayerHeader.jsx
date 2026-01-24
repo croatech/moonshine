@@ -51,6 +51,7 @@ export default function PlayerHeader({ fullWidth = false }) {
             backgroundColor: '#dc3545'
           }}
         ></div>
+        <span className="player-bar-label">HP</span>
         <span className="player-hp-text">
           {currentHp}/{maxHp}
         </span>
@@ -63,6 +64,7 @@ export default function PlayerHeader({ fullWidth = false }) {
             backgroundColor: '#ffc107'
           }}
         ></div>
+        <span className="player-bar-label">EXP</span>
         <span className="player-exp-text">
           {userExp}/{nextLevelExp}
         </span>

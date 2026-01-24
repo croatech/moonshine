@@ -196,7 +196,7 @@ func calculateFinalHp(currentHp, damage uint) uint {
 func calculateDroppedGold(botLvl uint) uint {
 	limitDroppedGold := botLvl * 5
 
-	if rand.Intn(3) == 0 {
+	if rand.Intn(3) == 1 {
 		return uint(rand.Intn(int(limitDroppedGold)) + 1)
 	}
 

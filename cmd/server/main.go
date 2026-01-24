@@ -66,7 +66,7 @@ func main() {
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
 
-	api.SetupRoutes(e, db.DB(), cfg.IsProduction())
+	api.SetupRoutes(e, db.DB(), cfg)
 
 	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
@@ -79,7 +79,7 @@ func main() {
 		}
 	}()
 
-	hpWorker := worker.NewHpWorker(db.DB(), 5*time.Second)
+	hpWorker := worker.NewHpWorker(db.DB(), 3*time.Second)
 	go hpWorker.StartWorker(ctx)
 
 	<-ctx.Done()

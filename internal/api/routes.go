@@ -12,6 +12,7 @@ import (
 
 	"moonshine/internal/api/handlers"
 	jwtMiddleware "moonshine/internal/api/middleware"
+	"moonshine/internal/config"
 )
 
 // @Summary Health check
@@ -21,10 +22,13 @@ import (
 // @Produce json
 // @Success 200 {string} string "ok"
 // @Router /health [get]
-func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
+func SetupRoutes(e *echo.Echo, db *sqlx.DB, cfg *config.Config) {
 	e.GET("/health", healthCheck)
 
-	if !isProduction {
+	wsHandler := handlers.NewWebSocketHandler(cfg)
+	e.GET("/api/ws", wsHandler.HandleConnection)
+
+	if !cfg.IsProduction() {
 		e.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
 			return func(c echo.Context) error {
 				if strings.HasPrefix(c.Request().URL.Path, "/assets") {
@@ -85,7 +89,7 @@ func SetupRoutes(e *echo.Echo, db *sqlx.DB, isProduction bool) {
 	authGroup.POST("/signin", authHandler.SignIn)
 
 	jwtConfig := echojwt.Config{
-		SigningKey: []byte(os.Getenv("JWT_KEY")),
+		SigningKey: []byte(cfg.JWTKey),
 		ContextKey: "user",
 		ErrorHandler: func(c echo.Context, err error) error {
 			return c.JSON(http.StatusUnauthorized, map[string]string{"error": "unauthorized"})

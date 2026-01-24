@@ -7,11 +7,14 @@ import (
 	"github.com/jmoiron/sqlx"
 
 	"moonshine/internal/api/services"
+	"moonshine/internal/api/ws"
 	"moonshine/internal/repository"
 )
 
 type HpWorker struct {
 	healthRegenerationService *services.HealthRegenerationService
+	userRepo                  *repository.UserRepository
+	hub                       *ws.Hub
 	ticker                    *time.Ticker
 }
 
@@ -21,6 +24,8 @@ func NewHpWorker(db *sqlx.DB, interval time.Duration) *HpWorker {
 
 	return &HpWorker{
 		healthRegenerationService: healthRegenerationService,
+		userRepo:                  userRepo,
+		hub:                       ws.GetHub(),
 		ticker:                    time.NewTicker(interval),
 	}
 }
@@ -39,6 +44,22 @@ func (w *HpWorker) StartWorker(ctx context.Context) {
 }
 
 func (w *HpWorker) regenerateHp() {
-	if err := w.healthRegenerationService.RegenerateAllUsers(1.0); err != nil {
+	_, err := w.healthRegenerationService.RegenerateAllUsers(1.0)
+	if err != nil {
+		return
+	}
+
+	connectedUserIDs := w.hub.GetConnectedUserIDs()
+	if len(connectedUserIDs) == 0 {
+		return
+	}
+
+	updates, err := w.userRepo.GetHPForUsers(connectedUserIDs)
+	if err != nil {
+		return
+	}
+
+	for _, update := range updates {
+		w.hub.SendHPUpdate(update.UserID, update.CurrentHp, update.Hp)
 	}
 }

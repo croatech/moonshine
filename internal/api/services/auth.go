@@ -172,6 +172,11 @@ func (s *AuthService) generateJWTToken(id uuid.UUID) (string, error) {
 		"exp": time.Now().Add(72 * time.Hour).Unix(),
 	}
 
+	jwtKey := os.Getenv("JWT_KEY")
+	if jwtKey == "" {
+		jwtKey = "secret"
+	}
+
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-	return token.SignedString([]byte(os.Getenv("JWT_KEY")))
+	return token.SignedString([]byte(jwtKey))
 }

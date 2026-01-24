@@ -120,11 +120,17 @@ func (r *UserRepository) UpdateAvatarID(userID uuid.UUID, avatarID *uuid.UUID) e
 	return err
 }
 
-func (r *UserRepository) RegenerateAllUsersHealth(percent float64) (int64, error) {
+type HPUpdate struct {
+	UserID    uuid.UUID `db:"id"`
+	CurrentHp uint      `db:"current_hp"`
+	Hp        uint      `db:"hp"`
+}
+
+func (r *UserRepository) RegenerateAllUsersHealth(percent float64) ([]HPUpdate, error) {
 	query := `
 		UPDATE users 
 		SET current_hp = LEAST(
-			current_hp + GREATEST(5, ROUND(hp * $1 / 100.0)), 
+			current_hp + GREATEST(1, ROUND(hp * $1 / 100.0)), 
 			hp
 		)
 		WHERE users.deleted_at IS NULL 
@@ -135,16 +141,14 @@ func (r *UserRepository) RegenerateAllUsersHealth(percent float64) (int64, error
 		        AND fights.status = $2
 		        AND fights.deleted_at IS NULL
 		    )
+		RETURNING id, current_hp, hp
 	`
-	result, err := r.db.Exec(query, percent, domain.FightStatusInProgress)
+	var updates []HPUpdate
+	err := r.db.Select(&updates, query, percent, domain.FightStatusInProgress)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	rowsAffected, err := result.RowsAffected()
-	if err != nil {
-		return 0, err
-	}
-	return rowsAffected, nil
+	return updates, nil
 }
 
 func isUniqueConstraintError(err error) bool {
@@ -183,4 +187,27 @@ func (r *UserRepository) InFight(userID uuid.UUID) (bool, error) {
 	err := r.db.Get(&exists, query, userID, domain.FightStatusInProgress)
 
 	return exists, err
+}
+
+func (r *UserRepository) GetHPForUsers(userIDs []uuid.UUID) ([]HPUpdate, error) {
+	if len(userIDs) == 0 {
+		return []HPUpdate{}, nil
+	}
+	
+	query, args, err := sqlx.In(`
+		SELECT id, current_hp, hp 
+		FROM users 
+		WHERE id IN (?) AND deleted_at IS NULL
+	`, userIDs)
+	if err != nil {
+		return nil, err
+	}
+	
+	query = r.db.Rebind(query)
+	var updates []HPUpdate
+	err = r.db.Select(&updates, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	return updates, nil
 }
