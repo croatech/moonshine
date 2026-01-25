@@ -168,6 +168,10 @@ func (r *UserRepository) UpdateLocationID(userID uuid.UUID, locationID uuid.UUID
 }
 
 func (r *UserRepository) Update(userID uuid.UUID, addedGold, addedExp, newLevel, newCurrentHp uint) error {
+	return r.UpdateWithExt(r.db, userID, addedGold, addedExp, newLevel, newCurrentHp)
+}
+
+func (r *UserRepository) UpdateWithExt(h ExtHandle, userID uuid.UUID, addedGold, addedExp, newLevel, newCurrentHp uint) error {
 	query := `
 		UPDATE users 
 		SET gold = gold + $1, 
@@ -176,7 +180,7 @@ func (r *UserRepository) Update(userID uuid.UUID, addedGold, addedExp, newLevel,
 		    current_hp = $4
 		WHERE id = $5 AND deleted_at IS NULL
 	`
-	_, err := r.db.Exec(query, addedGold, addedExp, newLevel, newCurrentHp, userID)
+	_, err := h.Exec(query, addedGold, addedExp, newLevel, newCurrentHp, userID)
 	return err
 }
 

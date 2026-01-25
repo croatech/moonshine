@@ -71,7 +71,9 @@ func (h *EquipmentItemHandler) GetEquipmentItems(c echo.Context) error {
 		return err
 	}
 
-	items, err := h.equipmentItemService.GetByCategorySlug(c.Request().Context(), category)
+	artifact := c.QueryParam("artifact") == "true"
+
+	items, err := h.equipmentItemService.GetByCategorySlug(c.Request().Context(), category, artifact)
 	if err != nil {
 		return ErrInternalServerError(c)
 	}

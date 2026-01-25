@@ -121,8 +121,10 @@ export const userAPI = {
 }
 
 export const equipmentAPI = {
-  getByCategory: async (category) => {
-    const response = await fetch(`${API_BASE_URL}/equipment_items?category=${encodeURIComponent(category)}`, {
+  getByCategory: async (category, artifact = false) => {
+    const params = new URLSearchParams({ category })
+    if (artifact) params.set('artifact', 'true')
+    const response = await fetch(`${API_BASE_URL}/equipment_items?${params}`, {
       method: 'GET',
       headers: getAuthHeaders(),
     })

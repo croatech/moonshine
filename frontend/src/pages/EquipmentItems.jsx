@@ -9,12 +9,13 @@ import './EquipmentItems.css'
 export default function EquipmentItems() {
   const [searchParams] = useSearchParams()
   const category = searchParams.get('category')
+  const artifact = searchParams.get('artifact') === 'true'
   const { logout } = useAuth()
   const navigate = useNavigate()
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const [notification, setNotification] = useState(null) // { message, type: 'error' | 'success' }
+  const [notification, setNotification] = useState(null)
 
   // Auto-hide notification after 3 seconds
   useEffect(() => {
@@ -38,7 +39,7 @@ export default function EquipmentItems() {
     }
 
     setLoading(true)
-    equipmentAPI.getByCategory(category)
+    equipmentAPI.getByCategory(category, artifact)
       .then((data) => {
         setItems(data)
         setLoading(false)
@@ -48,10 +49,10 @@ export default function EquipmentItems() {
         setError('Ошибка загрузки предметов')
         setLoading(false)
       })
-  }, [category])
+  }, [category, artifact])
 
   const handleBack = () => {
-    navigate('/locations/weapon_shop')
+    navigate(artifact ? '/locations/shop_of_artifacts' : '/locations/weapon_shop')
   }
 
   const handleLogout = () => {
@@ -168,7 +169,7 @@ export default function EquipmentItems() {
           </div>
         </div>
         <div className="equipment-items-content">
-          <EquipmentCategoryList currentCategory={category} />
+          <EquipmentCategoryList currentCategory={category} artifact={artifact} />
           <div className="equipment-items-list">
             {items.length === 0 ? (
               <p>Предметы не найдены</p>

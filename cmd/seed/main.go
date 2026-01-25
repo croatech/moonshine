@@ -40,6 +40,9 @@ func main() {
 	if err := seedEquipmentItems(db.DB()); err != nil {
 		log.Printf("Failed to seed equipment items: %v", err)
 	}
+	if err := seedArtifactItems(db.DB()); err != nil {
+		log.Printf("Failed to seed artifact items: %v", err)
+	}
 	if err := seedLocations(db.DB()); err != nil {
 		log.Printf("Failed to seed locations: %v", err)
 	}
@@ -167,7 +170,7 @@ func seedUsers(db *sqlx.DB) {
 		Hp:         20,
 		CurrentHp:  20,
 		Level:      1,
-		Gold:       100,
+		Gold:       200000,
 		Exp:        0,
 		FreeStats:  5,
 		LocationID: moonshineLocation.ID,
@@ -195,7 +198,7 @@ func seedLocations(db *sqlx.DB) error {
 
 	moonshineLocation, err := locationRepo.FindStartLocation()
 	if err == nil && moonshineLocation != nil {
-		if _, err := db.Exec("UPDATE locations SET cell = false WHERE slug IN ('moonshine', 'craft_shop', 'shop_of_artifacts', 'weapon_shop')"); err != nil {
+		if _, err := db.Exec("UPDATE locations SET cell = false WHERE slug IN ('moonshine', 'shop_of_artifacts', 'weapon_shop')"); err != nil {
 		}
 		if _, err := db.Exec("UPDATE locations SET cell = true WHERE slug LIKE '%cell'"); err != nil {
 		}
@@ -217,24 +220,17 @@ func seedLocations(db *sqlx.DB) error {
 
 
 	shops := []struct {
-		name string
 		slug string
+		name string
 	}{
-		{"craft_shop", "craft_shop"},
-		{"shop_of_artifacts", "shop_of_artifacts"},
-		{"weapon_shop", "weapon_shop"},
+		{"weapon_shop", "Weapon shop"},
+		{"shop_of_artifacts", "Артефакты"},
 	}
 
 	shopLocations := make(map[string]uuid.UUID)
 
 	for _, shop := range shops {
-		shopNameParts := strings.Split(shop.name, "_")
-		for i, part := range shopNameParts {
-			if len(part) > 0 {
-				shopNameParts[i] = strings.ToUpper(part[:1]) + strings.ToLower(part[1:])
-			}
-		}
-		shopName := strings.Join(shopNameParts, " ")
+		shopName := shop.name
 		shopLocation := &domain.Location{
 			Name:     shopName,
 			Slug:     shop.slug,
@@ -292,13 +288,12 @@ func seedLocations(db *sqlx.DB) error {
 
 	internalLocations := map[string]uuid.UUID{
 		"moonshine":         moonshineLocation.ID,
-		"craft_shop":        shopLocations["craft_shop"],
 		"shop_of_artifacts": shopLocations["shop_of_artifacts"],
 		"weapon_shop":       shopLocations["weapon_shop"],
 		"wayward_pines":     waywardPinesLocation.ID,
 	}
 
-	locationNames := []string{"moonshine", "craft_shop", "shop_of_artifacts", "weapon_shop", "wayward_pines"}
+	locationNames := []string{"moonshine", "shop_of_artifacts", "weapon_shop", "wayward_pines"}
 
 	for i, loc1Name := range locationNames {
 		for j, loc2Name := range locationNames {
@@ -687,8 +682,8 @@ func seedEquipmentItems(db *sqlx.DB) error {
 
 		itemID := uuid.New()
 		query := `INSERT INTO equipment_items 
-			(id, name, slug, attack, defense, hp, required_level, price, equipment_category_id, image) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`
+			(id, name, slug, attack, defense, hp, required_level, price, artifact, equipment_category_id, image) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
 
 		_, err = db.Exec(query,
 			itemID,
@@ -699,6 +694,7 @@ func seedEquipmentItems(db *sqlx.DB) error {
 			file.hp,
 			file.requiredLevel,
 			file.price,
+			false,
 			catID,
 			dbImagePath,
 		)
@@ -714,6 +710,148 @@ func seedEquipmentItems(db *sqlx.DB) error {
 	}
 
 	log.Printf("Equipment items seeding completed! Created %d items", count)
+	return nil
+}
+
+var artifactCategoryMap = map[string]string{
+	"arms": "arms", "belt": "belt", "chest": "chest", "feet": "feet",
+	"hands": "hands", "head": "head", "helm": "head", "legs": "legs",
+	"neck": "neck", "ring": "ring", "shield": "shield", "weapon": "weapon",
+}
+
+type artifactFileInfo struct {
+	path          string
+	categoryType  string
+	name          string
+	price         uint
+	attack        uint
+	requiredLevel uint
+	hp            uint
+	defense       uint
+}
+
+func parseArtifactFileName(filename string, info *artifactFileInfo) bool {
+	base := strings.TrimSuffix(filename, filepath.Ext(filename))
+	parts := strings.Split(base, "-")
+	if len(parts) < 7 {
+		return false
+	}
+	for i := len(parts) - 5; i < len(parts); i++ {
+		if _, err := strconv.Atoi(parts[i]); err != nil {
+			return false
+		}
+	}
+	catKey := strings.ToLower(parts[0])
+	info.categoryType = artifactCategoryMap[catKey]
+	if info.categoryType == "" {
+		return false
+	}
+	nameParts := parts[1 : len(parts)-5]
+	info.name = strings.Join(nameParts, " ")
+	info.name = strings.ReplaceAll(info.name, "_", " ")
+	info.name = strings.ReplaceAll(info.name, "-", " ")
+	if info.name == "" {
+		return false
+	}
+	runes := []rune(info.name)
+	if len(runes) > 0 {
+		r := runes[0]
+		if r >= 'а' && r <= 'я' {
+			runes[0] = 'А' + (r - 'а')
+		} else if r >= 'a' && r <= 'z' {
+			runes[0] = 'A' + (r - 'a')
+		}
+		info.name = string(runes)
+	}
+	n := len(parts)
+	if p, e := strconv.ParseUint(parts[n-5], 10, 32); e == nil {
+		info.price = uint(p)
+	} else {
+		return false
+	}
+	if a, e := strconv.ParseUint(parts[n-4], 10, 32); e == nil {
+		info.attack = uint(a)
+	} else {
+		return false
+	}
+	if l, e := strconv.ParseUint(parts[n-3], 10, 32); e == nil {
+		info.requiredLevel = uint(l)
+	} else {
+		return false
+	}
+	if h, e := strconv.ParseUint(parts[n-2], 10, 32); e == nil {
+		info.hp = uint(h)
+	} else {
+		return false
+	}
+	if d, e := strconv.ParseUint(parts[n-1], 10, 32); e == nil {
+		info.defense = uint(d)
+	} else {
+		return false
+	}
+	return true
+}
+
+func seedArtifactItems(db *sqlx.DB) error {
+	log.Println("Seeding artifact items...")
+
+	baseDir := "frontend/assets/images/artifacts"
+	if _, err := os.Stat(baseDir); os.IsNotExist(err) {
+		return nil
+	}
+
+	categoryIDs := make(map[string]uuid.UUID)
+	for _, catType := range []string{"arms", "belt", "chest", "feet", "hands", "head", "legs", "neck", "ring", "shield", "weapon"} {
+		var catID uuid.UUID
+		if err := db.QueryRow("SELECT id FROM equipment_categories WHERE type = $1", catType).Scan(&catID); err != nil {
+			continue
+		}
+		categoryIDs[catType] = catID
+	}
+
+	var count int
+	err := filepath.Walk(baseDir, func(path string, info os.FileInfo, err error) error {
+		if err != nil || info.IsDir() {
+			return err
+		}
+		if strings.ToLower(filepath.Ext(path)) != ".png" {
+			return nil
+		}
+		fileName := filepath.Base(path)
+		var af artifactFileInfo
+		af.path = path
+		if !parseArtifactFileName(fileName, &af) {
+			return nil
+		}
+		catID := categoryIDs[af.categoryType]
+		if catID == uuid.Nil {
+			return nil
+		}
+		dbImagePath := strings.TrimPrefix(path, "frontend/assets/images")
+		dbImagePath = strings.TrimPrefix(dbImagePath, "/")
+		dbImagePath = strings.TrimPrefix(dbImagePath, "\\")
+		dbImagePath = filepath.ToSlash(dbImagePath)
+		var exist uuid.UUID
+		if db.QueryRow("SELECT id FROM equipment_items WHERE image = $1", dbImagePath).Scan(&exist) == nil {
+			return nil
+		}
+		slug := generateSlugFromImage(dbImagePath)
+		itemID := uuid.New()
+		q := `INSERT INTO equipment_items (id, name, slug, attack, defense, hp, required_level, price, artifact, equipment_category_id, image)
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`
+		_, execErr := db.Exec(q, itemID, af.name, slug, af.attack, af.defense, af.hp, af.requiredLevel, af.price, true, catID, dbImagePath)
+		if execErr != nil {
+			log.Printf("Failed to create artifact %s: %v", af.name, execErr)
+			return nil
+		}
+		count++
+		log.Printf("Created artifact: %s (%s)", af.name, af.categoryType)
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("walk artifacts: %w", err)
+	}
+	log.Printf("Artifact items seeding completed! Created %d items", count)
 	return nil
 }
 

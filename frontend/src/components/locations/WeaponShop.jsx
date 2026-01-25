@@ -30,7 +30,7 @@ export default function WeaponShop() {
         {categories.map((category) => (
           <Link
             key={category.slug}
-            to={`/equipment_items?category=${category.slug}`}
+            to={`/equipment_items?category=${category.slug}&artifact=false`}
             className="weapon-shop-category-link"
           >
             <img

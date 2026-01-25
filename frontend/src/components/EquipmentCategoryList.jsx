@@ -15,13 +15,13 @@ const categories = [
   { slug: 'shield', filename: '10-shield' },
 ]
 
-export default function EquipmentCategoryList({ currentCategory }) {
+export default function EquipmentCategoryList({ currentCategory, artifact = false }) {
   return (
     <div className="equipment-category-list">
       {categories.map((category) => (
         <Link
           key={category.slug}
-          to={`/equipment_items?category=${category.slug}`}
+          to={`/equipment_items?category=${category.slug}&artifact=${artifact ? 'true' : 'false'}`}
           className={`equipment-category-item ${currentCategory === category.slug ? 'active' : ''}`}
         >
           <img

@@ -2,17 +2,15 @@ package repository
 
 import (
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 
 	"moonshine/internal/domain"
 )
 
 type FightRepository struct {
-	db *sqlx.DB
+	db ExtHandle
 }
 
-func NewFightRepository(db *sqlx.DB) *FightRepository {
-
+func NewFightRepository(db ExtHandle) *FightRepository {
 	return &FightRepository{db: db}
 }
 

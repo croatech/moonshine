@@ -2,17 +2,15 @@ package repository
 
 import (
 	"github.com/google/uuid"
-	"github.com/jmoiron/sqlx"
 
 	"moonshine/internal/domain"
 )
 
 type RoundRepository struct {
-	db *sqlx.DB
+	db ExtHandle
 }
 
-func NewRoundRepository(db *sqlx.DB) *RoundRepository {
-
+func NewRoundRepository(db ExtHandle) *RoundRepository {
 	return &RoundRepository{db: db}
 }
 

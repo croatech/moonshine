@@ -44,7 +44,7 @@ export default function LocationView({ slug, children }) {
 
   const cityLinks = [
     { to: '/locations/weapon_shop', label: 'Оружейная' },
-    { to: '/locations/craft_shop', label: 'Мастерская' },
+    { to: '/locations/shop_of_artifacts', label: 'Артефакты' },
     { to: '/locations/wayward_pines', label: 'Выйти из города' },
   ]
 

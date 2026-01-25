@@ -1,0 +1,6 @@
+your-domain.com {
+    reverse_proxy /api localhost:8080
+    reverse_proxy /swagger localhost:8080
+    reverse_proxy /metrics localhost:8080
+    reverse_proxy * localhost:3000
+}

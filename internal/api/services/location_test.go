@@ -42,6 +42,10 @@ func createConnections(db *sqlx.DB, connections [][2]uuid.UUID) error {
 	return nil
 }
 
+type noopMovingWorker struct{}
+
+func (noopMovingWorker) StartMovement(userID uuid.UUID, cellSlugs []string) error { return nil }
+
 func TestLocationService_FindShortestPath(t *testing.T) {
 	if testDB == nil {
 		t.Skip("Test database not initialized")
@@ -50,7 +54,8 @@ func TestLocationService_FindShortestPath(t *testing.T) {
 	db := testDB.DB()
 	locationRepo := repository.NewLocationRepository(db)
 	userRepo := repository.NewUserRepository(db)
-	service := NewLocationService(db, locationRepo, userRepo)
+	service, err := NewLocationService(db, locationRepo, userRepo, noopMovingWorker{})
+	require.NoError(t, err)
 
 	t.Run("successful path finding - direct connection", func(t *testing.T) {
 		db.Exec("TRUNCATE TABLE location_locations CASCADE")

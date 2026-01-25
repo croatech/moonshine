@@ -20,6 +20,7 @@ export default function Profile() {
   const [avatars, setAvatars] = useState([])
   const [avatarsLoading, setAvatarsLoading] = useState(false)
   const [notification, setNotification] = useState(null)
+  const [equipping, setEquipping] = useState(false)
   
   const updateInProgressRef = useRef(false)
 
@@ -156,6 +157,7 @@ export default function Profile() {
 
     try {
       updateInProgressRef.current = true
+      setEquipping(true)
       await equipmentAPI.takeOn(item.slug)
       
       const [items, equipped] = await Promise.all([
@@ -183,6 +185,7 @@ export default function Profile() {
       showNotification(errorMessage, 'error')
     } finally {
       updateInProgressRef.current = false
+      setEquipping(false)
     }
   }
 
@@ -198,6 +201,7 @@ export default function Profile() {
 
     try {
       updateInProgressRef.current = true
+      setEquipping(true)
       await equipmentAPI.takeOff(slotName)
       
       const [items, equipped] = await Promise.all([
@@ -221,6 +225,7 @@ export default function Profile() {
       showNotification(errorMessage, 'error')
     } finally {
       updateInProgressRef.current = false
+      setEquipping(false)
     }
   }
 
@@ -304,13 +309,14 @@ export default function Profile() {
 
   const renderEquipmentSlot = (slotName, alt) => {
     const hasItem = hasEquippedItem(slotName)
+    const canTakeOff = hasItem && !equipping
     
     return (
       <div 
         className={`equipment-slot ${hasItem ? 'has-item' : ''}`}
-        onClick={() => hasItem && handleTakeOff(slotName)}
-        style={{ cursor: hasItem ? 'pointer' : 'default' }}
-        title={hasItem ? 'Нажмите чтобы снять' : ''}
+        onClick={() => canTakeOff && handleTakeOff(slotName)}
+        style={{ cursor: canTakeOff ? 'pointer' : 'default' }}
+        title={canTakeOff ? 'Нажмите чтобы снять' : ''}
       >
         <img src={getEquipmentSlotImage(slotName)} alt={alt} />
       </div>
@@ -447,8 +453,8 @@ export default function Profile() {
                   {inventory.length === 0 ? (
                     <p>Инвентарь пуст</p>
                   ) : (
-                    inventory.map((item) => (
-                      <div key={item.id} className="equipment-item-card">
+                    inventory.map((item, index) => (
+                      <div key={`${item.id}-${item.slug}-${index}`} className="equipment-item-card">
                         {item.image && (
                           <img 
                             src={normalizeEquipmentImagePath(item.image)} 
@@ -471,9 +477,9 @@ export default function Profile() {
                             <button 
                               className="equipment-item-equip-button"
                               onClick={() => handleTakeOn(item)}
-                              disabled={user.level < item.requiredLevel}
+                              disabled={user.level < item.requiredLevel || equipping}
                             >
-                              {user.level < item.requiredLevel ? `Нужен ${item.requiredLevel} ур.` : 'Надеть'}
+                              {user.level < item.requiredLevel ? `Нужен ${item.requiredLevel} ур.` : (equipping ? '...' : 'Надеть')}
                             </button>
                             <button 
                               className="equipment-item-sell-button"

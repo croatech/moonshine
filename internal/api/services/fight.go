@@ -124,7 +124,16 @@ func (s *FightService) Hit(ctx context.Context, userID uuid.UUID, playerAttackPo
 	finalPlayerHp := calculateFinalHp(currentRound.PlayerHp, botDmg)
 	finalBotHp := calculateFinalHp(currentRound.BotHp, playerDmg)
 
-	if err = s.roundRepo.FinishRound(currentRound.ID, botAttackPoint, botDefensePoint, playerAttackPoint, playerDefensePoint,
+	tx, err := s.db.BeginTxx(ctx, nil)
+	if err != nil {
+		return nil, ErrInternalError
+	}
+	defer tx.Rollback()
+
+	roundRepoTx := repository.NewRoundRepository(tx)
+	fightRepoTx := repository.NewFightRepository(tx)
+
+	if err = roundRepoTx.FinishRound(currentRound.ID, botAttackPoint, botDefensePoint, playerAttackPoint, playerDefensePoint,
 		playerDmg, botDmg, finalPlayerHp, finalBotHp); err != nil {
 		return nil, ErrInternalError
 	}
@@ -141,25 +150,30 @@ func (s *FightService) Hit(ctx context.Context, userID uuid.UUID, playerAttackPo
 			user.CurrentHp = finalPlayerHp
 		}
 
-		if err = s.userRepo.Update(userID, fight.DroppedGold, fight.Exp, lvl, user.CurrentHp); err != nil {
+		if err = s.userRepo.UpdateWithExt(tx, userID, fight.DroppedGold, fight.Exp, lvl, user.CurrentHp); err != nil {
 			return nil, ErrInternalError
 		}
 
-		if fight, err = s.fightRepo.Finish(fight.ID, fight.DroppedGold, fight.Exp); err != nil {
+		finished, err := fightRepoTx.Finish(fight.ID, fight.DroppedGold, fight.Exp)
+		if err != nil {
 			return nil, ErrInternalError
 		}
+		fight = finished
 	} else {
-		err = s.roundRepo.Create(fight.ID, finalPlayerHp, finalBotHp)
-		if err != nil {
+		if err = roundRepoTx.Create(fight.ID, finalPlayerHp, finalBotHp); err != nil {
 			return nil, ErrInternalError
 		}
 	}
 
-	updatedRounds, err := s.roundRepo.FindByFightID(fight.ID)
+	updatedRounds, err := roundRepoTx.FindByFightID(fight.ID)
 	if err != nil {
 		return nil, ErrInternalError
 	}
 	fight.Rounds = updatedRounds
+
+	if err = tx.Commit(); err != nil {
+		return nil, ErrInternalError
+	}
 
 	return &GetCurrentFightResult{
 		User:  user,
@@ -169,17 +183,21 @@ func (s *FightService) Hit(ctx context.Context, userID uuid.UUID, playerAttackPo
 }
 
 func calculateDamage(attack, defense uint, attackPoint, defensePoint string) uint {
-	var res int
+	var base int
 	if attackPoint == defensePoint {
-		res = int(attack) - int(defense)
+		base = int(attack) - int(defense)
 	} else {
-		res = int(attack)
+		base = int(attack)
 	}
-
-	if res < 0 {
+	if base <= 0 {
 		return 0
 	}
-	return uint(res)
+	mult := 0.9 + rand.Float64()*0.2
+	dmg := int(math.Round(float64(base) * mult))
+	if dmg < 0 {
+		return 0
+	}
+	return uint(dmg)
 }
 
 func calculateFinalHp(currentHp, damage uint) uint {

@@ -109,11 +109,8 @@ func (s *EquipmentItemTakeOffService) TakeOffEquipmentItem(ctx context.Context, 
 		return err
 	}
 
-	inventory := &domain.Inventory{
-		UserID:          userID,
-		EquipmentItemID: equippedItemID,
-	}
-	err = s.inventoryRepo.Create(inventory)
+	invRepo := repository.NewInventoryRepository(tx)
+	err = invRepo.Create(&domain.Inventory{UserID: userID, EquipmentItemID: equippedItemID})
 	if err != nil {
 		return err
 	}

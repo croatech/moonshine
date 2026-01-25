@@ -111,40 +111,53 @@ func (h *UserHandler) GetUserEquippedItems(c echo.Context) error {
 		return ErrNotFound(c, "user not found")
 	}
 
-	var equipmentItemIDs = make([]uuid.UUID, 0, 14)
-	equipmentItemFields := []*uuid.UUID{
-		user.ChestEquipmentItemID,
-		user.BeltEquipmentItemID,
-		user.HeadEquipmentItemID,
-		user.NeckEquipmentItemID,
-		user.WeaponEquipmentItemID,
-		user.ShieldEquipmentItemID,
-		user.LegsEquipmentItemID,
-		user.FeetEquipmentItemID,
-		user.ArmsEquipmentItemID,
-		user.HandsEquipmentItemID,
-		user.Ring1EquipmentItemID,
-		user.Ring2EquipmentItemID,
-		user.Ring3EquipmentItemID,
-		user.Ring4EquipmentItemID,
+	slots := []struct {
+		name string
+		id   *uuid.UUID
+	}{
+		{"chest", user.ChestEquipmentItemID},
+		{"belt", user.BeltEquipmentItemID},
+		{"head", user.HeadEquipmentItemID},
+		{"neck", user.NeckEquipmentItemID},
+		{"weapon", user.WeaponEquipmentItemID},
+		{"shield", user.ShieldEquipmentItemID},
+		{"legs", user.LegsEquipmentItemID},
+		{"feet", user.FeetEquipmentItemID},
+		{"arms", user.ArmsEquipmentItemID},
+		{"hands", user.HandsEquipmentItemID},
+		{"ring1", user.Ring1EquipmentItemID},
+		{"ring2", user.Ring2EquipmentItemID},
+		{"ring3", user.Ring3EquipmentItemID},
+		{"ring4", user.Ring4EquipmentItemID},
 	}
-	for _, id := range equipmentItemFields {
-		if id != nil {
-			equipmentItemIDs = append(equipmentItemIDs, *id)
+	var ids []uuid.UUID
+	for _, s := range slots {
+		if s.id != nil {
+			ids = append(ids, *s.id)
 		}
+	}
+	if len(ids) == 0 {
+		return c.JSON(http.StatusOK, map[string]*dto.EquipmentItem{})
 	}
 
 	equipmentItemRepo := repository.NewEquipmentItemRepository(h.db)
-	equippedItemsList, err := equipmentItemRepo.FindByIDs(equipmentItemIDs)
+	list, err := equipmentItemRepo.FindByIDs(ids)
 	if err != nil {
 		return ErrInternalServerError(c)
 	}
-
-	equipmentItems := map[string]*dto.EquipmentItem{}
-	for _, item := range equippedItemsList {
-		equipmentItems[item.EquipmentType] = dto.EquipmentItemFromDomain(item)
+	idToItem := make(map[uuid.UUID]*dto.EquipmentItem)
+	for _, it := range list {
+		idToItem[it.ID] = dto.EquipmentItemFromDomain(it)
 	}
 
+	equipmentItems := map[string]*dto.EquipmentItem{}
+	for _, s := range slots {
+		if s.id != nil {
+			if d, ok := idToItem[*s.id]; ok {
+				equipmentItems[s.name] = d
+			}
+		}
+	}
 	return c.JSON(http.StatusOK, equipmentItems)
 }
 

@@ -2,7 +2,7 @@ import { useParams } from 'react-router-dom'
 import LocationView from '../components/locations/LocationView'
 import MoonshineCity from '../components/locations/MoonshineCity'
 import WeaponShop from '../components/locations/WeaponShop'
-import CraftShop from '../components/locations/CraftShop'
+import ArtifactsShop from '../components/locations/ArtifactsShop'
 import WaywardPines from '../components/locations/WaywardPines'
 
 export default function Location() {
@@ -14,8 +14,8 @@ export default function Location() {
         return <MoonshineCity />
       case 'weapon_shop':
         return <WeaponShop />
-      case 'craft_shop':
-        return <CraftShop />
+      case 'shop_of_artifacts':
+        return <ArtifactsShop />
       case 'wayward_pines':
         return <WaywardPines />
       default:
