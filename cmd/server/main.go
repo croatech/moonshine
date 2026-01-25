@@ -15,9 +15,11 @@ import (
 	"moonshine/cmd/server/docs"
 	"moonshine/internal/api"
 	"moonshine/internal/config"
+	"moonshine/internal/metrics"
 	"moonshine/internal/repository"
 	"moonshine/internal/worker"
 
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
@@ -65,6 +67,9 @@ func main() {
 	e.Use(middleware.Logger())
 	e.Use(middleware.Recover())
 	e.Use(middleware.CORS())
+	e.Use(metrics.PrometheusMiddleware())
+
+	e.GET("/metrics", echo.WrapHandler(promhttp.Handler()))
 
 	api.SetupRoutes(e, db.DB(), cfg)
 

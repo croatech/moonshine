@@ -45,13 +45,15 @@ func (w *HpWorker) StartWorker(ctx context.Context) {
 }
 
 func (w *HpWorker) regenerateHp() {
-	_, err := w.healthRegenerationService.RegenerateAllUsers(1.0)
+	regeneratedCount, err := w.healthRegenerationService.RegenerateAllUsers(1.0)
 	if err != nil {
 		fmt.Printf("[HpWorker] Error regenerating: %v\n", err)
 		return
 	}
 
 	connectedUserIDs := w.hub.GetConnectedUserIDs()
+	fmt.Printf("[HpWorker] Regenerated %d users, %d connected\n", regeneratedCount, len(connectedUserIDs))
+	
 	if len(connectedUserIDs) == 0 {
 		return
 	}
@@ -63,6 +65,11 @@ func (w *HpWorker) regenerateHp() {
 	}
 
 	for _, update := range updates {
-		_ = w.hub.SendHPUpdate(update.UserID, update.CurrentHp, update.Hp)
+		err := w.hub.SendHPUpdate(update.UserID, update.CurrentHp, update.Hp)
+		if err != nil {
+			fmt.Printf("[HpWorker] Error sending HP update to %s: %v\n", update.UserID, err)
+		} else {
+			fmt.Printf("[HpWorker] Sent HP update to %s: %d/%d\n", update.UserID, update.CurrentHp, update.Hp)
+		}
 	}
 }

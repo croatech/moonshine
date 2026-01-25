@@ -1,0 +1,92 @@
+{
+  "title": "Moonshine API",
+  "uid": "moonshine-api",
+  "editable": true,
+  "panels": [
+    {
+      "id": 1,
+      "title": "HTTP Requests Rate",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 0, "y": 0},
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {
+          "expr": "rate(http_requests_total[1m])",
+          "legendFormat": "{{method}} {{path}} - {{status}}"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "title": "HTTP Request Duration (p95, p99)",
+      "type": "timeseries",
+      "gridPos": {"h": 8, "w": 12, "x": 12, "y": 0},
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "p95 {{method}} {{path}}"
+        },
+        {
+          "expr": "histogram_quantile(0.99, rate(http_request_duration_seconds_bucket[5m]))",
+          "legendFormat": "p99 {{method}} {{path}}"
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "title": "Active WebSocket Connections",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 0, "y": 8},
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {
+          "expr": "active_websocket_connections"
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "title": "Players Online",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 6, "y": 8},
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {
+          "expr": "players_online"
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "title": "Total Fights",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 12, "y": 8},
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {
+          "expr": "fights_total"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Avg Fight Duration",
+      "type": "stat",
+      "gridPos": {"h": 4, "w": 6, "x": 18, "y": 8},
+      "datasource": {"type": "prometheus"},
+      "targets": [
+        {
+          "expr": "rate(fight_duration_seconds_sum[5m]) / rate(fight_duration_seconds_count[5m])"
+        }
+      ]
+    }
+  ],
+  "refresh": "5s",
+  "time": {
+    "from": "now-15m",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "schemaVersion": 38
+}

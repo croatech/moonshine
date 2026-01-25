@@ -1,0 +1,23 @@
+data_dir = "/var/lib/vector"
+
+[sources.docker]
+type = "docker_logs"
+docker_host = "/var/run/docker.sock"
+
+[transforms.parse_logs]
+type = "remap"
+inputs = ["docker"]
+source = '''
+.container_name = string!(.container_name)
+.message = string!(.message)
+'''
+
+[sinks.loki]
+type = "loki"
+inputs = ["parse_logs"]
+endpoint = "http://loki:3100"
+encoding.codec = "json"
+
+[sinks.loki.labels]
+container = "{{ container_name }}"
+source = "docker"

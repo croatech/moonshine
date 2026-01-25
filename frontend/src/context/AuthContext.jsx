@@ -16,7 +16,9 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(() => !!localStorage.getItem('token'))
 
   const handleWebSocketMessage = useCallback((message) => {
+    console.log('[AuthContext] Received WS message:', message.type, message)
     if (message.type === 'hp_update' && message.data) {
+      console.log('[AuthContext] Processing HP update:', message.data)
       setUser((prevUser) => {
         if (!prevUser) return prevUser
         const updated = {
@@ -25,6 +27,7 @@ export function AuthProvider({ children }) {
           current_hp: message.data.currentHp,
           hp: message.data.hp,
         }
+        console.log('[AuthContext] Updated user HP:', updated.currentHp, '/', updated.hp)
         cache.user = updated
         cache.timestamp = Date.now()
         return updated

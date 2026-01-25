@@ -41,10 +41,6 @@ func (h *Hub) Register(userID uuid.UUID, conn *websocket.Conn) {
 	h.mu.Lock()
 	defer h.mu.Unlock()
 
-	if oldConn, exists := h.connections[userID]; exists {
-		oldConn.Close()
-	}
-
 	h.connections[userID] = conn
 	fmt.Printf("[Hub] User %s connected. Total connections: %d\n", userID, len(h.connections))
 }
