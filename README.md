@@ -1,4 +1,5 @@
 # Moonshine
+Fantasy browser game
 
 Backend API server built with Go using Echo framework, PostgreSQL, and ClickHouse for analytics. React frontend.
 
